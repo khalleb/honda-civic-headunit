@@ -261,7 +261,7 @@ Alternativa: usar `null` como valor de `keyStore` para "sem checagem" — não t
 
 ## 8. Perguntas em aberto para a próxima rodada
 
-1. **O `honda_installer.apk` dentro de `res/raw/`** — não analisado. É um APK secundário que o HondaHack instala durante o setup. Pode conter código real (não ofuscado?) com pistas sobre o Aviso.
+1. ✅ **Resolvida** — `honda_installer.apk` analisado em `honda-installer.md`. Ele é um helper permanente instalado em `/system/app/`, roda `install_mitsubishi.sh` com argumentos construídos via UI, usa libsuperuser do Chainfire, detecta Mitsubishi vs Clarion por fingerprint de arquivo (`/system/etc/factory_reset.sh`). Reduz muito o escopo do nosso APK auto-OK.
 2. **Testar na central** (quando houver ADB) se adicionar `cn.autohack.hondahack` + signature na whitelist Mitsubishi + `pm install` funciona para user app com `READ_LOGS`. Se funcionar, a hipótese 7.1-(a) é confirmada e nosso APK não precisa ser system app.
 3. **Lista completa de pacotes `com.honda.*`** no firmware do EXL BR — pela whitelist aqui, existem `com.honda.hondaappstore` e `com.honda.appupdater`, mas eles não apareceram no scroll do menu Version (seção 5.3 do `fase1-reconhecimento/achados-2026-10-15.md`). Pode ter sido perdido entre fotos, ou pode ser que o EXL BR não tenha esses apps.
 
