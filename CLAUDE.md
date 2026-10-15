@@ -81,6 +81,8 @@ Trechos técnicos (comandos, flags, nomes de pacotes) podem ficar em inglês.
 
 - Repositório (privado): https://github.com/khalleb/honda-civic-headunit
 - Base de conhecimento: `./central-multimidia-civic-g10-kb.md`
+- **Rotas sem-ADB (varredura 2026-10-15):** `./docs/pesquisa-rotas-sem-adb-2026-10-15.md`
+- **Próxima sessão (ponto de partida):** `./docs/proxima-sessao.md`
 - Setup para Linux: `./MIGRATION/setup.sh`
 - Disclaimer: `./DISCLAIMER.md`
 - Referências de terceiros (clonadas por `setup.sh`):

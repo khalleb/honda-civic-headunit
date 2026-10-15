@@ -505,6 +505,23 @@ Mesmo com root (do Honda Hack ou manual), **ninguém publicou qual APK/flag cont
 original. E o Honda Hack, com root já funcionando, não removeu — apenas **auto-pressiona o OK**. Isso
 sugere fortemente que a comunidade tentou achar e desistiu, optando pelo workaround mais barato.
 
+### Rota alternativa à dirtyCOW — EvilValet (jun/2026)
+Vulnerabilidade divulgada por E. McDonald em 14/06/2026 em [juniperspring.org](https://juniperspring.org/posts/honda-evil-valet/).
+A central Honda mantém o certificado público AOSP `testkey.x509.pem` em `res/keys` da partição
+recovery, e a rotina `verify_file` do recovery é essencialmente idêntica à do AOSP stock. Como
+consequência, qualquer um pode:
+
+1. Construir um `update.zip` com o payload desejado (incluindo nosso `AutoOk.apk`).
+2. Assinar com `testkey.pk8` + `testkey.x509.pem` — **chaves públicas** disponíveis em
+   `aosp-mirror/platform_build/target/product/security/`.
+3. Plugar em pendrive FAT32 na porta USB frontal da central (energizada).
+4. Recovery aceita e aplica.
+
+**Impacto no roteiro deste projeto:** se funcionar na nossa safra, substitui as Fases 3 (ADB) e 6
+(dirtyCOW) inteiras. Confirmado em Civic 2021 pelo autor; não confirmado em `1.F187.16` BR. A rota
+tem experimento zero-risco (construir e inspecionar o zip em laboratório) antes de qualquer teste
+físico. Catálogo completo e plano de validação em `docs/pesquisa-rotas-sem-adb-2026-10-15.md`.
+
 ### Riscos arquiteturais (importantes de saber)
 - **A central tem acesso ao CAN bus do carro.** Isso não é teoria: ela precisa falar com o veículo
   pra mostrar status, câmera de ré, climatização. Software comprometido na central potencialmente
@@ -532,7 +549,9 @@ Atualizado em 2026-10-15 após as duas sessões de reconhecimento no carro.
 3. ❌ **Rota do passcord via Settings do Android encerrada para `1.F187.16` BR.** 5 variações
    testadas (ver `docs/fase3-adb/passcord-pesquisa.md` seção 4 e sessão 2 do reconhecimento). O
    detector dos 7 toques funciona (toast dispara), mas nenhuma sequência passa — Honda tem patch
-   nesse ponto. Próxima rota de ADB a avaliar está no mesmo documento (seção 3).
+   nesse ponto. **Rota substituta identificada em 2026-10-15**: EvilValet via `update.zip`
+   assinado com testkey AOSP, pula ADB inteiro — ver seção 5 e
+   `docs/pesquisa-rotas-sem-adb-2026-10-15.md`.
 4. ✅ **Resolvida** — Part number + build da nossa unidade: `MY16ADA` + `1.F187.16` + DBOOT
    `1.10_20160407183722`.
 5. **Fórum BR** (civicx.club "Honda Hack para Civic 2017"): alguém já achou o passcord ou outra
@@ -557,16 +576,39 @@ Atualizado em 2026-10-15 após as duas sessões de reconhecimento no carro.
 
 ## 8. Veredito atual (honesto)
 
-Depois de esgotar a direção 1 (settings/menu): **não há caminho limpo para remover o Aviso.** A camada
-de configuração reseta por design e não existe flag persistente de disclaimer de boot. Os únicos alvos
-restantes (patch da HMI re-assinada; ou script de boot que auto-pressiona o OK) são nível-root,
-nível-Honda-Hack, sem nada documentado para a unidade Mitsubishi, por um ganho de **um toque** — e com
-risco de brick (a mesma tela é a câmera de ré).
+Atualizado em 2026-10-15 após a varredura ampla (fóruns, GitHub, HN, write-ups técnicos).
 
-Conclusão prática: as opções reais continuam sendo **(a) conviver com o toque único** (recomendado) ou
-**(b) o auto-OK do Honda Hack** (incerto, arriscado, e que o dono já descartou). A engenharia reversa
-confirmou *por que* não há mágica aqui — isso é a expertise que ganhamos. Vale seguir só se for pelo
-aprendizado, não pelo resultado.
+### Direções que foram esgotadas
+- **Direção 1 (settings/menu):** não existe flag persistente de disclaimer de boot. A camada de
+  configuração reseta por design.
+- **Direção 2 (passcord Settings do Android):** 5 variações testadas, Honda tem patch nessa rota
+  na safra BR `1.F187.16` — ver `docs/fase3-adb/passcord-pesquisa.md`.
+
+### Direção que mudou tudo
+A varredura de 2026-10-15 identificou a vulnerabilidade **EvilValet** (seção 5), publicada apenas
+um mês atrás. Ela permite instalar `update.zip` custom via pendrive **sem** ADB, dev mode ou
+dirtyCOW. Isso potencialmente substitui as duas fases mais arriscadas (3 e 6) do roteiro inteiro.
+Precisa validação na nossa safra — experimento zero-risco em laboratório descrito em
+`docs/pesquisa-rotas-sem-adb-2026-10-15.md` seção 4.3.
+
+### Opções práticas hoje
+| Opção | Custo | Risco | Resultado |
+|---|---|---|---|
+| (a) Conviver com o toque único | 0 | 0 | Aviso continua |
+| (b) Honda Hack pago (US$25) | US$25 | Médio | Auto-OK funciona (descartado pelo dono) |
+| (c) EvilValet + nosso APK auto-OK | Alto esforço | Baixo-médio | Auto-OK funciona, livre |
+| (d) dirtyCOW + root manual (rota original) | Muito alto | Alto (brick) | Auto-OK funciona |
+
+A opção (c) virou a prioritária. A varredura mudou o roteiro: a Fase 3 (ADB) deixa de ser
+pré-requisito da Fase 6 se EvilValet funcionar.
+
+### Honestidade sobre o estado
+- O APK está pronto (12,8 KB, `e3b14e2b...`), falta só preencher 3 constantes depois do pull dos
+  APKs do `/system`.
+- Nenhuma OTA brasileira pública foi encontrada.
+- Ninguém da comunidade BR publicou root/ADB para `1.F187.16` BR.
+- A rota EvilValet é a primeira novidade real desde o início do projeto — vale testar antes de
+  decidir se o projeto segue ou encerra.
 
 ## 9. Fontes
 
@@ -587,3 +629,23 @@ aprendizado, não pelo resultado.
 - CivicX — "2017 Lx Secret Menu" (combo PRESET 1+6+VOL para LX): https://www.civicx.com/forum/threads/2017-lx-secret-menu.39126/
 - civinfo — "Diagnostic or hidden menu Honda CRV EX 2016" (combo POWER + MENU + BRIGHTNESS para 7"): https://www.civinfo.com/threads/diagnostic-or-hidden-menu-honda-crv-ex-2016.290529/
 - Relato interno da Fase 1 (unidade real `1.F187.16` EXL BR): `docs/fase1-reconhecimento/achados-2026-10-15.md`
+
+### Fontes da varredura de rotas sem-ADB (2026-10-15 — segunda metade da sessão)
+
+Documento consolidado da pesquisa: `docs/pesquisa-rotas-sem-adb-2026-10-15.md`.
+
+- **EvilValet / testkey AOSP (vulnerabilidade principal):**
+  - juniperspring.org — [Honda Civics and the Evil Valet](https://juniperspring.org/posts/honda-evil-valet/)
+  - Hackaday — [Installing Software With Android Test Keys](https://hackaday.com/2026/06/16/honda-civics-and-installing-software-with-android-test-keys/)
+  - Tom's Hardware — [2021 Civic jailbreak via USB](https://www.tomshardware.com/tech-industry/cyber-security/2021-honda-civic-infotainment-system-can-be-jailbroken-via-usb-flaw-uses-public-android-test-keys-to-install-unauthorized-apps-enables-for-evilvalet-attacks)
+  - Hacker News — [EvilValet discussion](https://news.ycombinator.com/item?id=48523080)
+  - GIGAZINE — [EvilValet detail](https://gigazine.net/gsc_news/en/20260617-honda-civic-evil-valet)
+- **Ferramentas / repos abertos:**
+  - GitHub — [librick/ic1101/ota-builder](https://github.com/librick/ic1101/tree/main/ota-builder)
+  - GitHub — [librick/ic1101/docs/rooting.md](https://github.com/librick/ic1101/blob/main/docs/rooting.md)
+  - GitHub — [aosp-mirror/platform_build/target/product/security](https://github.com/aosp-mirror/platform_build/tree/master/target/product/security) (testkey.pk8 e testkey.x509.pem)
+- **Fóruns revisitados para rotas de deploy:**
+  - CivicX — [Turn off annoying "OK" on startup](https://www.civicx.com/forum/threads/turn-off-annoying-%E2%80%9Cok%E2%80%9D-on-startup.84663/)
+  - CivicX — [Honda Head Unit Hack Without A Laptop](https://www.civicx.com/forum/threads/honda-head-unit-hack-without-a-laptop.23336/)
+  - CivicX — [How to Establish an ADB Connection (US Models)](https://www.civicx.com/forum/threads/how-to-establish-an-adb-connection-us-models.12479/)
+  - Civinfo — [Disabling the driver responsibility warning](https://www.civinfo.com/threads/disabling-the-driver-responsibility-warning.418726/)
