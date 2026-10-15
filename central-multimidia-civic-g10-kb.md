@@ -6,9 +6,16 @@ eliminar a tela de "Aviso" da partida sem depender do Honda Hack. Nada aqui foi 
 
 ## Alvo (unidade estudada)
 
-- Honda Civic 2017, fabricado no Brasil (VIN prefixo `93H...` = Brasil; 10º dígito = ano modelo).
-- Central: Display Audio 7" (botões laterais AUDIO/HOME/VOL/MENU/BACK).
-- Software: `Ver.1.F187.16` (versão de aplicativos).
+- Honda Civic 2017 **EXL**, fabricado no Brasil (VIN prefixo `93H...` = Brasil; 10º dígito = ano modelo).
+- Central: Display Audio 7" (botões capacitivos laterais AUDIO/HOME/+VOL-/MENU/BACK; botão físico DAY/NIGHT acima da tela — **sem presets numerados 1-6 e sem knob giratório na central**, isso é da versão LX).
+- **Confirmado via Settings → Sobre o dispositivo e menu de serviço (sessão de 2026-10-15, ver `docs/fase1-reconhecimento/achados-2026-10-15.md`):**
+  - Model Number: **`MY16ADA`** (Model Year 2016, Android Display Audio)
+  - Software (número da versão): **`1.F187.16`**
+  - Android: **4.2.2** build `-55`
+  - Kernel: `3.1.10+` build `jenkins@NDYWY3861584 #1 Thu Apr 7 18:50:54 JST 2016`
+  - Bootloader **DBOOT**: `1.10_20160407183722` (mesma data do kernel — a central foi flashada numa única imagem)
+  - Software loader: `1.F187.16` (bate com a versão de apps)
+  - System µCom (microcontrolador): `H62F0N 71.55.13` (Renesas/Hitachi family)
 
 > **Nota:** VIN completo, device serial e dados privados do veículo foram
 > removidos desta documentação. Se você está adaptando pro seu próprio Civic,
@@ -46,19 +53,27 @@ Entendimento inicial estava errado. A unidade do Civic G10 é a mesma em todo o 
 
 - **Android 4.2.2 (Jelly Bean, 2012/2013)** — confirmado em unidades Pilot/Ridgeline/Civic. Versão
   bastante antiga; muitos APKs modernos não rodam, por isso a comunidade caça builds velhos de apps.
-- **Namespace de sistema:** `com.clarion.displayaudio.*` — confirmado também em unidade Civic 2016 NA.
-  Pacotes conhecidos (todos "clarion.displayaudio"):
-  - `.apps.tenkey` — teclado numérico
-  - `.apps.generalsettings` — configurações gerais (visto no launcher de dev no Ridgeline)
-  - `.filer` — gerenciador de arquivos
-  - `.taskmanager` — gerenciador de tarefas
-  - `.vehiclecustomize` — ajustes do veículo
-  - `.colorprovider` — tema/cores
-  - `.extframework` — framework de extensões (aparece em pop-ups de erro)
-- **Lacuna documental:** nenhuma fonte identifica **qual pacote mostra o Aviso de abertura.** Essa é
-  uma pergunta em aberto da comunidade — ninguém publicou isso. Candidatos prováveis pelo nome:
-  `.generalsettings`, `.extframework` ou um app de "boot/startup" ainda não listado. Só dá para
-  responder dumpando os APKs da unidade e inspecionando os strings/resources.
+- **Namespace de sistema:** no Civic 2017 EXL BR o namespace confirmado é
+  **`com.mitsubishielectric.ada.*`**, não `com.clarion.displayaudio.*` como fontes mais antigas (unidade
+  Civic 2016 NA e Ridgeline) indicavam. A Clarion foi comprada pela Mitsubishi em 2015, e a safra 2016
+  parece ter sido o ponto de transição; nossa unidade (`1.F187.16`, Apr/2016) já saiu com namespace
+  Mitsubishi puro. O **inventário completo** dos 64 pacotes `com.mitsubishielectric.ada.*` observados
+  na central está em `docs/fase1-reconhecimento/achados-2026-10-15.md` (seções 5.3-5.5). Destaques
+  relevantes para o nosso objetivo:
+  - `com.mitsubishielectric.ada.app.dalauncher` — Launcher principal
+  - `com.mitsubishielectric.ada.app.dasettings` — Settings (mostra "Sobre o dispositivo" e o toast "passcord")
+  - `com.mitsubishielectric.ada.app.appmode` — Gerenciador de modos
+  - `com.mitsubishielectric.ada.app.hidkeyboard` — **teclado escondido** (do passcord de serviço)
+  - `com.mitsubishielectric.ada.app.developerdiag` — **Developer Diagnostic** (provável habilitador de ADB)
+  - `com.mitsubishielectric.ada.app.dealerdiag` / `preshipmentdiag` / `letdiag` — apps de serviço do dealer
+  - `com.mitsubishielectric.ada.app.systemupdate` — processo OTA
+  - `com.mitsubishielectric.ada.appservice.whitelist` — service da whitelist (seção 4quater)
+  - `com.mitsubishielectric.ada.appservice.screenshot` — **serviço nativo de screenshot** (vale ouro para medir X,Y do botão OK sem câmera)
+  - `com.mitsubishielectric.ada.appservice.diag` — Diag core
+  - Também presente: `com.honda.displayaudio.whitelist` — pacote Honda injetado sobre o firmware Mitsubishi
+- **Candidatos ao Aviso de abertura** (seção 3) — pelo inventário real, os mais prováveis são
+  `dalauncher`, `dasettings` e `appmode`. Ainda não confirmado qual exatamente; depende de dumpar
+  os APKs via ADB e procurar a string do Aviso.
 - **Whitelist:** o launcher checa o nome do pacote contra uma lista de apps homologados pela Honda
   (ex.: `com.honda.navigation`). Por isso só renomear um APK para um nome "da lista" funcionou em 2015
   mas falhou no modelo 2016 NA. É o mecanismo central que bloqueia apps de terceiros.
@@ -122,6 +137,41 @@ Fonte: manual de serviço Honda, replicado no fórum.
    · `5 = Connection` · `6 = Vehicle Info`.
 6. Sair: girar/pressionar o knob `VOLUME/POWER`, ou desligar o carro.
 
+### 4.1a Self-Diagnosis Mode (EXL BR — CONFIRMADO em `1.F187.16`, 2026-10-15)
+A versão EXL brasileira **não tem presets físicos 1-6 nem knob giratório na central** — o combo da
+seção 4.1 não serve. Em compensação ela tem o botão físico **DAY/NIGHT** (sol+lua, acima da tela) e
+os capacitivos **AUDIO/HOME/+VOL-/MENU/BACK** à esquerda da tela. O combo que funciona é o oficial
+do TSB Honda 17-049 (seção 4.3):
+
+1. Carro em **ON**, áudio **off** (botão POWER capacitivo até a tela ficar sem fonte).
+2. **Segurar simultaneamente por ~2s:** `DAY/NIGHT` (físico) + `AUDIO` (capacitivo) + `MENU` (capacitivo).
+   Técnica: um dedo em cada capacitivo + outra mão no DAY/NIGHT físico. Encostar firme nos capacitivos
+   sem deslizar.
+3. Abre a tela **Self-Diagnosis Mode** com duas opções:
+   - `Self-Diagnosis Mode` — roda teste automático (não usar fora de serviço)
+   - `Detail Information & Setting` — é por aqui que a gente navega
+
+Estrutura mapeada do `Detail Information & Setting`:
+
+```
+Detail Information & Setting
+├─ Monitor Check · Unit Check · Audio Check · Guideline Setup
+├─ Functional Setup
+│  ├─ Backup Data Clear  ⚠️  Anti-Theft Skip  ⚠️  AMP Repro  ⚠️⚠️  Display Repro  ⚠️⚠️⚠️
+│  ├─ Save User's Memory · LaneWatch · Phone Picture
+│  └─ Other
+│     ├─ Operation Restriction  ← é a trava (b) "DD VSS" (vídeo em movimento), não o Aviso (a)
+│     └─ Smartphone Information (ON/OFF do Android Auto e do Car Play — não mexer, derruba CarPlay)
+├─ B-CAN · F-CAN                 ← monitor ao vivo dos barramentos (seção 4bis)
+├─ Version                        ← inventário completo de pacotes + versões DBOOT/loader/µCom
+├─ Vehicle status · GPS Information
+```
+
+**Achado importante:** o **Functional Setup do EXL BR não expõe dev mode / ADB** (ao contrário do
+que a seção 4.4 reporta para outras unidades Honda). Essa rota está fechada aqui — ver 4.4 abaixo.
+
+Sair: botão `Return` no canto superior direito, até voltar à tela normal.
+
 ### 4.2 Combinação alternativa — Civic 2016 Touring (tela 7" "upgraded")
 Reportada em fórum, menos confirmada: segurar `AUDIO` + `BRIGHTNESS` + `MENU` por 4s.
 Variante vista: `HOME` + `BRIGHTNESS` + `MENU`.
@@ -135,6 +185,28 @@ Para a atualização de software, a Honda documenta: carro em ON → segurar
 Tocar várias vezes (relatos de 7–8 vezes) no número do build dentro das configurações. O caminho
 exato muda entre firmware 2016–2017 e 2018+ (olhar a data ao lado de "Kernel Version"). Em CR-V 2016
 sem navegação: dev mode via "Functional setup" dentro do Manual Diag.
+
+**Civic 2017 EXL BR (`1.F187.16`) — reality check 2026-10-15:**
+
+- 7 toques no "Número da versão" abrem um toast curto `Please enter a passcord` (sic, com typo —
+  é string única, boa para `grep` nos APKs quando a gente tiver pull). Nenhum teclado aparece junto;
+  é só o toast, mesmo clicando novamente.
+- Sequência XDA 2017 (`Modelo → Kernel → Android → Baseband`, ordem 1-4-2-3) **não funciona** nessa
+  safra — só repete o toast. Mesmo sintoma relatado para 2018 Civic Si (XDA / CivicX).
+- Rota alternativa "via Functional Setup" (seção 4.4 original) **também não funciona no EXL BR**: o
+  Functional Setup só tem Backup Data Clear, Save User's Memory, LaneWatch, Phone Picture, Anti-Theft
+  Skip, Other, AMP Repro, Display Repro (ver 4.1a). Dentro de "Other" tem apenas Operation Restriction
+  e Smartphone Information. Zero opção explícita de dev mode / ADB.
+- **Hipótese nova:** o passcord **não destrava o dev mode do Android** — destrava os apps
+  `com.mitsubishielectric.ada.app.{dealerdiag,developerdiag,preshipmentdiag,letdiag}` listados em
+  Version (ver seção 2). Pistas: existe pacote dedicado `com.mitsubishielectric.ada.app.hidkeyboard`
+  (teclado escondido) só para o fluxo de serviço; os relatos XDA que mencionam "após o passcord,
+  segurar MENU para abrir outro menu" descrevem na verdade a entrada no `DeveloperDiag`, não no dev
+  mode do Settings do Android.
+- **Rotas abertas a avaliar:** descobrir o passcord correto para safra 2016-04; invocar `developerdiag`
+  via `am start -n ...` (circular — precisa ADB); explorar `systemupdate` como shell OTA; procurar
+  atalho não documentado para habilitar `ScreenshotApService`. Detalhes em
+  `docs/fase1-reconhecimento/achados-2026-10-15.md` seção 4.
 
 ### 4.5 Reboot do áudio
 Segurar `HOME` por ~5s reinicia a central (atalho oficial Honda).
@@ -339,14 +411,27 @@ sugere fortemente que a comunidade tentou achar e desistiu, optando pelo workaro
 
 ## 7. Perguntas em aberto / roadmap de pesquisa
 
-1. **Confirmar os pacotes da unidade Mitsubishi do Civic** (são `com.clarion.*` ou `com.mitsubishi*`?).
-   → só dá via ADB numa unidade Civic (ou achar alguém que já listou).
-2. **Localizar a configuração que desliga o aviso** e entender **por que ela reseta** (onde é gravada?
-   É volátil? A HMI reescreve no boot?). É a chave para uma solução limpa e permanente.
-3. **Caminho de persistência:** se rooteado, dá pra (a) tornar a config persistente, (b) script no boot
-   que reaplica, ou (c) patch no app/HMI que reativa o aviso? Qual é menos arriscado?
-4. **Part number + build exato da nossa unidade** (`F187.16`) e se root foi confirmado nessa versão BR.
-5. **Fórum BR** (civicx.club "Honda Hack para Civic 2017"): alguém já mexeu especificamente no aviso?
+Atualizado em 2026-10-15 após sessão de reconhecimento no carro.
+
+1. ✅ **Resolvida** — Pacotes da unidade Mitsubishi do Civic BR: são **`com.mitsubishielectric.ada.*`**
+   (64 pacotes mapeados). Lista completa em `docs/fase1-reconhecimento/achados-2026-10-15.md`.
+2. **Qual activity do `dalauncher`/`dasettings`/`appmode` renderiza o Aviso?** Só respondemos depois
+   de pullar os APKs via ADB e procurar a string. Candidatos reduzidos aos 3 pacotes acima.
+3. **Qual é o passcord do serviço na safra `1.F187.16`?** Não chutar. Procurar em fóruns BR/XDA
+   específicos dessa safra, ou extrair do APK `com.mitsubishielectric.ada.app.dasettings` quando
+   tivermos pull. **Prioridade alta — destrava `DeveloperDiag` que provavelmente destrava ADB.**
+4. ✅ **Resolvida** — Part number + build da nossa unidade: `MY16ADA` + `1.F187.16` + DBOOT
+   `1.10_20160407183722`.
+5. **Fórum BR** (civicx.club "Honda Hack para Civic 2017"): alguém já achou o passcord ou outra
+   rota de dev mode na safra BR? Buscar.
+6. **O `ScreenshotApService 1.0` que vimos existir pode ser disparado por atalho?** Em caso positivo,
+   dispensa a câmera na hora de medir X,Y do botão OK — valor alto.
+7. **Caminho de persistência pós-root:** se rooteado, dá pra (a) tornar a config persistente,
+   (b) script no boot que reaplica, ou (c) patch no app/HMI que reativa o aviso? Qual é menos
+   arriscado?
+8. **A whitelist Honda (`com.honda.displayaudio.whitelist`) vive junto da Mitsubishi
+   (`com.mitsubishielectric.ada.appservice.whitelist`)** — qual tem prioridade? Pode haver ponto
+   de alavanca na Honda, não na Mitsubishi.
 
 ## 8. Veredito atual (honesto)
 
@@ -371,3 +456,12 @@ aprendizado, não pelo resultado.
 - RE da unidade 2021 (NÃO é a nossa) — librick/ic1101: https://github.com/librick/ic1101 · artigos: https://juniperspring.org/posts/honda-reverse-engineering/
 - Gitee `root-honda` (ferramenta não verificada): https://gitee.com/ylcplus/root-honda
 - Honda/NVIDIA (unidade europeia Tegra, contexto): https://www.droid-life.com/2014/10/02/nvidia-and-honda-debut-tegra-powered-android-infotainment-system/
+
+### Fontes adicionadas na sessão de 2026-10-15
+
+- Pastebin — `pm list packages` de outro Honda Civic (fonte principal dos nomes `com.mitsubishielectric.ada.*`): https://pastebin.com/B9Edr2fv
+- XDA — "How to enter developer mode on 2017 Honda Civic" (sequência 1-4-2-3 após o passcord): https://xdaforums.com/t/guide-how-to-enter-developer-mode-on-2017-honda-civic-and-now-root-install-apps.3621582/
+- CivicX — "In case anyone is wondering passcord for 2018 models" (confirma que o passcord muda por safra): https://www.civicx.com/forum/threads/in-case-anyone-is-wondering-passcord-for-2018-models-developer-mode.26840/
+- CivicX — "2017 Lx Secret Menu" (combo PRESET 1+6+VOL para LX): https://www.civicx.com/forum/threads/2017-lx-secret-menu.39126/
+- civinfo — "Diagnostic or hidden menu Honda CRV EX 2016" (combo POWER + MENU + BRIGHTNESS para 7"): https://www.civinfo.com/threads/diagnostic-or-hidden-menu-honda-crv-ex-2016.290529/
+- Relato interno da Fase 1 (unidade real `1.F187.16` EXL BR): `docs/fase1-reconhecimento/achados-2026-10-15.md`

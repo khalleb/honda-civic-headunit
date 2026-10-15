@@ -44,6 +44,7 @@ captures/
 screenshots/
 fotos/
 fotos-pessoais/
+!docs/fase1-reconhecimento/fotos/
 
 # ---- Imagens soltas na raiz (prevenção) ----
 # Fotos de documentação devem ir pra docs/images/ e adicionadas explicitamente
