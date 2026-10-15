@@ -15,14 +15,19 @@ toda vez que o carro é ligado — sem usar ferramentas pagas de terceiros.
 
 ## 📘 O que você vai encontrar aqui
 
+- **`docs/proxima-sessao.md`** — **comece por aqui ao retomar o trabalho**:
+  ponto de partida operacional da próxima sessão, com checklist, decision
+  tree e o que já está resolvido para não refazer
 - **`central-multimidia-civic-g10-kb.md`** — base de conhecimento técnica
   completa (hardware, software, mecanismo de root, análise de APK,
   menus ocultos, pinouts, CAN bus, etc.)
+- **`docs/`** — relatos de cada sessão de trabalho, agrupados por fase do roadmap
 - **`MIGRATION/`** — scripts e docs para configurar o ambiente de desenvolvimento
   em qualquer máquina Linux
 - **`CLAUDE.md`** — contexto automático para sessões do Claude Code
 - **`DISCLAIMER.md`** — avisos de segurança, legais e técnicos
-- **`our-apk/`** — nosso APK auto-OK em construção (ainda não iniciado)
+- **`our-apk/`** — APK auto-OK compilável; falta preencher 3 constantes
+  após o pull do `/system/app` da central
 
 ## 🚀 Começando
 
