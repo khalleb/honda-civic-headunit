@@ -31,7 +31,7 @@ Permissões declaradas no manifest: `RECEIVE_BOOT_COMPLETED`, `READ_LOGS`, `ACCE
 
 ## Compilar
 
-Pré-requisitos: Android SDK (API 33 para compile; build-tools 33), `ANDROID_SDK_ROOT` apontado:
+Pré-requisitos: Android SDK (API 33 para compile; build-tools 33), `ANDROID_SDK_ROOT` apontado. **Para setup no Fedora** (instalação do JDK 17, SDK command-line tools, troubleshooting), ver `../docs/fase5-apk/compilar.md`.
 
 ```bash
 cd our-apk
