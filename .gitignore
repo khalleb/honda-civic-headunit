@@ -1,0 +1,91 @@
+# =============================================================================
+# .gitignore — Projeto Honda Civic G10 Head Unit
+# =============================================================================
+# Mantém o repositório limpo e protege contra commit acidental de:
+# - Ferramentas baixadas (podem ser recriadas via setup.sh)
+# - Repositórios de terceiros clonados (clonados pelo setup.sh)
+# - Dumps de APK proprietários da Honda/Mitsubishi
+# - Dados pessoais do veículo
+# =============================================================================
+
+# ---- Ferramentas baixadas (recriadas via setup.sh) ----
+tooling/bin/
+tooling/references/
+
+# ---- APKs extraídos da central Honda (proprietários — nunca redistribuir) ----
+tooling/apks-dumped/
+tooling/apks-decoded/
+*.apk
+*.odex
+*.vdex
+*.art
+*.oat
+
+# ---- Dumps de firmware / imagens de partição (proprietários) ----
+*.img
+*.mtd
+*.bin
+SwUpdate*.txt
+SwUpdate*.mtd
+
+# ---- Dados pessoais do veículo (nunca commitar) ----
+*vin*.txt
+*my-car*.md
+my-coords.*
+my-build.*
+whitelist-1.0*.xml
+*-personal.*
+
+# ---- Logs e capturas (podem conter info sensível) ----
+*.log
+logcat*.txt
+adb-logs/
+captures/
+screenshots/
+fotos/
+fotos-pessoais/
+
+# ---- Imagens soltas na raiz (prevenção) ----
+# Fotos de documentação devem ir pra docs/images/ e adicionadas explicitamente
+/*.jpg
+/*.jpeg
+/*.png
+/*.gif
+/*.heic
+/*.webp
+
+# ---- Builds do nosso APK ----
+our-apk/build/
+our-apk/.gradle/
+our-apk/local.properties
+our-apk/.idea/
+our-apk/app/build/
+*.ap_
+*.aab
+
+# ---- Keystores de assinatura (NUNCA commitar) ----
+*.jks
+*.keystore
+*.pem
+*.p12
+key.properties
+
+# ---- Caches e temporários ----
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+*~
+.vscode/
+.idea/
+
+# ---- Python ----
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# ---- Windows específicos ----
+desktop.ini
+$RECYCLE.BIN/
