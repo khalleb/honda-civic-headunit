@@ -153,20 +153,67 @@ unzip -p "$APK_OUT" "$RSA_ENTRY" | \
   awk -F= '{print $2}' | tr -d :
 ```
 
-## 7. Rodar via emulador antes do carro (opcional)
+## 7. Validação sem rodar o APK — o emulador API 17 não sobe mais
 
-Para pelo menos ver se o APK sobe, compila e abre sem crashar, dá para rodar num emulador Android 4.2.2:
+**O caminho de rodar num emulador Android 4.2.2 x86 não funciona em distro Linux recente** (testado em Fedora 44, kernel 7.2.8). O `qemu-system-i386` do pacote `emulator` 35.x segmenta logo depois de `Emulator is performing a full startup`, independente de GPU (`off`, `swiftshader`, `swiftshader_indirect`, `guest`) e aceleração (`-no-accel`). O crash é consistente com relatos públicos de incompatibilidade entre as imagens API 17 (de 2013) e o QEMU/Mesa modernos. API 21+ sobe normal, mas aí não é mais Android 4.2.2.
+
+**Alternativa que preserva o que o emulador validaria** — análise estática do APK compilado:
+
+### 7.1 Manifest após merge do AGP
 
 ```bash
-sdkmanager "system-images;android-17;default;x86"
-avdmanager create avd -n civic-test -k "system-images;android-17;default;x86"
-emulator -avd civic-test &
-sleep 30
-adb install AutoOk.apk
-adb logcat -s AutoOk:*
+BT=$ANDROID_SDK_ROOT/build-tools/33.0.2
+APK=app/build/outputs/apk/release/AutoOk.apk
+"$BT/aapt" dump xmltree "$APK" AndroidManifest.xml
 ```
 
-Limitação: o emulador não tem `su`, então `LogcatWatcher` vai logar `su exec IOException`. Mas pelo menos valida que o `BootReceiver` dispara e o `AutoOkService` entra no `onStartCommand` — o resto é testável em runtime no carro.
+O que conferir: `uses-sdk`, `uses-permission`, `<receiver>` com `<intent-filter><action name="android.intent.action.BOOT_COMPLETED"/></intent-filter>`, `<service>` registrado. Se qualquer um estiver faltando, o AGP comeu durante o merge.
+
+### 7.2 Classes DEX e métodos compilados
+
+```bash
+"$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/apkanalyzer" dex packages "$APK" | grep com.khalleb
+```
+
+Confere nome das classes, campos (`F d`), métodos (`M d`), tamanho em bytes. Para o AutoOk, esperado:
+
+- `AutoOkConfig` (constantes) — campos `AVISO_ACTIVITY_NAME`, `BUTTON_OK_X/Y`, etc.
+- `BootReceiver` — `onReceive`
+- `AutoOkService` — `onStartCommand`, `onBind`, `onDestroy`, `isConfigValid`, `onAvisoDetected`, `buildWatcher`, `sleepSeconds`, `stopWatcher`
+- `LogcatWatcher` + `LogcatWatcher$1` (anon inner) + `LogcatWatcher$OnDetected` (interface)
+- `Shell` — `suTap`, `suExec`
+
+### 7.3 Lint focado em bugs reais
+
+```bash
+./gradlew :app:lintRelease
+```
+
+Isso roda só o lint, sem o build inteiro. Report em HTML em `app/build/reports/lint-results-release.html`. O que importa é zero erro — warnings de style podem ser ignorados.
+
+### 7.4 Checar signature e permissões num comando só
+
+```bash
+"$BT/apksigner" verify --print-certs "$APK" | grep -E "SHA-1 digest|SHA-256 digest"
+"$BT/aapt" dump permissions "$APK"
+```
+
+### 7.5 O que ainda só o carro consegue validar
+
+A validação estática confirma que:
+
+- O APK é parseável pelo `PackageManager` do Android 4.2.2.
+- Permissões, componentes e flags estão como declaramos.
+- O código Java compila sem erros e as classes estão todas lá.
+
+**O que NÃO consegue validar sem a central:**
+
+- Se `su` existe e o SuperSU/Magisk responde ao `exec("su")` do `LogcatWatcher`.
+- Se o `logcat` filtra `ActivityManager:I *:S` como esperado (depende de versão exata do logd).
+- Se a `AVISO_ACTIVITY_NAME` que a gente vai preencher aparece mesmo nas linhas que o filtro deixa passar.
+- Se `input tap X Y` acerta o botão OK.
+
+Esses quatro só pulam depois que ADB subir no carro.
 
 ## 8. Troubleshooting
 
