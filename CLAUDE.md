@@ -79,7 +79,7 @@ Trechos técnicos (comandos, flags, nomes de pacotes) podem ficar em inglês.
 
 ## Links úteis
 
-- Repositório: (preencher após criar no GitHub)
+- Repositório (privado): https://github.com/khalleb/honda-civic-headunit
 - Base de conhecimento: `./central-multimidia-civic-g10-kb.md`
 - Setup para Linux: `./MIGRATION/setup.sh`
 - Disclaimer: `./DISCLAIMER.md`
