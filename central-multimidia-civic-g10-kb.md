@@ -172,6 +172,26 @@ que a seção 4.4 reporta para outras unidades Honda). Essa rota está fechada a
 
 Sair: botão `Return` no canto superior direito, até voltar à tela normal.
 
+**Estrutura detalhada mapeada na sessão 2 de 2026-10-15** (sub-menus de Detail Information &
+Setting; sem risco, sem dev mode, só leitura):
+
+- **Monitor Check** → 7 testes de display: `RGB Colour`, `Grey Tone`, `White Raster`, `Black Raster`,
+  `Colour Pattern`, `Touch Panel Check`, `Touch Panel Adjustment`. Útil para validar display com
+  defeito, não acionável para outro propósito.
+- **Unit Check** → 18 componentes individuais: `HMI Unit`, `F-CAN`, `B-CAN`, `USB`, `Vehicle Status`,
+  `HFT/Mic`, `Hard Key`, `Error History`, `Rear wide camera`, `LaneWatch`, `Remote tuner`, `CD`,
+  `Centre display`, `Meter Display`, `GPS Antenna`, `Traffic Information`, `Gyro Sensor`, `A/C`.
+  **Nenhum** item com `Developer`, `ADB`, `Debug`, `Service`, `Factory`, `Dealer`, `Diag` —
+  descarta a hipótese "dev mode via Unit Check". "Error History" pode render dados valiosos sobre
+  erros persistentes em visita futura.
+- **Audio Check** → só `Speaker Check`.
+- **Guideline Setup** → calibração de guias das câmeras: `Corner Camera`, `Rear wide camera`.
+- **B-CAN** → monitor ao vivo com ~20 sinais semânticos (ver 4bis).
+- **F-CAN** → monitor ao vivo com motor ligado (ver 4bis).
+- **Vehicle status** → valores decodificados ao vivo (ver 4bis).
+- **GPS Information** → status GPS: número de satélites, Measuring Status (2D/3D/No Fix), Time (UTC),
+  Current Position, Altitude, mapa de céu com In Use / Search.
+
 ### 4.2 Combinação alternativa — Civic 2016 Touring (tela 7" "upgraded")
 Reportada em fórum, menos confirmada: segurar `AUDIO` + `BRIGHTNESS` + `MENU` por 4s.
 Variante vista: `HOME` + `BRIGHTNESS` + `MENU`.
@@ -207,6 +227,30 @@ sem navegação: dev mode via "Functional setup" dentro do Manual Diag.
   via `am start -n ...` (circular — precisa ADB); explorar `systemupdate` como shell OTA; procurar
   atalho não documentado para habilitar `ScreenshotApService`. Detalhes em
   `docs/fase1-reconhecimento/achados-2026-10-15.md` seção 4.
+
+**Atualização 2026-10-15 sessão 2:** 5 variações distintas da sequência de toques foram testadas no
+carro (receita XDA 1-4-2-3 em três cadências diferentes, mais a sequência do vídeo brasileiro Kernel
+→ Modelo → Build → Status em duas cadências). Em todas, o toast "Please enter a passcord" dispara
+corretamente, confirmando que o detector dos 7 toques funciona, mas a sequência subsequente nunca é
+aceita. **A rota do passcord via Settings do Android está encerrada para a safra `1.F187.16` BR.**
+Isso é consistente com os relatos públicos (XDA, CivicX) de que a Honda introduziu patch nesse ponto
+em algum momento pré-2018 e que o `@codeage` começou a cobrar US$25 por root remoto via browser
+exatamente porque muita gente parou de conseguir a sequência manual. Nossa unidade está no grupo
+pós-patch.
+
+Também foi feito teste rápido de ADB via cabo USB sem dev mode habilitado:
+- `lsusb`, `journalctl -k` e `adb devices` não registraram evento algum quando a central foi plugada
+  no notebook, consistente com cenário "central em modo host + PC em modo host → ninguém negocia".
+- Ressalva registrada: **o cabo USB-C↔USB-A usado pode não ter data lines** (ser só carregamento).
+  Antes da próxima tentativa, falsificar essa ressalva plugando um pendrive no notebook pelo mesmo
+  cabo; se o notebook montar o pendrive, o cabo tem data e a conclusão fica firme.
+
+**Rotas de ADB que seguem abertas (nenhuma pronta para execução):** combos físicos escondidos ainda
+não documentados; análise estática do APK `dasettings.apk` depois que tivermos ADB por outra via
+para extrair o passcord novo; análise de vulnerabilidades conhecidas no kernel 3.1.10 (abr/2016)
+que precedem CVE-2016-5195 (dirtyCOW já é usada pela ferramenta `root-honda` quando ADB está
+disponível); rota do browser (o payload que o `@codeage` entrega é privado, teria que ser desenvolvido
+do zero). Nenhuma dessas é factível na próxima visita; voltamos ao estado "pesquisa offline".
 
 ### 4.5 Reboot do áudio
 Segurar `HOME` por ~5s reinicia a central (atalho oficial Honda).
@@ -258,6 +302,61 @@ além da própria central.
   Isso é RE que teria que ser feita por sniffing — mas aí a conclusão é importante: **a tela de Aviso
   é renderizada LOCALMENTE pela HMI, não vem do CAN.** Então mesmo mapeando o CAN inteiro, não há
   "mensagem de aviso" para interceptar. É UI do próprio APK.
+- **Lacuna parcialmente fechada (2026-10-15, EXL BR):** o menu de serviço (Self-Diagnosis Mode →
+  Detail Information & Setting → B-CAN) lista por nome semântico ~20 sinais que a central consome do
+  B-CAN. Relato completo em `docs/fase1-reconhecimento/achados-2026-10-15-sessao2.md` seção 3.
+
+### Sinais B-CAN consumidos pela central (EXL BR `1.F187.16`)
+
+Observados pelo próprio menu de serviço com status de watchdog por sinal:
+
+```
+VSPNE       = Vehicle Speed
+AT          = Automatic Transmission
+ILLUMI      = Illumination (farol -> dim do display)
+ST_SW_PAD   = Steering Wheel Switch Pad (botões do volante)
+VINNO       = VIN Number (transmitido pelo cluster)
+ACSTATE     = AC State
+STRG_ANG    = Steering Angle
+ODO_TRIP    = Odometer / Trip
+TRICOM1..4  = Trip Computer 1 a 4
+PARKSENS    = Parking Sensors
+METER_RMD   = Meter Reminder
+ACFB        = AC Feedback
+HLSW_BCM/ICU = Headlight Switch (BCM/ICU)
+MICU_BCM/ICU = Multiplex ICU
+MET_CUSTOM  = Meter Custom
+MAINTENANCE = Maintenance reminders
+```
+
+**F-CAN requer motor ligado** para o monitor da central mostrar sinais; sem motor, só `ENG1` (Engine 1)
+e `EPB1` (Electronic Parking Brake) aparecem com status `TIME OUT`. Mapeamento completo do F-CAN fica
+para visita com motor em marcha lenta num local arejado.
+
+### Tela "Vehicle status" — valores decodificados ao vivo
+
+Dentro de Detail Information & Setting → Vehicle status. Mostra campos decodificados do CAN em
+tempo real, incluindo:
+
+```
+VSP                     = Vehicle Speed Pulse
+BACK                    = marcha ré (0/1)
+IG                      = Ignition on (0/1)
+C_METER_ILL_STATUS      = iluminação do painel - status
+C_METER_ILL_CANCEL      = iluminação do painel - cancel bit
+C_METER_ILL_STEP        = passo atual de dim (0-N)
+Speed                   = velocidade decodificada em km/h
+TV-PARK                 = trava DD TV (0/1)
+NAVI-PARK               = trava DD nav (0/1)
+Current/Initial/Last registered VIN
+```
+
+Observações importantes:
+
+- **TV-PARK e NAVI-PARK** confirmam a trava DD VSS (a "trava b" descrita na seção 3). O menu Operation
+  Restriction (dentro de Functional Setup → Other) controla essas flags.
+- **Initial/Current/Last registered VIN** confirma antifurto: a central guarda histórico de VINs e
+  pode travar se detectar mudança. Possível vetor de problema se trocar a central entre carros.
 
 ### Bitrate
 - F-CAN: 500 kbit/s (padrão Honda moderno).
@@ -424,15 +523,16 @@ sugere fortemente que a comunidade tentou achar e desistiu, optando pelo workaro
 
 ## 7. Perguntas em aberto / roadmap de pesquisa
 
-Atualizado em 2026-10-15 após sessão de reconhecimento no carro.
+Atualizado em 2026-10-15 após as duas sessões de reconhecimento no carro.
 
 1. ✅ **Resolvida** — Pacotes da unidade Mitsubishi do Civic BR: são **`com.mitsubishielectric.ada.*`**
    (64 pacotes mapeados). Lista completa em `docs/fase1-reconhecimento/achados-2026-10-15.md`.
 2. **Qual activity do `dalauncher`/`dasettings`/`appmode` renderiza o Aviso?** Só respondemos depois
    de pullar os APKs via ADB e procurar a string. Candidatos reduzidos aos 3 pacotes acima.
-3. **Qual é o passcord do serviço na safra `1.F187.16`?** Não chutar. Procurar em fóruns BR/XDA
-   específicos dessa safra, ou extrair do APK `com.mitsubishielectric.ada.app.dasettings` quando
-   tivermos pull. **Prioridade alta — destrava `DeveloperDiag` que provavelmente destrava ADB.**
+3. ❌ **Rota do passcord via Settings do Android encerrada para `1.F187.16` BR.** 5 variações
+   testadas (ver `docs/fase3-adb/passcord-pesquisa.md` seção 4 e sessão 2 do reconhecimento). O
+   detector dos 7 toques funciona (toast dispara), mas nenhuma sequência passa — Honda tem patch
+   nesse ponto. Próxima rota de ADB a avaliar está no mesmo documento (seção 3).
 4. ✅ **Resolvida** — Part number + build da nossa unidade: `MY16ADA` + `1.F187.16` + DBOOT
    `1.10_20160407183722`.
 5. **Fórum BR** (civicx.club "Honda Hack para Civic 2017"): alguém já achou o passcord ou outra
@@ -445,6 +545,15 @@ Atualizado em 2026-10-15 após sessão de reconhecimento no carro.
 8. **A whitelist Honda (`com.honda.displayaudio.whitelist`) vive junto da Mitsubishi
    (`com.mitsubishielectric.ada.appservice.whitelist`)** — qual tem prioridade? Pode haver ponto
    de alavanca na Honda, não na Mitsubishi.
+9. **Cabo USB-C↔USB-A em teste tem data lines?** Teste de ADB sem dev mode foi feito mas é
+   inconclusivo porque o cabo pode ser "só carrega". Falsificar plugando um pendrive via esse cabo
+   e confirmando que o notebook enxerga os arquivos. Até lá a conclusão "sem dev mode, cabo é
+   inútil" segue como provisória.
+10. **F-CAN completo com motor ligado** — a próxima visita que inclua motor em marcha lenta num
+    local arejado deve mapear os sinais F-CAN visíveis no menu de serviço, que hoje estão em
+    time-out.
+11. **"Error History"** no Unit Check — pode render erros persistentes históricos úteis para
+    debug. Entrar numa visita futura, só read.
 
 ## 8. Veredito atual (honesto)
 

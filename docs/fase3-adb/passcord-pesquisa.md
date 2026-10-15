@@ -76,17 +76,19 @@ Mesmo mecanismo do serviço pago, mas o payload que o site do `@codeage` entrega
 
 O KB (seção 2) confirma que `com.mitsubishielectric.ada.app.developerdiag` está instalado. Se existir um atalho de UI (combo físico, long-press, etc.) que invoque essa Activity direto, pulamos o passcord inteiro. **Nenhuma fonte pública documenta esse atalho** — seria descoberta nossa. Vale uma varredura mais extensa no menu de serviço (fase 1 só explorou 3-4 níveis).
 
-## 4. Plano para a próxima ida ao carro
+## 4. Plano executado na sessão 2 de 2026-10-15 — resultado
 
-Objetivo: validar/falsificar as hipóteses 2.1-2.3 com **no máximo 3 tentativas** (seguir a disciplina de cooldown).
+Objetivo era validar/falsificar as hipóteses 2.1-2.3 com no máximo 3 tentativas. **As três foram feitas, todas falharam** (relato em `../fase1-reconhecimento/achados-2026-10-15-sessao2.md` seção 1).
 
-| Tentativa | Variação | Hipótese testada |
-|---|---|---|
-| 1 | 7 toques no Build Number rapidíssimos (0.3s cada) + sequência 1-4-2-3 **imediatamente após** (sem esperar o toast) | 2.2 (timing) |
-| 2 | 7 toques normais + sequência 1-4-2-3 com **cadência de 0.3s** (muito mais rápida que da primeira sessão) | 2.2 variante |
-| 3 | 7 toques no Build Number + sequência contando os 7 itens visíveis (incluindo Status e Informações legais) | 2.1 (ordem absoluta) |
+| Tentativa | Variação | Hipótese testada | Resultado |
+|---|---|---|---|
+| 1 | 7 toques rapidíssimos + sequência 1-4-2-3 imediatamente, antes do toast sumir | 2.2 (timing) | ❌ só o toast |
+| 2 | 7 toques normais + sequência 1-4-2-3 com cadência 1 toque/s | 2.2 variante lenta | ❌ só o toast |
+| 3 | 7 toques normais + sequência do vídeo brasileiro (Kernel → Modelo → Build → Status) com cadência relaxada | 2.1 variante (ordem alternativa) | ❌ só o toast |
 
-**Se nenhuma funcionar:** safra `1.F187.16` provavelmente é post-patch (2.4). Encerramos essa rota e migramos para pesquisa de outro caminho (combos físicos escondidos, varredura mais fina do menu de serviço, análise de recovery image via ic1101).
+Combinadas com as 2 variações já testadas na sessão 1, **5 variações distintas foram descartadas**. A hipótese 2.4 (`1.F187.16` BR é pós-patch) **se confirma por eliminação**: todas as receitas públicas falharam, e o detector dos 7 toques funciona (o toast dispara), então o patch está na validação da sequência, não no gatilho.
+
+**Status final da rota passcord via Settings do Android:** encerrada. Sem outras hipóteses testáveis dentro desse caminho.
 
 ## 5. Observações do inventário do EXL BR
 
