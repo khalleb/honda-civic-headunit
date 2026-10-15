@@ -2,11 +2,13 @@
 
 Documento operacional, não teórico. Para abrir no início da próxima sessão de trabalho (seja no carro, no PC ou em pesquisa online). O KB principal (`../central-multimidia-civic-g10-kb.md`) tem o conhecimento acumulado; aqui está só o que precisa ser feito a seguir.
 
-Última atualização: 2026-10-15, após as duas sessões no carro.
+Última atualização: 2026-10-15, após as duas sessões no carro **e** da varredura ampla documentada em `pesquisa-rotas-sem-adb-2026-10-15.md`.
 
 ## 1. Resumo do estado em uma frase
 
-**Rota de ADB via passcord no Settings do Android está morta** para a safra `1.F187.16` BR. Sem ADB, nada do nosso APK auto-OK (`our-apk/`) consegue chegar na central. Precisamos achar outra rota de ADB antes de qualquer coisa.
+**Rota de ADB via passcord no Settings do Android está morta** para a safra `1.F187.16` BR. Mas a varredura de 2026-10-15 identificou a rota **EvilValet** (`testkey` AOSP + `update.zip` via USB) como **substituta direta do ADB** — se funcionar, pula Fase 3 e Fase 6 inteiras. Precisa validar com experimento zero-risco em laboratório antes de descer para o carro.
+
+**📄 Leia `pesquisa-rotas-sem-adb-2026-10-15.md` antes de continuar** — ele cataloga 8 rotas alternativas e justifica a priorização.
 
 ## 2. O que já está pronto e NÃO precisa refazer
 
@@ -156,6 +158,6 @@ Essa sessão fica para depois do pull do `/system/app` ser feito e nós termos t
 
 ## 9. Resumo de 3 linhas para abrir na próxima sessão
 
-- Teste do cabo com pendrive em casa primeiro.
-- Se cabo tem data lines, próxima no carro: plugar + explorar combos físicos (5.2 e 5.3) para achar modo USB que não exige passcord.
-- Em paralelo, procurar OTA zip pública da Honda — é a rota offline com maior chance de pular o ADB inteiro.
+- **Prioridade 1 (laboratório, sem risco):** construir `update.zip` com `AutoOk.apk` + testkey AOSP e validar formato — ver `pesquisa-rotas-sem-adb-2026-10-15.md` seção 4.3.
+- **Prioridade 2 (laboratório):** ler `tooling/references/ic1101/docs/rooting.md` localmente (clonado pelo setup.sh) buscando método alternativo não documentado aqui.
+- **Prioridade 3 (no carro):** combos físicos (5.3) + plugar o `signed.zip` em pendrive e observar o prompt (sem instalar) — rotas B e D da varredura.
