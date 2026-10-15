@@ -169,9 +169,12 @@ Linha única: **nosso APK auto-OK fica mais simples do que o README do `our-apk/
 
 ## 10. Perguntas em aberto para a próxima rodada
 
-1. **O `honda_installer.apk 2.1` ainda funciona em firmware `1.F187.16`?** O `@codeage` publicou essa versão em 2018; firmware da central dele é 2016. Compatibilidade esperada mas não confirmada.
-2. **URL de download do HondaHack dentro do Installer** — não extraí ainda. Pode estar em uma string hardcoded em `MainActivity` ou `d.smali`.
-3. **O Installer altera arquivos fora de `/data/data/whitelist-1.0.xml`?** Pela análise, não parece. Confirmar com `strings` focado em paths.
-4. **O Installer tem telemetria para o `@codeage`?** `uses-permission INTERNET` + autor com email + QQ group levanta a questão. Vale um grep em URLs no smali antes de usar.
+1. **O `honda_installer.apk 2.1` ainda funciona em firmware `1.F187.16`?** O `@codeage` publicou essa versão em 2018; firmware da central dele é 2016. Compatibilidade esperada mas não confirmada em runtime.
+2. ✅ **Resolvida (grep de URLs em todo smali)** — URL de download do HondaHack: `http://www.autohack.cn/app/hondahack.php?lang=<locale>`. Único endpoint hardcoded em todo o APK. **HTTP, não HTTPS** — risco de MITM se usarmos o Installer para baixar o HondaHack numa rede não confiável. Nosso projeto não precisa dessa funcionalidade, então irrelevante na prática.
+3. ✅ **Resolvida (grep de paths absolutos)** — O Installer manipula estes paths e apenas estes:
+   - Lê: `/sdcard/Download`, `/usbdrive1`, `/usbdrive2`, `/usbdrive3` (file picker de APK alvo), `/system/etc/factory_reset.sh` (fingerprint read-only).
+   - Escreve via `su`: `chmod 777` no APK alvo, `rm` no próprio APK em `/system/app/` (uninstall self), `mount -o remount,rw,sync /system` + `remount,ro /system` (temporário).
+   - **Toda escrita em `/data/data/whitelist-1.0.xml` é delegada ao `install_mitsubishi.sh`**, não feita em código Java próprio. Zero paths escondidos.
+4. ✅ **Resolvida (grep de endpoints de telemetria)** — Sem telemetria. Nenhuma string de SDK conhecido (Umeng, Bugly, Flurry, AppsFlyer, Crashlytics, Google Analytics). A única URL é a de download citada em (2). O `android.permission.INTERNET` existe só para o download, não para report.
 
-Esses três últimos são tarefas pra uma rodada de 15 min quando quisermos esgotar a análise.
+Resumo das três últimas: **o Installer é limpo**. Faz exatamente o que as strings do UI dizem, nada mais, sem backdoor.

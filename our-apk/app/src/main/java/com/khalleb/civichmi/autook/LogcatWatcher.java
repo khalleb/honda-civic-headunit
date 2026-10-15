@@ -76,11 +76,11 @@ public class LogcatWatcher {
     }
 
     private Process startLogcat() throws IOException {
-        ProcessBuilder pb = new ProcessBuilder(
-            "logcat", "-v", "brief", "ActivityManager:I", "*:S"
-        );
-        pb.redirectErrorStream(true);
-        return pb.start();
+        Process p = Runtime.getRuntime().exec("su");
+        java.io.DataOutputStream out = new java.io.DataOutputStream(p.getOutputStream());
+        out.writeBytes("exec logcat -v brief ActivityManager:I *:S 2>&1\n");
+        out.flush();
+        return p;
     }
 
     private void consume(BufferedReader reader) throws IOException {

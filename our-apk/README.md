@@ -1,60 +1,103 @@
 # AutoOk — APK auto-OK do Aviso de abertura
 
-APK próprio para dispensar a tela de "Aviso" na partida do Civic G10. Implementa o algoritmo descrito na seção 4quater do KB (`../central-multimidia-civic-g10-kb.md`) sem usar o Honda Hack. Pacote: `com.khalleb.civichmi.autook`.
+APK próprio para dispensar a tela de "Aviso" na partida do Civic G10 EXL BR. Implementa o algoritmo descrito na seção 4quater do KB (`../central-multimidia-civic-g10-kb.md`) sem usar o Honda Hack pago. Pacote: `com.khalleb.civichmi.autook`.
 
 ## Estado
 
-Esqueleto compilável. Falta preencher 3 constantes em `app/src/main/java/com/khalleb/civichmi/autook/AutoOkConfig.java` com dados que só saem do pull via ADB da central (Fase 3). Enquanto não forem preenchidas, o `AutoOkService` loga `config pendente...` e encerra — fail-fast de propósito.
+Esqueleto compilável. Falta preencher 3 constantes em `app/src/main/java/com/khalleb/civichmi/autook/AutoOkConfig.java` com dados que só saem do pull via ADB da central (fase 3 do roadmap). Enquanto não forem preenchidas, o `AutoOkService` loga `config pendente...` e encerra.
 
 | Constante | Valor hoje | Como obter |
 |---|---|---|
-| `AVISO_ACTIVITY_NAME` | `""` | Rodar `logcat ActivityManager:I *:S` na central logo após ligar, até ver o Aviso. A linha de `am_resume_activity` ou `START u0 {cmp=...}` traz o pacote/Activity. |
-| `BUTTON_OK_X` | `-1` | Coord X do botão OK em pixel. Ativar "Pointer location" nas dev options (ou tirar screenshot via `screencap` + abrir no PC) com o Aviso na tela. |
-| `BUTTON_OK_Y` | `-1` | Idem para Y. |
+| `AVISO_ACTIVITY_NAME` | `""` | `adb shell "su -c 'logcat -v brief ActivityManager:I *:S'"` com a central ligando, até ver a linha `am_resume_activity` ou `START u0 {cmp=...}` do Aviso. Candidatos (seção 2 do KB): `com.mitsubishielectric.ada.app.dalauncher`, `.dasettings`, `.appmode`. |
+| `BUTTON_OK_X` | `-1` | Dev options → Pointer location + bater o OK; ou `screencap -p /sdcard/aviso.png` + `adb pull` + abrir no PC e medir. |
+| `BUTTON_OK_Y` | `-1` | Idem. |
 
-Opcional:
+Opcionais:
 
 | Constante | Default | Observação |
 |---|---|---|
-| `DELAY_SECONDS_AFTER_DETECT` | `2` | Espera depois que a Activity do Aviso é vista no logcat, antes de disparar o tap. HondaHack permite 1–10s. |
-| `BOOT_INITIAL_WAIT_MS` | `5000` | Espera inicial depois do `BOOT_COMPLETED` antes de começar a observar o logcat. |
+| `DELAY_SECONDS_AFTER_DETECT` | `2` | Espera depois que a Activity do Aviso é vista no logcat, antes de disparar o tap. HondaHack permite 1-10s. |
+| `BOOT_INITIAL_WAIT_MS` | `5000` | Espera inicial depois do `BOOT_COMPLETED` antes de observar o logcat. |
 
 ## Como funciona
 
 1. `BootReceiver` escuta `BOOT_COMPLETED` e sobe o `AutoOkService`.
-2. `AutoOkService` valida a config; se faltar coisa, aborta.
-3. `LogcatWatcher` roda `logcat -v brief ActivityManager:I *:S` numa thread e lê linha a linha procurando `AVISO_ACTIVITY_NAME` como substring.
+2. `AutoOkService` valida a config; se faltar coisa, aborta via `Log.e` sem efeitos colaterais.
+3. `LogcatWatcher` executa `su -c "logcat -v brief ActivityManager:I *:S"` numa thread e lê linha a linha procurando `AVISO_ACTIVITY_NAME` como substring. **Rodar o logcat via `su` dispensa a permissão `READ_LOGS` que normalmente é `signature|system`** — mesmo caminho que o HondaHack usa (ver `../docs/fase4-analise-estatica/honda-installer.md`).
 4. Ao achar, chama de volta o service, que espera `DELAY_SECONDS_AFTER_DETECT` e dispara `su -c "input tap X Y"` via `Shell`.
-5. Executado com sucesso ou não, encerra o watcher e o service (one-shot por ignição).
+5. Executado o tap, encerra watcher e service (one-shot por ignição).
 
-Perms declaradas: `RECEIVE_BOOT_COMPLETED`, `READ_LOGS`, `ACCESS_SUPERUSER`. `READ_LOGS` em API 17 é `signature|system` — por isso o APK só vai funcionar instalado como **system app**, não como user app.
+Permissões declaradas no manifest: `RECEIVE_BOOT_COMPLETED`, `READ_LOGS`, `ACCESS_SUPERUSER`. `READ_LOGS` fica como best-effort — se por qualquer motivo o APK virar system app, continua funcionando sem `su`; se for user app comum (fluxo recomendado), cai no `su` do passo 3. `ACCESS_SUPERUSER` é consumido pelo SuperSU instalado via `root-honda` (fase 6).
 
 ## Compilar
 
-Pré-requisitos: Android SDK (API 33 para compile; build-tools 33). Com `ANDROID_SDK_ROOT` apontado:
+Pré-requisitos: Android SDK (API 33 para compile; build-tools 33), `ANDROID_SDK_ROOT` apontado:
 
 ```bash
 cd our-apk
 ./gradlew assembleRelease
 ```
 
-Saída: `app/build/outputs/apk/release/app-release-unsigned.apk`. Para instalar como system app, o APK precisa ser alinhado e assinado (ou copiado direto para `/system/app/AutoOk/AutoOk.apk` com root — nesse caso a assinatura system pode ser dispensada em algumas configurações; na nossa central Mitsubishi ainda é incógnita, ver seção de whitelist no KB).
-
-## Instalar como system app (fluxo esperado, não executado ainda)
-
-Pré-condição: central já rooteada seguindo a doc do `root-honda` (fase 6). Backup de `/system` antes.
+Saída: `app/build/outputs/apk/release/app-release-unsigned.apk`. Assinar com qualquer keystore (debug serve para testes; release para distribuição):
 
 ```bash
-adb push app-release-unsigned.apk /sdcard/AutoOk.apk
-adb shell
-su
-mount -o remount,rw /system
-mkdir -p /system/app/AutoOk
-cp /sdcard/AutoOk.apk /system/app/AutoOk/AutoOk.apk
-chmod 644 /system/app/AutoOk/AutoOk.apk
+# Chave debug (desenvolvimento)
+apksigner sign --ks ~/.android/debug.keystore \
+  --ks-key-alias androiddebugkey \
+  --ks-pass pass:android --key-pass pass:android \
+  --out AutoOk-signed.apk app-release-unsigned.apk
 ```
 
-Depois, pela regra de whitelist descrita no KB (seção 4quater), editar `/data/data/whitelist-1.0.xml` adicionando o pacote `com.khalleb.civichmi.autook` com a signature do APK (`GetAndroidSig.jar`). Reboot da central (`long press AUDIO 5s → reboot`).
+Qualquer signature serve para a whitelist Mitsubishi — ela aceita `null` como `keyStore` ou qualquer hash SHA do CERT.RSA. Ver `../docs/fase4-analise-estatica/hondahack-mitsubishi.md` seção 5.
+
+## Instalar como user app (fluxo recomendado)
+
+Pré-requisitos acumulados: central já rooteada (fase 6) **e** com o Honda Installer instalado em `/system/app/` (seguir `root-honda/` + copiar `honda_installer.apk` para a central). A partir daí nosso APK é tratado como qualquer app terceiro:
+
+### Opção A — Pelo Honda Installer (mais simples)
+
+1. `adb push AutoOk-signed.apk /sdcard/Download/AutoOk.apk`.
+2. Na central: abrir "Honda Installer" → "Install an app" → escolher `AutoOk.apk`.
+3. O Installer extrai signature, edita `/data/data/whitelist-1.0.xml` via `install_mitsubishi.sh`, pede reboot.
+4. Após reboot: `pm install -r` roda automaticamente ao reabrir o Installer; AutoOk fica instalado como user app.
+
+### Opção B — Direto via ADB (sem Honda Installer)
+
+Se por qualquer motivo o Installer não estiver na central, o fluxo manual replica o que ele faria. Pré-condição: central rooteada.
+
+1. `adb push AutoOk-signed.apk /sdcard/Download/AutoOk.apk`
+2. `adb push install_mitsubishi.sh /data/local/tmp/` (copiar o script de `tooling/apks-decoded/HondaHack/res/raw/`)
+3. `adb shell`, depois `su`, depois:
+   ```sh
+   chmod 755 /data/local/tmp/install_mitsubishi.sh
+   /data/local/tmp/install_mitsubishi.sh \
+       /sdcard/Download/AutoOk.apk \
+       com.khalleb.civichmi.autook \
+       "<SHA-1 do CERT.RSA do nosso APK>" \
+       no \
+       no
+   ```
+4. Reboot da central (`long press AUDIO 5s → reboot`).
+
+Para extrair a SHA-1 do CERT.RSA do APK assinado, no PC:
+
+```bash
+unzip -p AutoOk-signed.apk META-INF/CERT.RSA | \
+  openssl pkcs7 -inform DER -print_certs | \
+  openssl x509 -fingerprint -noout -sha1 | \
+  awk -F= '{print $2}' | tr -d :
+```
+
+Alternativa: `GetAndroidSig.jar` mencionado no KB (seção 4quater).
+
+### O que NÃO precisa (ao contrário do que o README anterior dizia)
+
+- ❌ Copiar o APK para `/system/app/`
+- ❌ `mount -o remount,rw /system`
+- ❌ Resetar `android:sharedUserId` para `android.uid.system`
+- ❌ Nada em `/system/`
+
+Isso é consequência da análise estática do `honda_installer.apk` (ver `../docs/fase4-analise-estatica/honda-installer.md` seção 9) — ele mostra que o único componente que precisa viver em `/system/app/` é o próprio Installer. User apps rodam normal depois da whitelist.
 
 ## Ver logs
 
@@ -64,11 +107,22 @@ adb logcat -s AutoOk:*
 
 Mensagens relevantes:
 
-- `watcher iniciado, aguardando <Activity>` — subiu.
-- `config pendente de preenchimento em AutoOkConfig` — constantes vazias/`-1`.
-- `tap X,Y -> true` — comando `su input tap` saiu com exit 0.
-- `logcat watch falhou: ...` — erro ao abrir o processo logcat (sem READ_LOGS?).
-- `su exec IOException: ...` — `su` não disponível ou negou.
+- `watcher iniciado, aguardando <Activity>` — serviço subiu, config válida.
+- `config pendente de preenchimento em AutoOkConfig` — constantes placeholder.
+- `tap X,Y -> true` — `su -c "input tap"` saiu com exit 0.
+- `tap X,Y -> false` — `su` negou ou o tap deu erro.
+- `logcat watch falhou: <mensagem>` — a thread do watcher parou (central sem `su`? processo logcat morreu?).
+- `su exec IOException: ...` — binário `su` indisponível (central não rooteada).
+
+## Riscos operacionais
+
+Nenhum dos fluxos acima mexe em `/system/`, então **o risco de brick é baixíssimo**. Pior cenário realista: o AutoOk fica em loop tentando o tap em coordenada errada e consome bateria enquanto o carro está em acessório. Para desarmar: `adb shell pm disable com.khalleb.civichmi.autook` (reversível) ou `adb shell pm uninstall com.khalleb.civichmi.autook` (remove de vez).
+
+O que **PODE** gerar brick:
+- A fase de root (dirtyCOW), que é anterior a este APK.
+- Copiar o `honda_installer.apk` para `/system/app/` manualmente errado — mas isso também é anterior.
+
+Depois que a central está rooteada e com o Installer, nosso APK em si é totalmente reversível.
 
 ## Estrutura do módulo
 
@@ -77,7 +131,7 @@ our-apk/
 ├── build.gradle               (plugin AGP 7.4.2, apply false)
 ├── settings.gradle
 ├── gradle.properties
-├── README.md
+├── README.md                   (este arquivo)
 └── app/
     ├── build.gradle           (minSdk/targetSdk 17, compileSdk 33)
     ├── proguard-rules.pro
@@ -88,6 +142,6 @@ our-apk/
             ├── AutoOkConfig.java     (constantes a preencher)
             ├── BootReceiver.java     (BOOT_COMPLETED -> service)
             ├── AutoOkService.java    (orquestra: valida, observa, tap, encerra)
-            ├── LogcatWatcher.java    (tail do logcat em thread própria)
+            ├── LogcatWatcher.java    (su -c "logcat ..." em thread própria)
             └── Shell.java            (su -c "input tap X Y")
 ```
