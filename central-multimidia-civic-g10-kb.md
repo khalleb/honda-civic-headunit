@@ -328,6 +328,19 @@ Instalar APK terceiro = (a) extrair signature do APK com `GetAndroidSig.jar`, (b
 `<application><property><package>` + `<keyStore>` ao XML, (c) copiar como system, (d) `pm install`.
 Precisa root pra escrever no whitelist.
 
+**Atualização 2026-10-15 — análise estática do `install_mitsubishi.sh` do HondaHack**
+(detalhes em `docs/fase4-analise-estatica/hondahack-mitsubishi.md`):
+
+- Caminho exato na central Mitsubishi: `/data/data/whitelist-1.0.xml` (confirmado).
+- Permissões: `0666`, dono `system:system`.
+- Schema do `<application>` para injetar inclui `<property>`, `<keyStoreLists>` com `<keyStore>` por
+  assinatura, e `<controlData>` com `withAudio`, `audioStreamType`, `regulation`, `revert`.
+- **O HondaHack instala como user app** (`pm install -r`), **não** copia para `/system/app/`. Isso é
+  importante — nosso APK auto-OK pode seguir o mesmo caminho (menos invasivo, reversível) desde que
+  a signature entre na whitelist. Investigar em runtime quando ADB subir.
+- Diff com Clarion: Clarion usa `/data/system/whitelist.xml` (sem versão) e já tem `cn.autohack.hondahack`
+  pré-aprovado. Mitsubishi precisa adicionar na hora.
+
 ### Base do root (fluxo do `root-honda/root.sh`)
 1. Push `dirtycow` (binário ARMv7) via ADB para `/data/local/tmp/dcow`.
 2. `dcow` substitui `/system/bin/run-as` por um `run-as` modificado (CVE-2016-5195).
