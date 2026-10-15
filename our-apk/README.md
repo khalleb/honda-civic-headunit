@@ -79,16 +79,14 @@ Se por qualquer motivo o Installer não estiver na central, o fluxo manual repli
    ```
 4. Reboot da central (`long press AUDIO 5s → reboot`).
 
-Para extrair a SHA-1 do CERT.RSA do APK assinado, no PC:
+Para extrair a SHA-1 do certificado do APK assinado, no PC — rota robusta via `apksigner`:
 
 ```bash
-unzip -p AutoOk-signed.apk META-INF/CERT.RSA | \
-  openssl pkcs7 -inform DER -print_certs | \
-  openssl x509 -fingerprint -noout -sha1 | \
-  awk -F= '{print $2}' | tr -d :
+"$ANDROID_SDK_ROOT/build-tools/33.0.2/apksigner" verify --print-certs AutoOk-signed.apk \
+  | grep "SHA-1 digest" | awk '{print $NF}'
 ```
 
-Alternativa: `GetAndroidSig.jar` mencionado no KB (seção 4quater).
+A rota pelo `META-INF/*.RSA` funciona, mas o apksigner v2+ nomeia o entry dinamicamente a partir do alias do keystore (ex.: `META-INF/ANDROIDD.RSA` quando o alias é `androiddebugkey`), **não** `CERT.RSA` fixo. Ver `../docs/fase5-apk/compilar.md` seção 6 para a versão robusta.
 
 ### O que NÃO precisa (ao contrário do que o README anterior dizia)
 

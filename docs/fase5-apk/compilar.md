@@ -132,18 +132,26 @@ APK_OUT=app/build/outputs/apk/release/AutoOk.apk
     --out "$APK_OUT" "$APK_IN"
 ```
 
-## 6. Extrair SHA-1 do CERT.RSA (para a whitelist)
+## 6. Extrair SHA-1 do certificado (para a whitelist)
 
-Com o APK assinado em mãos, para extrair a signature que o `install_mitsubishi.sh` espera:
+A rota mais robusta é pedir pro próprio `apksigner`:
 
 ```bash
-unzip -p "$APK_OUT" META-INF/CERT.RSA | \
+"$ANDROID_SDK_ROOT/build-tools/33.0.2/apksigner" verify --print-certs "$APK_OUT" \
+  | grep "SHA-1 digest" | awk '{print $NF}'
+```
+
+Saída: 40 caracteres hex (ex.: `e3b14e2b697dcdf9245e9988cb0bae8b3b504860` para a debug keystore padrão). Essa string vira o terceiro argumento do `install_mitsubishi.sh` (seção "Opção B" do `our-apk/README.md`).
+
+Alternativa manual (quando `apksigner` não está disponível): o APK v2+ assinado pelo `apksigner` tem o `.RSA` em `META-INF/` com nome dinâmico baseado no alias (ex.: `META-INF/ANDROIDD.RSA` para alias `androiddebugkey`), não `CERT.RSA` fixo. Para extrair direto do arquivo:
+
+```bash
+RSA_ENTRY=$(unzip -l "$APK_OUT" | awk '/META-INF\/.*\.RSA/ {print $NF}' | head -1)
+unzip -p "$APK_OUT" "$RSA_ENTRY" | \
   openssl pkcs7 -inform DER -print_certs | \
   openssl x509 -fingerprint -noout -sha1 | \
   awk -F= '{print $2}' | tr -d :
 ```
-
-Saída: 40 caracteres hex. Essa string vira o terceiro argumento do `install_mitsubishi.sh` (seção "Opção B" do `our-apk/README.md`).
 
 ## 7. Rodar via emulador antes do carro (opcional)
 
