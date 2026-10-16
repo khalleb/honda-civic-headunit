@@ -50,13 +50,21 @@ public class AutoOkService extends Service {
         return new LogcatWatcher(
             AutoOkConfig.AVISO_ACTIVITY_NAME,
             AutoOkConfig.BOOT_INITIAL_WAIT_MS,
-            new LogcatWatcher.OnDetected() {
-                @Override
-                public void onDetected() {
-                    onAvisoDetected();
-                }
-            }
+            new AvisoCallback(this)
         );
+    }
+
+    private static final class AvisoCallback implements LogcatWatcher.OnDetected {
+        private final AutoOkService service;
+
+        AvisoCallback(AutoOkService service) {
+            this.service = service;
+        }
+
+        @Override
+        public void onDetected() {
+            service.onAvisoDetected();
+        }
     }
 
     private void onAvisoDetected() {
@@ -69,8 +77,18 @@ public class AutoOkService extends Service {
         }
         boolean ok = Shell.suTap(AutoOkConfig.BUTTON_OK_X, AutoOkConfig.BUTTON_OK_Y);
         Log.i(TAG, "tap " + AutoOkConfig.BUTTON_OK_X + "," + AutoOkConfig.BUTTON_OK_Y + " -> " + ok);
+        rearmWatcher();
+    }
+
+    private void rearmWatcher() {
+        if (!sleepSeconds(AutoOkConfig.REARM_DELAY_SECONDS)) {
+            return;
+        }
+        handled = false;
+        Log.i(TAG, "watcher rearmado, aguardando proxima aparicao");
         stopWatcher();
-        stopSelf();
+        watcher = buildWatcher();
+        watcher.start();
     }
 
     private boolean sleepSeconds(int seconds) {

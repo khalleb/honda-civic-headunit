@@ -1,92 +1,68 @@
-# =============================================================================
-# .gitignore — Projeto Honda Civic G10 Head Unit
-# =============================================================================
-# Mantém o repositório limpo e protege contra commit acidental de:
-# - Ferramentas baixadas (podem ser recriadas via setup.sh)
-# - Repositórios de terceiros clonados (clonados pelo setup.sh)
-# - Dumps de APK proprietários da Honda/Mitsubishi
-# - Dados pessoais do veículo
-# =============================================================================
+# ============================================================
+# .gitignore — honda-civic-g10-skip-disclaimer
+# ============================================================
+# Esse projeto deliberadamente NÃO distribui firmware proprietário,
+# binários de terceiros nem dumps obtidos do veículo. Essas pastas
+# são excluídas aqui. Para rodar o projeto você precisa dumpar
+# do próprio HU — ver docs/pt-BR/03-descobrindo-sua-safra.md.
+# ============================================================
 
-# ---- Ferramentas baixadas (recriadas via setup.sh) ----
-tooling/bin/
+# ---- Material proprietário Honda/Mitsubishi (NUNCA commitar) ----
+# Dumps de /system obtidos do HU — contém APKs proprietários
+tooling/apks-dumped/
+# APKs e smali decompilados de apps proprietários do HU
+tooling/apks-decoded/
+
+# ---- Repos de terceiros clonados pelo setup.sh ----
+# Estes têm licenças próprias (ic1101 Apache 2.0, root-honda sem
+# license clara, 2016PilotOneClick GPL). setup.sh clona do upstream.
 tooling/references/
 
-# ---- APKs extraídos da central Honda (proprietários — nunca redistribuir) ----
-tooling/apks-dumped/
-tooling/apks-decoded/
-*.apk
-*.odex
-*.vdex
-*.art
-*.oat
+# ---- Ferramentas baixadas pelo setup.sh ----
+# apktool + jadx são baixados em runtime, não distribuídos aqui
+tooling/bin/apktool
+tooling/bin/apktool.jar
+tooling/bin/jadx/
 
-# ---- Dumps de firmware / imagens de partição (proprietários) ----
-*.img
-*.mtd
-*.bin
-SwUpdate*.txt
-SwUpdate*.mtd
+# ---- Binários pre-built de terceiros (precisam ser extraídos localmente) ----
+# busybox: vem do HondaHack.apk (binário proprietário de distribuição)
+# su: vem do root-honda (origem dubia da license)
+# sleep: vem do ic1101 (Apache 2.0, OK em teoria mas deixa setup.sh baixar)
+tooling/ota-build/bin/busybox
+tooling/ota-build/bin/su
+tooling/ota-build/bin/sleep
 
-# ---- Dados pessoais do veículo (nunca commitar) ----
-*vin*.txt
-*my-car*.md
-my-coords.*
-my-build.*
-whitelist-1.0*.xml
-*-personal.*
+# ---- Builds (saídas efêmeras, reconstruíveis) ----
+tooling/ota-build/output/
+tooling/ota-build/output-rollback/
 
-# ---- Logs e capturas (podem conter info sensível) ----
-*.log
-logcat*.txt
-adb-logs/
-captures/
-screenshots/
-fotos/
-fotos-pessoais/
-!docs/fase1-reconhecimento/fotos/
+# ---- Overlay do pacote OTA ----
+# AutoOk.apk no overlay é rebuildável via `./gradlew assembleRelease`.
+# Opcionalmente ignorar para não distribuir APK assinado — leitor rebuilda.
+tooling/ota-build/overlay/system/app/AutoOk.apk
 
-# ---- Imagens soltas na raiz (prevenção) ----
-# Fotos de documentação devem ir pra docs/images/ e adicionadas explicitamente
-/*.jpg
-/*.jpeg
-/*.png
-/*.gif
-/*.heic
-/*.webp
-
-# ---- Builds do nosso APK ----
+# ---- APK compilado ----
+# Rebuild via our-apk/ -> gradlew assembleRelease + apksigner.
+our-apk/app/build/
 our-apk/build/
 our-apk/.gradle/
 our-apk/local.properties
-our-apk/.idea/
-our-apk/app/build/
-*.ap_
-*.aab
 
-# ---- Keystores de assinatura (NUNCA commitar) ----
-*.jks
-*.keystore
-*.pem
-*.p12
-key.properties
-
-# ---- Caches e temporários ----
+# ---- IDE / OS ----
+.idea/
+.vscode/
+*.iml
 .DS_Store
 Thumbs.db
-*.swp
-*.tmp
-*~
-.vscode/
-.idea/
 
 # ---- Python ----
 __pycache__/
 *.pyc
 *.pyo
-venv/
 .venv/
+venv/
 
-# ---- Windows específicos ----
-desktop.ini
-$RECYCLE.BIN/
+# ---- Scratchpad / temp ----
+*.swp
+*.bak
+*~

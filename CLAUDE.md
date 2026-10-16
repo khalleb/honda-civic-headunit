@@ -6,65 +6,56 @@
 ## Sobre o projeto
 
 Engenharia reversa da central multimídia (Honda Display Audio 7") de um
-Honda Civic 2017 brasileiro. Objetivo primário: eliminar a tela de "Aviso"
+Honda Civic 2017 EXL brasileiro. Objetivo primário: eliminar a tela de "Aviso"
 que aparece na partida do carro, construindo um APK auto-OK próprio
 (sem usar o Honda Hack pago).
 
-## Antes de qualquer coisa — LEIA O KB
+## 🎉 Projeto concluído — 2026-10-16
 
-A base de conhecimento técnica completa está em:
+O objetivo foi atingido. Aviso é suprimido automaticamente em cada boot.
 
-```
-./central-multimidia-civic-g10-kb.md
-```
+**Antes de responder qualquer pergunta sobre o projeto, LEIA:**
 
-**Sempre leia esse arquivo antes de responder perguntas técnicas sobre
-o projeto.** Ele contém:
+1. **`docs/fase7-deploy-2026-10-16/README.md`** — ponto de entrada da documentação final (resumo + navegação pros outros 6 docs da Fase 7).
+2. **`docs/proxima-sessao.md`** — pontos de entrada específicos ("quero atualizar o APK", "preciso de rollback", "APK parou de funcionar", etc.).
 
-- Perfil técnico da plataforma (NVIDIA Tegra 3, Android 4.2.2, framework
-  Mitsubishi "Andromeda", pacotes `com.clarion.displayaudio.*`)
-- Mecanismo de root (CVE-2016-5195 / dirtyCOW)
-- Análise do HondaHack.apk (feature `auto_confirm_agreement`)
-- Algoritmo inferido do auto-OK
-- Combinações de botão dos menus ocultos (Manual Diag)
-- CAN bus da família Civic G10
-- Lista de ferramentas e dependências
+Esses dois arquivos cobrem 95% das perguntas que podem surgir.
 
-## Estado atual (data da última atualização está no KB)
+## O que foi feito (resumo técnico)
 
-O projeto está estruturado em **7 fases**, com dependências:
+- APK `AutoOk.apk` em `/system/app/AutoOk.apk` — monitora logcat, detecta Activity do Aviso, dispara `su -c "input tap 400 350"`.
+- `su` ARM setuid em `/system/xbin/su` (do root-honda, mode 06755) — root permanente.
+- Deploy via **EvilValet**: pacote OTA `SwUpdate.mdt` assinado com testkey AOSP, aceito pela recovery da nossa safra `1.F187.16` BR, rom_type `0040`.
+- Zero modificação em arquivos preexistentes do /system. Nenhum risco de brick realizado.
 
-| # | Fase | Pode fazer sem hardware? |
-|---|------|---|
-| 0 | Preparar ambiente análise | ✅ Sim |
-| 1 | Fotos do Manual Diag / Build / Kernel | ✅ Sim (só celular) |
-| 2 | Comprar cabo USB-A-A ou testar USB-C-A | 🟡 Comprar hardware |
-| 3 | ADB + extrair APKs do /system | ❌ Precisa cabo |
-| 4 | Analisar APKs → achar Activity do Aviso | ✅ Sim (após Fase 3) |
-| 5 | Escrever nosso APK auto-OK | ✅ Sim (após Fase 4) |
-| 6 | Rootear a central (dirtyCOW) | ❌ Precisa cabo + risco |
-| 7 | Deploy e teste do APK no carro | ❌ Precisa Fase 6 |
+## Credenciais técnicas rápidas
 
-Verificar o KB para o estado específico de cada fase na data atual.
+| Campo | Valor |
+|---|---|
+| DA version | `1.F187.16` |
+| Rom type (EvilValet key) | `0040` |
+| Device | `vcm30t30` (NVIDIA Tegra 3) |
+| Android | 4.2.2 API 17 |
+| Combo cold boot | **`AUDIO 5s`** + confirmar reiniciar |
+| Botão OK do Aviso | X=400, Y=350 (tela 800×480) |
+| Activity do Aviso | `com.mitsubishielectric.ada.app.dalauncher/.OpeningDivideActivity` |
+| Testkey SHA-256 | `A4:0D:A8:0A:59:D1:70:CA:A9:50:CF:15:C1:8C:45:4D:47:A3:9B:26:98:9D:8B:64:0E:CD:74:5B:A7:1B:F5:DC` |
+
+## Base de conhecimento histórica
+
+O `central-multimidia-civic-g10-kb.md` **tem o histórico de descoberta** (pesquisa, hipóteses, análise estática) feito ao longo das 7 fases do projeto. Preservado como contexto histórico, mas **não é mais o ponto de entrada**. Para trabalho prático novo, começar pelos docs da Fase 7.
 
 ## Como ajudar o dono do projeto
 
-1. **Seja honesto sobre riscos.** O dono já aceitou conscientemente o risco
-   de brick (R$1-2k pra trocar central + perda temporária da câmera de ré).
-   Mas sempre reforce decisões irreversíveis antes de executar.
+1. **Antes de qualquer modificação do /system do carro:** garantir que o pacote de rollback (`tooling/ota-build/output-rollback/`) está construído e pronto. Rede de segurança obrigatória.
 
-2. **Não dê passo-a-passo de exploit explícito.** O caminho de root é via
-   ferramentas públicas (`root-honda`, `2016PilotOneClick`). Instrua o
-   usuário a seguir a documentação dessas ferramentas, não "receita sua".
+2. **Nunca editar código em `tooling/references/*` diretamente.** São clones de projetos de terceiros. Usar monkey patch em `tooling/ota-build/`.
 
-3. **Prefira análise estática no PC.** Descompilar APKs, estudar código,
-   escrever o APK próprio — tudo isso é zero risco e é onde você mais
-   agrega valor.
+3. **Prefira análise estática no PC.** Dumps completos de /system em `tooling/apks-dumped/dump-0040/`. 197MB cobrindo /system/app, /system/vendor/app, /system/framework (parcial), /system/etc, build.props.
 
-4. **Backup antes de modificar `/system`.** Sempre. Isso é obrigatório.
+4. **Para novas descobertas:** adicionar em `docs/fase7-deploy-2026-10-16/02-descobertas-tecnicas.md` ou criar `fase8-*` se mudança for grande.
 
-5. **Documente achados.** Qualquer coisa nova que descobrirmos juntos vai
-   para o KB. É um documento vivo.
+5. **Para modificações do APK:** rebuild via `our-apk/`, resign com apksigner, copiar pro overlay, rebuild OTA via `python3 tooling/ota-build/build.py`. Detalhes em `docs/fase7-deploy-2026-10-16/05-manutencao-e-futuro.md § Rebuild + redeploy do APK`.
 
 ## Idioma
 
@@ -73,19 +64,20 @@ Trechos técnicos (comandos, flags, nomes de pacotes) podem ficar em inglês.
 
 ## Convenções
 
-- **Zero comentários no código** (regra do dono — ver histórico no KB)
+- **Zero comentários no código** (regra do dono — ver `~/.claude/CLAUDE.md`)
 - Documentação em Markdown
 - Commits em português no imperativo
 
 ## Links úteis
 
 - Repositório (privado): https://github.com/khalleb/honda-civic-headunit
-- Base de conhecimento: `./central-multimidia-civic-g10-kb.md`
-- **Rotas sem-ADB (varredura 2026-10-15):** `./docs/pesquisa-rotas-sem-adb-2026-10-15.md`
-- **Próxima sessão (ponto de partida):** `./docs/proxima-sessao.md`
-- Setup para Linux: `./MIGRATION/setup.sh`
-- Disclaimer: `./DISCLAIMER.md`
+- **Documentação do deploy final:** [`./docs/fase7-deploy-2026-10-16/`](docs/fase7-deploy-2026-10-16/)
+- **Ponto de partida de nova sessão:** [`./docs/proxima-sessao.md`](docs/proxima-sessao.md)
+- Base de conhecimento histórica: [`./central-multimidia-civic-g10-kb.md`](central-multimidia-civic-g10-kb.md)
+- Pesquisa das rotas sem-ADB: [`./docs/pesquisa-rotas-sem-adb-2026-10-15.md`](docs/pesquisa-rotas-sem-adb-2026-10-15.md)
+- Setup para Linux: [`./MIGRATION/setup.sh`](MIGRATION/setup.sh)
+- Disclaimer: [`./DISCLAIMER.md`](DISCLAIMER.md)
 - Referências de terceiros (clonadas por `setup.sh`):
-  - https://github.com/codeage/root-honda
-  - https://github.com/jersacct/2016PilotOneClick
-  - https://github.com/librick/ic1101
+  - https://github.com/codeage/root-honda — `su` + SuperSU + whitelist Mitsubishi
+  - https://github.com/jersacct/2016PilotOneClick — rooteador de Honda Pilot 2016
+  - https://github.com/librick/ic1101 — pesquisa RE completa + `ota-builder` (base do nosso build)

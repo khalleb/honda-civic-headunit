@@ -33,13 +33,21 @@ public class LogcatWatcher {
             return;
         }
         running = true;
-        thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                watchLoop();
-            }
-        }, "AutoOk-LogcatWatcher");
+        thread = new Thread(new WatchRunnable(this), "AutoOk-LogcatWatcher");
         thread.start();
+    }
+
+    private static final class WatchRunnable implements Runnable {
+        private final LogcatWatcher watcher;
+
+        WatchRunnable(LogcatWatcher watcher) {
+            this.watcher = watcher;
+        }
+
+        @Override
+        public void run() {
+            watcher.watchLoop();
+        }
     }
 
     public synchronized void stop() {

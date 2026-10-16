@@ -1,8 +1,19 @@
-# ⚠️ Disclaimer — Leia antes de executar qualquer coisa
+# ⚠️ Disclaimer — Leia antes de executar qualquer coisa / Read before executing anything
+
+🇧🇷 **Português** / 🇺🇸 [English below](#-english)
+
+---
 
 Este repositório documenta trabalho de engenharia reversa feito em caráter
 **pessoal e educativo** no veículo próprio do autor. Qualquer coisa aqui é
 usada **inteiramente por sua conta e risco**.
+
+Ao usar este código ou documentação, você reconhece que:
+
+1. Está modificando o firmware do seu próprio veículo.
+2. Entende que isso pode brickar a central e você vai arcar com os custos de troca.
+3. Pode perder garantia e cobertura de seguro.
+4. Os autores do projeto NÃO se responsabilizam por nenhum dano causado.
 
 ## Riscos técnicos reais
 
@@ -80,3 +91,44 @@ Nada neste repositório é destinado a facilitar violações. Faça apenas o que
 - ✅ Para quem quer entender como centrais automotivas funcionam
 - ✅ Para quem tem uma central de teste (ou aceita conscientemente o risco)
 - ✅ Para contribuir com conhecimento aberto sobre a plataforma
+
+---
+
+## 🇺🇸 English
+
+**⚠️ Read before executing anything.**
+
+This repository documents reverse engineering work done for **personal and educational**
+purposes on the author's own vehicle. Anything here is used **entirely at your own risk**.
+
+By using this code or documentation, you acknowledge that:
+
+1. You are modifying the firmware of your own vehicle.
+2. You understand this can brick the head unit, and you will bear the replacement costs.
+3. You may lose warranty and insurance coverage.
+4. The project authors are NOT responsible for any damage caused.
+
+### Known real risks
+
+- **Permanent brick** of the head unit if done wrong. Replacement cost: R$ 1,000-2,000 (~USD 200-400) in Brazil.
+- **The HU screen is the backup camera** — brick = no backup camera until replacement.
+- **Honda OTA updates may revert** the modification.
+- **May void warranty** (depending on jurisdiction and dealer).
+
+### Compatibility
+
+Only tested on Honda Civic 2017 EXL Brazil (`1.F187.16`). Other variants are speculation.
+See [`docs/pt-BR/03-descobrindo-sua-safra.md`](docs/pt-BR/03-descobrindo-sua-safra.md) for how to
+check your firmware before deploying.
+
+### Legal
+
+- Rooting your own vehicle is **legal in the US** under DMCA § 1201(f) (interoperability research exemption).
+- Legal status varies by country. **Consult your local laws.**
+- You retain all responsibility for consequences.
+
+### No warranty
+
+This project is provided "AS IS", without warranty of any kind. Use at your own risk.
+
+See [LICENSE](LICENSE) (MIT) for full code license terms.

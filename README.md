@@ -1,117 +1,130 @@
-# honda-civic-headunit
+<div align="center">
 
-> Engenharia reversa e documentação da central multimídia do Honda Civic
-> 10ª geração (2016–2021). Projeto pessoal, aprendizado de plataforma.
+<img src="docs/images/logo.svg" alt="Honda Civic G10 Skip Disclaimer" width="200"/>
+
+# Honda Civic G10 — Skip Disclaimer
+
+**Elimine automaticamente a tela de "Aviso" que aparece sempre que você liga seu Honda Civic G10 BR**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status: WIP](https://img.shields.io/badge/status-work_in_progress-orange)]()
+[![Status: Done](https://img.shields.io/badge/status-done-brightgreen)]()
 [![Platform](https://img.shields.io/badge/platform-Android_4.2.2_%7C_Tegra_3-blue)]()
+[![Safra](https://img.shields.io/badge/safra_testada-1.F187.16_BR-orange)]()
 
-## 🎯 Objetivo
+🇧🇷 **Português** · [🇺🇸 English](README.en.md)
 
-Documentar e, se possível, modificar o firmware da central Honda Display Audio
-7" (do Civic G10 brasileiro) para eliminar a tela de "Aviso" (OK) que aparece
-toda vez que o carro é ligado — sem usar ferramentas pagas de terceiros.
+</div>
 
-## 📘 O que você vai encontrar aqui
+---
 
-- **`docs/proxima-sessao.md`** — **comece por aqui ao retomar o trabalho**:
-  ponto de partida operacional da próxima sessão, com checklist, decision
-  tree e o que já está resolvido para não refazer
-- **`central-multimidia-civic-g10-kb.md`** — base de conhecimento técnica
-  completa (hardware, software, mecanismo de root, análise de APK,
-  menus ocultos, pinouts, CAN bus, etc.)
-- **`docs/`** — relatos de cada sessão de trabalho, agrupados por fase do roadmap
-- **`MIGRATION/`** — scripts e docs para configurar o ambiente de desenvolvimento
-  em qualquer máquina Linux
-- **`CLAUDE.md`** — contexto automático para sessões do Claude Code
-- **`DISCLAIMER.md`** — avisos de segurança, legais e técnicos
-- **`our-apk/`** — APK auto-OK compilável; falta preencher 3 constantes
-  após o pull do `/system/app` da central
+## 🎯 O que esse projeto faz
 
-## 🚀 Começando
+Cada vez que você liga o carro, a tela da central mostra o Aviso:
 
-### 1. Clone o repositório
+> **"O motorista é o responsável pela condução segura..."**
 
-```bash
-git clone https://github.com/<seu-usuario>/honda-civic-headunit.git
-cd honda-civic-headunit
-```
+E você tem que clicar OK. Toda. Vez. Até o CarPlay subir.
 
-### 2. Rode o setup (Linux)
+Esse projeto **suprime esse aviso automaticamente** — você liga o carro, aparece o aviso, e em ~2 segundos ele some sozinho. Sem clicar em nada.
 
-```bash
-cd MIGRATION
-chmod +x setup.sh
-./setup.sh
-```
+## ✨ Como funciona
 
-O script instala as dependências (Java, ADB, Git, curl, unzip), baixa
-`apktool` e `jadx`, clona os repositórios de referência (`root-honda`,
-`2016PilotOneClick`, `ic1101`) e descompila o `HondaHack.apk` incluído no
-`root-honda` para estudo. Tudo em `~/honda-civic/`.
+1. Um pacote OTA (atualização de firmware falsa, assinada com testkey AOSP via vulnerabilidade **EvilValet** descoberta por [juniperspring.org](https://juniperspring.org/posts/honda-evil-valet/)) instala:
+   - **`AutoOk.apk`** em `/system/app/` — monitora logcat, detecta quando a tela do Aviso aparece.
+   - **`su`** setuid em `/system/xbin/` — root permanente.
+2. No boot do carro, o APK recebe `BOOT_COMPLETED` e inicia o watcher.
+3. Quando a tela de Aviso aparece, o APK espera 2s e dispara `su -c "input tap 400 350"` — simula o toque no botão OK.
+4. Aviso some. Você nem percebeu.
 
-### 3. Leia a base de conhecimento
+## 🚗 Testado em
 
-```bash
-less ~/honda-civic/central-multimidia-civic-g10-kb.md
-```
+**Única safra confirmada:**
 
-Esse arquivo é o coração do projeto — ler antes de qualquer coisa.
+| Carro | DA Version | Mercado | Rom type | Status |
+|---|---|---|---|---|
+| Honda Civic 2017 EXL | `1.F187.16` | 🇧🇷 Brasil | `0040` | ✅ Funciona |
 
-### 4. Siga as fases
+**Potencialmente compatível** (framework Mitsubishi Andromeda igual) — não testado:
 
-O projeto tem 7 fases (ver `central-multimidia-civic-g10-kb.md`), da
-preparação de ambiente até deploy e teste do APK auto-OK.
+- Civic G10 2016–2021 (US, EU, AU, outros mercados BR)
+- Civic Avancier, Civic URV
+- CR-V 2016–2021 (algumas safras)
+- Accord 2016+ com Display Audio
 
-## 🔧 Plataforma estudada
+**Se você tem outra safra**, [ajude a comunidade](#-contribuindo) — bastam 2 informações pra confirmar se funciona na sua: o `custom_rom.type` e a resolução da tela.
 
-| Campo | Valor |
-|---|---|
-| Carro | Honda Civic 10ª geração (2016–2021) |
-| Central | Display Audio 7" |
-| SoC | NVIDIA Tegra 3 (quad-core ARM Cortex-A9, ARMv7) |
-| OS | Android 4.2.2 (Jelly Bean) |
-| Framework HMI | Mitsubishi "Andromeda" |
-| Namespace apps | `com.clarion.displayaudio.*` |
-| Board NVIDIA | VCM30T30 |
+## 🚀 Quick Start
 
-## 📚 Referências de terceiros usadas
+Se você é dono de Civic 2017 EXL BR e quer deployar hoje:
 
-Esses repositórios são **clonados pelo `setup.sh`**, não incluídos aqui:
+👉 **[Siga o QUICKSTART.md](QUICKSTART.md)** — passo a passo em 10 minutos (notebook) + 10 minutos (carro).
 
-- [codeage/root-honda](https://github.com/codeage/root-honda) — ferramenta de
-  root para Civic 2017 (dirtyCOW + SuperSU + whitelist bypass)
-- [jersacct/2016PilotOneClick](https://github.com/jersacct/2016PilotOneClick) —
-  projeto-mãe para Honda Pilot 2016
-- [librick/ic1101](https://github.com/librick/ic1101) — RE profunda da
-  plataforma por Eric McDonald (datasheets Tegra 3, imagens de boot/recovery,
-  `ota-builder`)
+Para safras diferentes, antes do deploy você precisa:
+1. Descobrir seu `custom_rom.type` → [`docs/pt-BR/03-descobrindo-sua-safra.md`](docs/pt-BR/03-descobrindo-sua-safra.md)
+2. Confirmar coordenadas do botão OK (pode ser (400, 350) ou outras)
+3. Rebuild do pacote com valores corretos
 
 ## ⚠️ Avisos importantes
 
-**Leia `DISCLAIMER.md` antes de executar qualquer coisa deste repositório.**
+- **Pode causar brick permanente** da central se feito errado. Troca custa R$ 1.000-2.000.
+- **A tela da central também é a câmera de ré** — brick = sem ré até trocar.
+- **Updates oficiais da Honda podem reverter** a modificação. Precisará redeployar.
+- **CarPlay, Bluetooth, áudio, navegação continuam funcionando** — nossa modificação é cirúrgica.
+- **Zero backdoor pra Honda detectar.** APK fica como se fosse um app do sistema.
 
-Resumo rápido dos riscos:
-- Modificar a central pode causar **brick permanente** (R$1.000-2.000 para trocar)
-- A tela da central é a **câmera de ré** — brick = sem ré
-- Updates oficiais da concessionária podem reverter modificações
-- Este projeto é para **uso pessoal, educativo e no próprio veículo**
+**Leia o [DISCLAIMER.md](DISCLAIMER.md) completo antes de executar qualquer coisa.**
+
+## 📚 Documentação completa
+
+- 🇧🇷 Português: [`docs/pt-BR/`](docs/pt-BR/)
+- 🇺🇸 English: [`docs/en/`](docs/en/)
+
+| Documento | Descrição |
+|---|---|
+| [`QUICKSTART.md`](QUICKSTART.md) | Deploy em 20 minutos |
+| [`docs/pt-BR/00-visao-geral.md`](docs/pt-BR/00-visao-geral.md) | O que foi feito e por quê |
+| [`docs/pt-BR/01-arquitetura-ataque.md`](docs/pt-BR/01-arquitetura-ataque.md) | Como EvilValet funciona |
+| [`docs/pt-BR/02-pre-requisitos.md`](docs/pt-BR/02-pre-requisitos.md) | Ferramentas, hardware, software |
+| [`docs/pt-BR/03-descobrindo-sua-safra.md`](docs/pt-BR/03-descobrindo-sua-safra.md) | Como adaptar pra sua central |
+| [`docs/pt-BR/04-build-do-pacote.md`](docs/pt-BR/04-build-do-pacote.md) | Compilar o pacote OTA |
+| [`docs/pt-BR/05-deploy-no-carro.md`](docs/pt-BR/05-deploy-no-carro.md) | Protocolo no carro |
+| [`docs/pt-BR/06-troubleshooting.md`](docs/pt-BR/06-troubleshooting.md) | Debug quando algo não funciona |
+| [`docs/pt-BR/07-rollback.md`](docs/pt-BR/07-rollback.md) | Reverter tudo |
+
+**Deep dive técnico** (para pesquisadores):
+
+- [`docs/fase7-deploy-2026-10-16/`](docs/fase7-deploy-2026-10-16/) — 7 docs com jornada, descobertas, receitas, dumps, arquitetura do APK, manutenção
+- [`docs/images/flow-evilvalet.md`](docs/images/flow-evilvalet.md) — diagramas Mermaid do fluxo
+
+## 🙏 Créditos
+
+Este projeto não existiria sem o trabalho de:
+
+- **librick / Eric McDonald** ([juniperspring.org](https://juniperspring.org/), [ic1101](https://github.com/librick/ic1101)) — descoberta e documentação técnica da vulnerabilidade EvilValet, `ota-builder`, `apk-rebuilder`.
+- **@codeage** ([root-honda](https://github.com/codeage/root-honda)) — ferramenta de root com `su` ARM estático, SuperSU, análise da whitelist Mitsubishi.
+- **@jersacct** ([2016PilotOneClick](https://github.com/jersacct/2016PilotOneClick)) — projeto-mãe para rooting de Honda baseado em DirtyCOW.
+
+**Nossa contribuição é a adaptação para a safra brasileira `1.F187.16`** (rom type `0040`, combo `AUDIO 5s` para cold boot, descoberta de que o recovery da safra BR não tem `/sbin/sh` e precisa de busybox embarcado, APK persistente que re-arma depois de cada tap). Veja [`docs/fase7-deploy-2026-10-16/02-descobertas-tecnicas.md § 0`](docs/fase7-deploy-2026-10-16/02-descobertas-tecnicas.md#0-contribuições-novas-deste-projeto) para detalhes.
 
 ## 🤝 Contribuindo
 
-Projeto pessoal, mas issues e PRs com melhorias de documentação ou achados
-técnicos relevantes são bem-vindos. Se você tem um Civic G10 brasileiro e quer
-contribuir com dados específicos (versões de firmware, listagem de pacotes,
-coordenadas de UI), abra uma issue.
+Encorajamos contribuições:
 
-**Não envie:**
-- APKs do sistema Honda/Mitsubishi (proprietários)
-- Firmware oficial da Honda
-- Seus próprios dados pessoais (VIN, serial, dados de rede)
+1. **Tem outra safra Honda G10?** Abra uma issue usando o template [`nova-safra.md`](.github/ISSUE_TEMPLATE/nova-safra.md) com: VIN prefix, DA version, `custom_rom.type` (como descobrir no doc), resolução da tela. Juntamos uma matriz de compatibilidade.
+2. **Encontrou bug ou melhoria?** Issues + PRs bem-vindos.
+3. **Quer traduzir pra outro idioma?** Fork + PR com nova pasta em `docs/<lang>/`.
 
 ## 📄 Licença
 
-MIT — ver [`LICENSE`](LICENSE). Trabalho próprio neste repositório é liberado
-sob essa licença. Marcas e software proprietário referenciados pertencem a
-seus respectivos donos.
+Código: [MIT](LICENSE). Documentação: CC BY 4.0.
+
+Software proprietário Honda/Mitsubishi referenciado é propriedade de seus respectivos donos. **Este repo não distribui firmware proprietário** — você precisa dumpar do seu próprio HU (ver `docs/pt-BR/03-descobrindo-sua-safra.md`).
+
+---
+
+<div align="center">
+
+**Made for the Honda Civic G10 community.**
+**Feito pela comunidade, para a comunidade.**
+
+</div>

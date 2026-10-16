@@ -1,8 +1,26 @@
 # Base de Conhecimento — Central Multimídia Honda Civic G10 (2016–2017)
 
-Documento vivo. Objetivo: virar especialista nessa central e avaliar, com base técnica, se dá pra
-eliminar a tela de "Aviso" da partida sem depender do Honda Hack. Nada aqui foi executado no carro —
-é pesquisa/engenharia reversa de leitura.
+> **🎉 PROJETO CONCLUÍDO EM 2026-10-16.** O objetivo primário foi atingido: Aviso de partida é
+> suprimido automaticamente em cada ligar do carro, sem interação manual. APK auto-OK + root (via
+> `su` setuid) deployados em `/system/app/` e `/system/xbin/`.
+>
+> **Documentação completa da fase final:** [`docs/fase7-deploy-2026-10-16/`](docs/fase7-deploy-2026-10-16/)
+> — jornada completa, descobertas técnicas, receita de build do pacote OTA, detalhes do APK,
+> manutenção e rollback, catálogo dos dumps obtidos.
+>
+> O conteúdo abaixo é o **histórico de descoberta** (pesquisa, hipóteses, análise estática) feito
+> antes do deploy final. Preservado como contexto histórico. Para qualquer trabalho prático novo,
+> começar pelos docs da Fase 7.
+
+Documento vivo. Objetivo original: virar especialista nessa central e avaliar, com base técnica, se dá
+pra eliminar a tela de "Aviso" da partida sem depender do Honda Hack. **Objetivo atingido.** Rota
+usada: EvilValet (descuido sistemático do pipeline Mitsubishi — testkey AOSP pública aceita pelo
+recovery) via pendrive OTA, com `AUDIO 5s` para cold boot forçado.
+
+**Atribuição correta das fontes do trabalho:**
+- Fonte primária técnica (fluxo daupdater, formato do pacote, checklist): `tooling/references/ic1101/docs/updates.md` do librick / Eric McDonald.
+- Anúncio público do ataque (contexto, nome "Evil Valet"): [juniperspring.org/posts/honda-evil-valet](https://juniperspring.org/posts/honda-evil-valet/) do mesmo autor (post 2026-06-13, explicitamente não-técnico).
+- Nossa contribuição: primeira confirmação pública em safra `1.F187.16` BR, rom type `0040`, combo `AUDIO 5s` para cold boot, descoberta de que a safra BR não tem `/sbin/sh` no recovery (requer busybox embarcado).
 
 ## Alvo (unidade estudada)
 

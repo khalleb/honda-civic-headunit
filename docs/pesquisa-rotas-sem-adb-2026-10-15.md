@@ -69,11 +69,19 @@ Montar o `update.zip` em laboratório e simular a verificação de assinatura **
 
 ### 4.4 Teste no carro (depois do experimento zero-risco)
 
-- Pendrive FAT32 vazio, 4-8 GB.
-- Copia `signed.zip` como `/HondaSoftwareUpdates/update.zip` (nome e caminho exatos ainda a confirmar — formato Honda usa `1110/SwUpdate.mdt`, pode ser diferente).
-- Pluga na porta frontal USB-A da central com motor em ACC.
-- Observa: a central mostra prompt "System Update Available"? Se não mostrar em 60 s, nada aconteceu, retira pendrive.
-- **Se mostrar**: NÃO instalar sem backup; abortar e retornar ao plano principal (rootear primeiro, backup `/system`, depois tentar).
+**Correção importante (2026-10-15 noite):** a redação anterior desta seção dizia "observar prompt sem instalar". Isso **estava errado** — foi extrapolação do fluxo do app `SystemUpdate`, que o nosso pacote evita de propósito (usa `NEW_DA_VERSION="IC1101"`, sem prefixo `1.F1`). Fluxo real do `daupdater` segundo `tooling/references/ic1101/docs/updates.md`:
+
+- `daupdater` roda silenciosamente a cada boot — não existe UI de confirmação.
+- Pendrive FAT32 MSDOS (com tabela de partição; superfloppy sem tabela não funciona).
+- Pendrive precisa ter `SwUpdate2.txt` na raiz **e** `<cur_rom>/SwUpdate.mdt`, onde `<cur_rom>` é o valor exato de `custom_rom.type` em `/system/vendor/build.prop` do HU. Como esse valor não é conhecido para `1.F187.16` BR, o build atual (`tooling/ota-build/output/20261015T234310Z/`) cobre cinco: `1110`, `1115`, `1118`, `1120`, `2250`. `daupdater` ignora silenciosamente as pastas que não batem.
+- Processo: plugar pendrive na porta USB-A frontal (não a do console central), reboot forçado (power/volume), aguardar `daupdater` detectar/estagar/reiniciar para recovery, recovery aplicar, updater-script fazer `set_progress(1.000000)` + sleep 30s, **retirar o pendrive durante esses 30s** (ver seção `Appendix: Boot loops with a valid update` do updates.md para detalhes).
+
+**Isso significa que não existe "testar sem aplicar".** Qualquer passagem do pendrive na central com `daupdater` ativo é uma tentativa real de aplicação. Risco de brick é aceito por decisão (sem ré, troca R$ 1-2k).
+
+**Mitigações no pacote reconstruído:**
+- Sem `assert(ro.product.device == "vcm30t30" || ...)` no updater-script, para evitar recovery loop permanente em safras BR que possam ter sufixo (`vcm30t30br`?). Perda de proteção é irrelevante — pendrive só vai nessa central.
+- 5 rom types em paralelo cobrem a maior incerteza.
+- `release-keys` nas tags do `build.prop` embarcado (exigência do recovery, cf. recovery checklist).
 
 ### 4.5 Risco
 
