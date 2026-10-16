@@ -14,6 +14,7 @@ Documentação prática para usar/adaptar o projeto. Para quem só quer deployar
 | [`05-deploy-no-carro.md`](05-deploy-no-carro.md) | Protocolo no carro (ver [QUICKSTART § 6](../../QUICKSTART.md#-6-deploy-no-carro)) | ↪ |
 | [`06-troubleshooting.md`](06-troubleshooting.md) | Debug (ver [fase7/05 § Troubleshooting](../fase7-deploy-2026-10-16/05-manutencao-e-futuro.md#troubleshooting)) | ↪ |
 | [`07-rollback.md`](07-rollback.md) | Reverter tudo | ✅ |
+| [`08-backups-e-rollback.md`](08-backups-e-rollback.md) | Catálogo completo de backups + script `verificar-backups.sh` | ✅ |
 
 Legenda:
 - ✅ = doc nesta pasta
