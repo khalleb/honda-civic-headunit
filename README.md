@@ -1,15 +1,16 @@
 <div align="center">
 
-<img src="docs/images/logo.svg" alt="Honda Civic G10 Skip Disclaimer" width="200"/>
+<img src="docs/images/logo.svg" alt="Honda Civic G10 Skip Disclaimer" width="180"/>
 
 # Honda Civic G10 — Skip Disclaimer
 
-**Elimine automaticamente a tela de "Aviso" que aparece sempre que você liga seu Honda Civic G10 BR**
+**Elimine automaticamente a tela de "Aviso" que aparece sempre que você liga seu Honda Civic**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status: Done](https://img.shields.io/badge/status-done-brightgreen)]()
+[![Status](https://img.shields.io/badge/status-funcionando-brightgreen)]()
 [![Platform](https://img.shields.io/badge/platform-Android_4.2.2_%7C_Tegra_3-blue)]()
 [![Safra](https://img.shields.io/badge/safra_testada-1.F187.16_BR-orange)]()
+[![APK](https://img.shields.io/badge/APK-v0.3.0-informational)]()
 
 🇧🇷 **Português** · [🇺🇸 English](README.en.md)
 
@@ -17,114 +18,200 @@
 
 ---
 
-## 🎯 O que esse projeto faz
+## 🎬 Antes e depois
 
-Cada vez que você liga o carro, a tela da central mostra o Aviso:
+<div align="center">
 
-> **"O motorista é o responsável pela condução segura..."**
+<img src="docs/images/antes-depois.gif" alt="Antes: aviso aparece. Depois: aviso some sozinho em ~5s" width="640"/>
 
-E você tem que clicar OK. Toda. Vez. Até o CarPlay subir.
+**Toda vez que você liga o carro, a central mostra o Aviso.** Antes era clicar manualmente. Agora o aviso aparece e some sozinho em ~5 segundos — você nem precisa tocar na tela.
 
-Esse projeto **suprime esse aviso automaticamente** — você liga o carro, aparece o aviso, e em ~2 segundos ele some sozinho. Sem clicar em nada.
+</div>
 
-## ✨ Como funciona
+---
 
-1. Um pacote OTA (atualização de firmware falsa, assinada com testkey AOSP via vulnerabilidade **EvilValet** descoberta por [juniperspring.org](https://juniperspring.org/posts/honda-evil-valet/)) instala:
-   - **`AutoOk.apk`** em `/system/app/` — monitora logcat, detecta quando a tela do Aviso aparece.
-   - **`su`** setuid em `/system/xbin/` — root permanente.
-2. No boot do carro, o APK recebe `BOOT_COMPLETED` e inicia o watcher.
-3. Quando a tela de Aviso aparece, o APK espera 2s e dispara `su -c "input tap 400 350"` — simula o toque no botão OK.
-4. Aviso some. Você nem percebeu.
+## 🎯 O problema
 
-## 🚗 Testado em
+<div align="center">
+<img src="docs/images/foto-aviso-painel.jpg" alt="Tela de Aviso na central multimídia do Honda Civic G10" width="640"/>
+</div>
 
-**Única safra confirmada:**
+Cada vez que você liga o carro, a central mostra:
+
+> **"Aviso — O motorista é o responsável pela condução segura deste veículo..."**
+
+E você tem que clicar **OK**. Toda. Vez. Até o CarPlay subir. Toda ligada do carro, 365 dias por ano, por anos.
+
+A Honda **nunca** liberou uma configuração pra desabilitar isso.
+
+## ✨ A solução
+
+Instalamos um APK + `su` setuid no `/system/` da central via a vulnerabilidade **EvilValet** (descoberta por [juniperspring.org](https://juniperspring.org/posts/honda-evil-valet/)) — um pacote OTA "falso" assinado com testkey AOSP pública.
+
+Depois de instalado, o APK:
+
+1. **Monitora o logcat** procurando a Activity do Aviso aparecer
+2. **Espera ~2 segundos** (deixa a UI renderizar completa)
+3. **Dispara um tap simulado** via `su -c "input tap 400 350"` nas coordenadas do botão OK
+4. **Aviso some**. Você nem percebeu.
+
+Zero toque humano. Funciona em todas as ligadas do carro, pra sempre.
+
+---
+
+## 🏗️ Como funciona (visão de 60 segundos)
+
+<div align="center">
+<img src="docs/images/arquitetura.svg" alt="Pipeline: PC → pacote OTA → pendrive → cold boot → recovery → /system" width="900"/>
+</div>
+
+**No PC** (uma vez, ~15 min):
+1. Compila o APK (`gradlew assembleRelease`)
+2. Assina com debug keystore (`apksigner`)
+3. Monta pacote OTA assinado com testkey AOSP (`python3 build.py`)
+4. Grava num pendrive FAT32 (`prepare-pendrive-install.sh`)
+
+**No carro** (uma vez, ~10 min):
+1. Pendrive na porta USB-A frontal
+2. Segura `AUDIO` por 5s → confirma "Quer reiniciar?"
+3. Central reinicia, recovery aplica o pacote
+4. APK + `su` em `/system/` — permanente
+
+**Em operação** (automático, pra sempre):
+- A cada boot do carro, o APK dispensa o aviso em ~5s
+- Zero manutenção. Zero interação.
+
+---
+
+## 🚗 Compatibilidade
+
+### ✅ Confirmado funcionando
 
 | Carro | DA Version | Mercado | Rom type | Status |
 |---|---|---|---|---|
-| Honda Civic 2017 EXL | `1.F187.16` | 🇧🇷 Brasil | `0040` | ✅ Funciona |
+| Honda Civic 2017 EXL | `1.F187.16` | 🇧🇷 Brasil | `0040` | ✅ Deployado 2026-10-16 |
 
-**Potencialmente compatível** (framework Mitsubishi Andromeda igual) — não testado:
+### 🤷 Potencialmente compatível (não testado)
 
-- Civic G10 2016–2021 (US, EU, AU, outros mercados BR)
-- Civic Avancier, Civic URV
-- CR-V 2016–2021 (algumas safras)
-- Accord 2016+ com Display Audio
+Mesmo framework Mitsubishi Andromeda — provável que funcione com adaptação de 2 valores:
+- **Civic G10 2016-2021** (US, EU, AU, outras BR)
+- **Civic Avancier, Civic URV**
+- **CR-V 2016-2021** (algumas safras)
+- **Accord 2016+** com Display Audio
 
-**Se você tem outra safra**, [ajude a comunidade](#-contribuindo) — bastam 2 informações pra confirmar se funciona na sua: o `custom_rom.type` e a resolução da tela.
+Se você tem outra safra, [ajude a comunidade](#-contribuindo) — bastam 2 informações pra confirmar: o `custom_rom.type` e a resolução da tela.
+
+👉 Como adaptar pra outra safra: [`docs/pt-BR/03-descobrindo-sua-safra.md`](docs/pt-BR/03-descobrindo-sua-safra.md)
+
+---
 
 ## 🚀 Quick Start
 
-Se você é dono de Civic 2017 EXL BR e quer deployar hoje:
+**Dono de Civic 2017 EXL BR?** Deploy em ~20 minutos:
 
-👉 **[Siga o QUICKSTART.md](QUICKSTART.md)** — passo a passo em 10 minutos (notebook) + 10 minutos (carro).
+👉 **[QUICKSTART.md](QUICKSTART.md)** — passo a passo completo
 
-Para safras diferentes, antes do deploy você precisa:
-1. Descobrir seu `custom_rom.type` → [`docs/pt-BR/03-descobrindo-sua-safra.md`](docs/pt-BR/03-descobrindo-sua-safra.md)
-2. Confirmar coordenadas do botão OK (pode ser (400, 350) ou outras)
-3. Rebuild do pacote com valores corretos
+Resumo:
+```bash
+git clone https://github.com/khalleb/honda-civic-headunit.git
+cd honda-civic-headunit
+./MIGRATION/setup.sh                     # clona dependências
+cd our-apk && ./gradlew assembleRelease  # compila APK
+# ... assina + copia pro overlay ...
+python3 tooling/ota-build/build.py       # pacote OTA
+sudo ./tooling/scripts/prepare-pendrive-install.sh /dev/sda
+# No carro: AUDIO 5s + confirmar reiniciar
+```
+
+**Outra safra?** Primeiro adapte seguindo [`docs/pt-BR/03-descobrindo-sua-safra.md`](docs/pt-BR/03-descobrindo-sua-safra.md).
+
+---
 
 ## ⚠️ Avisos importantes
 
-- **Pode causar brick permanente** da central se feito errado. Troca custa R$ 1.000-2.000.
-- **A tela da central também é a câmera de ré** — brick = sem ré até trocar.
-- **Updates oficiais da Honda podem reverter** a modificação. Precisará redeployar.
-- **CarPlay, Bluetooth, áudio, navegação continuam funcionando** — nossa modificação é cirúrgica.
-- **Zero backdoor pra Honda detectar.** APK fica como se fosse um app do sistema.
+- 🧱 **Pode causar brick permanente** da central se feito errado. Troca custa R$ 1.000-2.000.
+- 📷 **A tela também é a câmera de ré** — brick = sem ré até trocar.
+- 🔄 **OTAs oficiais da Honda podem reverter** a modificação. Precisa redeployar.
+- ✅ **CarPlay, Bluetooth, áudio, navegação continuam funcionando** — nossa modificação é cirúrgica.
+- 🔒 **Zero backdoor pra Honda detectar.** APK fica como qualquer app do /system/.
 
 **Leia o [DISCLAIMER.md](DISCLAIMER.md) completo antes de executar qualquer coisa.**
 
-## 📚 Documentação completa
+---
 
-- 🇧🇷 Português: [`docs/pt-BR/`](docs/pt-BR/)
-- 🇺🇸 English: [`docs/en/`](docs/en/)
+## 📚 Documentação
 
-| Documento | Descrição |
+### 🇧🇷 Em português
+
+| Doc | Descrição |
 |---|---|
-| [`QUICKSTART.md`](QUICKSTART.md) | Deploy em 20 minutos |
+| [`QUICKSTART.md`](QUICKSTART.md) | Deploy em 20 min |
 | [`docs/pt-BR/00-visao-geral.md`](docs/pt-BR/00-visao-geral.md) | O que foi feito e por quê |
 | [`docs/pt-BR/01-arquitetura-ataque.md`](docs/pt-BR/01-arquitetura-ataque.md) | Como EvilValet funciona |
-| [`docs/pt-BR/02-pre-requisitos.md`](docs/pt-BR/02-pre-requisitos.md) | Ferramentas, hardware, software |
-| [`docs/pt-BR/03-descobrindo-sua-safra.md`](docs/pt-BR/03-descobrindo-sua-safra.md) | Como adaptar pra sua central |
+| [`docs/pt-BR/02-pre-requisitos.md`](docs/pt-BR/02-pre-requisitos.md) | Hardware, software, keystore |
+| [`docs/pt-BR/03-descobrindo-sua-safra.md`](docs/pt-BR/03-descobrindo-sua-safra.md) | Adaptar pra outras safras |
 | [`docs/pt-BR/04-build-do-pacote.md`](docs/pt-BR/04-build-do-pacote.md) | Compilar o pacote OTA |
 | [`docs/pt-BR/05-deploy-no-carro.md`](docs/pt-BR/05-deploy-no-carro.md) | Protocolo no carro |
 | [`docs/pt-BR/06-troubleshooting.md`](docs/pt-BR/06-troubleshooting.md) | Debug quando algo não funciona |
 | [`docs/pt-BR/07-rollback.md`](docs/pt-BR/07-rollback.md) | Reverter tudo |
+| [`docs/pt-BR/08-backups-e-rollback.md`](docs/pt-BR/08-backups-e-rollback.md) | Catálogo de backups |
 
-**Deep dive técnico** (para pesquisadores):
+### 🇺🇸 In English
 
+| Doc | Description |
+|---|---|
+| [`README.en.md`](README.en.md) | README |
+| [`docs/en/00-overview.md`](docs/en/00-overview.md) | What the project does and why |
+| [`docs/en/03-finding-your-firmware.md`](docs/en/03-finding-your-firmware.md) | Adapt for other firmware |
+| [`docs/en/07-rollback.md`](docs/en/07-rollback.md) | Revert everything |
+| [`docs/en/08-backups.md`](docs/en/08-backups.md) | Full backup catalog |
+
+### 🔬 Deep technical dive
+
+- [`docs/MAPA.md`](docs/MAPA.md) — **Atlas navegável da central** (partições, APKs, services, pipeline)
 - [`docs/fase7-deploy-2026-10-16/`](docs/fase7-deploy-2026-10-16/) — 7 docs com jornada, descobertas, receitas, dumps, arquitetura do APK, manutenção
-- [`docs/images/flow-evilvalet.md`](docs/images/flow-evilvalet.md) — diagramas Mermaid do fluxo
+
+---
 
 ## 🙏 Créditos
 
 Este projeto não existiria sem o trabalho de:
 
-- **librick / Eric McDonald** ([juniperspring.org](https://juniperspring.org/), [ic1101](https://github.com/librick/ic1101)) — descoberta e documentação técnica da vulnerabilidade EvilValet, `ota-builder`, `apk-rebuilder`.
-- **@codeage** ([root-honda](https://github.com/codeage/root-honda)) — ferramenta de root com `su` ARM estático, SuperSU, análise da whitelist Mitsubishi.
-- **@jersacct** ([2016PilotOneClick](https://github.com/jersacct/2016PilotOneClick)) — projeto-mãe para rooting de Honda baseado em DirtyCOW.
+- **[librick / Eric McDonald](https://juniperspring.org/)** — descoberta e documentação técnica da vulnerabilidade **EvilValet**, `ota-builder`, `apk-rebuilder` ([ic1101](https://github.com/librick/ic1101))
+- **[@codeage](https://github.com/codeage/root-honda)** — ferramenta de root com `su` ARM estático, SuperSU, análise da whitelist Mitsubishi
+- **[@jersacct](https://github.com/jersacct/2016PilotOneClick)** — projeto-mãe para rooting de Honda via DirtyCOW
 
-**Nossa contribuição é a adaptação para a safra brasileira `1.F187.16`** (rom type `0040`, combo `AUDIO 5s` para cold boot, descoberta de que o recovery da safra BR não tem `/sbin/sh` e precisa de busybox embarcado, APK persistente que re-arma depois de cada tap). Veja [`docs/fase7-deploy-2026-10-16/02-descobertas-tecnicas.md § 0`](docs/fase7-deploy-2026-10-16/02-descobertas-tecnicas.md#0-contribuições-novas-deste-projeto) para detalhes.
+**Nossa contribuição** é a adaptação para a safra brasileira `1.F187.16` (rom type `0040`, combo `AUDIO 5s` para cold boot, descoberta de que o recovery BR não tem `/sbin/sh` e precisa de busybox embarcado, APK persistente que re-arma após cada tap, pipeline de deep-scan pra sincronizar o atlas da central).
+
+Detalhes técnicos: [`docs/fase7-deploy-2026-10-16/02-descobertas-tecnicas.md § 0`](docs/fase7-deploy-2026-10-16/02-descobertas-tecnicas.md#0-contribuições-novas-deste-projeto).
+
+---
 
 ## 🤝 Contribuindo
 
-Encorajamos contribuições:
+Encorajamos:
 
-1. **Tem outra safra Honda G10?** Abra uma issue usando o template [`nova-safra.md`](.github/ISSUE_TEMPLATE/nova-safra.md) com: VIN prefix, DA version, `custom_rom.type` (como descobrir no doc), resolução da tela. Juntamos uma matriz de compatibilidade.
+1. **Tem outra safra Honda G10?** Abra uma issue com o template [`nova-safra.md`](.github/ISSUE_TEMPLATE/nova-safra.md). Informe VIN prefix, DA version, `custom_rom.type`, resolução. Juntamos matriz de compatibilidade.
 2. **Encontrou bug ou melhoria?** Issues + PRs bem-vindos.
-3. **Quer traduzir pra outro idioma?** Fork + PR com nova pasta em `docs/<lang>/`.
+3. **Quer traduzir pra outro idioma?** Fork + PR com nova pasta `docs/<lang>/`. Prioridade: completar tradução EN dos docs 01, 02, 04, 05, 06.
+4. **Testou em outro carro e funcionou?** Reporta via issue — vira linha na tabela de compatibilidade.
+
+Veja [`CONTRIBUTING.md`](CONTRIBUTING.md) pra detalhes.
+
+---
 
 ## 📄 Licença
 
 Código: [MIT](LICENSE). Documentação: CC BY 4.0.
 
-Software proprietário Honda/Mitsubishi referenciado é propriedade de seus respectivos donos. **Este repo não distribui firmware proprietário** — você precisa dumpar do seu próprio HU (ver `docs/pt-BR/03-descobrindo-sua-safra.md`).
+Software proprietário Honda/Mitsubishi referenciado é propriedade de seus respectivos donos. **Este repo NÃO distribui firmware proprietário** — você precisa dumpar do seu próprio HU (ver [`docs/pt-BR/03-descobrindo-sua-safra.md`](docs/pt-BR/03-descobrindo-sua-safra.md)).
 
 ---
 
 <div align="center">
 
-**Made for the Honda Civic G10 community.**
-**Feito pela comunidade, para a comunidade.**
+**Feito pela comunidade Civic G10, pra comunidade Civic G10.**
+
+🇧🇷 **Português** · [🇺🇸 English](README.en.md)
 
 </div>

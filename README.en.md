@@ -1,15 +1,16 @@
 <div align="center">
 
-<img src="docs/images/logo.svg" alt="Honda Civic G10 Skip Disclaimer" width="200"/>
+<img src="docs/images/logo.svg" alt="Honda Civic G10 Skip Disclaimer" width="180"/>
 
 # Honda Civic G10 — Skip Disclaimer
 
-**Automatically dismiss the "Warning" disclaimer screen that appears every time you turn on your Honda Civic G10**
+**Automatically dismiss the "Warning" disclaimer screen that appears every time you turn on your Honda Civic**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status: Done](https://img.shields.io/badge/status-done-brightgreen)]()
+[![Status](https://img.shields.io/badge/status-working-brightgreen)]()
 [![Platform](https://img.shields.io/badge/platform-Android_4.2.2_%7C_Tegra_3-blue)]()
-[![Build](https://img.shields.io/badge/tested_firmware-1.F187.16_BR-orange)]()
+[![Firmware](https://img.shields.io/badge/tested_firmware-1.F187.16_BR-orange)]()
+[![APK](https://img.shields.io/badge/APK-v0.3.0-informational)]()
 
 [🇧🇷 Português](README.md) · 🇺🇸 **English**
 
@@ -17,101 +18,197 @@
 
 ---
 
-## 🎯 What this project does
+## 🎬 Before and after
 
-Every time you turn the car on, the head unit shows a disclaimer screen:
+<div align="center">
 
-> **"The driver is responsible for safe driving..."**
+<img src="docs/images/antes-depois.gif" alt="Before: warning appears. After: warning goes away on its own in ~5s" width="640"/>
 
-And you have to tap OK. Every. Single. Time. Before CarPlay starts.
+**Every time you turn the car on, the head unit shows the Warning.** Before, you had to tap it manually. Now the warning appears and disappears on its own in ~5 seconds — you don't even touch the screen.
 
-This project **automatically dismisses that warning** — you turn on the car, warning appears, and ~2 seconds later it disappears on its own. No tapping.
+</div>
 
-## ✨ How it works
+---
 
-1. An OTA package (fake firmware update, signed with the AOSP testkey via the **EvilValet** vulnerability discovered by [juniperspring.org](https://juniperspring.org/posts/honda-evil-valet/)) installs:
-   - **`AutoOk.apk`** in `/system/app/` — monitors logcat, detects when the warning screen appears.
-   - **`su`** setuid binary in `/system/xbin/` — permanent root.
-2. On car boot, the APK receives `BOOT_COMPLETED` and starts a logcat watcher.
-3. When the warning screen appears, the APK waits 2s and fires `su -c "input tap 400 350"` — simulates a tap on the OK button.
-4. Warning disappears. You barely noticed.
+## 🎯 The problem
 
-## 🚗 Tested on
+<div align="center">
+<img src="docs/images/foto-aviso-painel.jpg" alt="Warning screen on Honda Civic G10 head unit" width="640"/>
+</div>
 
-**Only confirmed firmware:**
+Every time you turn the car on, the head unit shows:
+
+> **"Warning — The driver is responsible for safe driving..."**
+
+And you have to tap **OK**. Every. Single. Time. Before CarPlay starts. Every ignition cycle, 365 days a year, for years.
+
+Honda has **never** released a configuration to disable this.
+
+## ✨ The solution
+
+We install an APK + `su` setuid binary into `/system/` of the head unit via the **EvilValet** vulnerability (discovered by [juniperspring.org](https://juniperspring.org/posts/honda-evil-valet/)) — a "fake" OTA package signed with the public AOSP testkey.
+
+Once installed, the APK:
+
+1. **Monitors logcat** looking for the warning Activity to appear
+2. **Waits ~2 seconds** (lets the UI render fully)
+3. **Fires a simulated tap** via `su -c "input tap 400 350"` on the OK button coordinates
+4. **Warning disappears**. You barely noticed.
+
+Zero human touch. Works on every car start, forever.
+
+---
+
+## 🏗️ How it works (60 second view)
+
+<div align="center">
+<img src="docs/images/arquitetura.svg" alt="Pipeline: PC → OTA package → USB stick → cold boot → recovery → /system" width="900"/>
+</div>
+
+**On the PC** (one time, ~15 min):
+1. Compile the APK (`gradlew assembleRelease`)
+2. Sign with debug keystore (`apksigner`)
+3. Build OTA package signed with AOSP testkey (`python3 build.py`)
+4. Write to a FAT32 USB stick (`prepare-pendrive-install.sh`)
+
+**In the car** (one time, ~10 min):
+1. USB stick into the front USB-A port
+2. Hold `AUDIO` button for 5s → confirm "Reboot?"
+3. Head unit reboots, recovery applies the package
+4. APK + `su` land in `/system/` — permanent
+
+**In operation** (automatic, forever):
+- On every car boot, the APK dismisses the warning in ~5s
+- Zero maintenance. Zero interaction.
+
+---
+
+## 🚗 Compatibility
+
+### ✅ Confirmed working
 
 | Car | DA Version | Market | Rom type | Status |
 |---|---|---|---|---|
-| Honda Civic 2017 EXL | `1.F187.16` | 🇧🇷 Brazil | `0040` | ✅ Working |
+| Honda Civic 2017 EXL | `1.F187.16` | 🇧🇷 Brazil | `0040` | ✅ Deployed 2026-10-16 |
 
-**Likely compatible** (same Mitsubishi Andromeda framework) — not tested:
+### 🤷 Likely compatible (not tested)
 
-- Civic G10 2016–2021 (US, EU, AU, other BR variants)
-- Civic Avancier, Civic URV
-- CR-V 2016–2021 (some firmware)
-- Accord 2016+ with Display Audio
+Same Mitsubishi Andromeda framework — likely works with adaptation of 2 values:
+- **Civic G10 2016-2021** (US, EU, AU, other BR variants)
+- **Civic Avancier, Civic URV**
+- **CR-V 2016-2021** (some firmware)
+- **Accord 2016+** with Display Audio
 
-**If you have a different firmware**, [help the community](#-contributing) — just 2 pieces of info to confirm compatibility: your `custom_rom.type` and screen resolution.
+If you have a different firmware, [help the community](#-contributing) — just 2 pieces of info confirm it works: your `custom_rom.type` and screen resolution.
+
+👉 How to adapt for other firmware: [`docs/en/03-finding-your-firmware.md`](docs/en/03-finding-your-firmware.md)
+
+---
 
 ## 🚀 Quick Start
 
-If you own a 2017 Civic EXL BR and want to deploy today:
+**Own a 2017 Civic EXL BR?** Deploy in ~20 minutes:
 
-👉 **[Follow the QUICKSTART.md](QUICKSTART.md)** (currently Portuguese only — translation welcome!) — step-by-step in 10 minutes (laptop) + 10 minutes (car).
+👉 **[QUICKSTART.md](QUICKSTART.md)** (currently Portuguese — commands are universal)
 
-For different firmware, before deploying you need to:
-1. Find your `custom_rom.type` → [`docs/pt-BR/03-descobrindo-sua-safra.md`](docs/pt-BR/03-descobrindo-sua-safra.md) (Portuguese, translation welcome)
-2. Confirm OK button coordinates (may be (400, 350) or different)
-3. Rebuild the package with correct values
+Summary:
+```bash
+git clone https://github.com/khalleb/honda-civic-headunit.git
+cd honda-civic-headunit
+./MIGRATION/setup.sh                     # clone dependencies
+cd our-apk && ./gradlew assembleRelease  # build APK
+# ... sign + copy to overlay ...
+python3 tooling/ota-build/build.py       # OTA package
+sudo ./tooling/scripts/prepare-pendrive-install.sh /dev/sda
+# In the car: AUDIO 5s + confirm reboot
+```
+
+**Different firmware?** First adapt following [`docs/en/03-finding-your-firmware.md`](docs/en/03-finding-your-firmware.md).
+
+---
 
 ## ⚠️ Important warnings
 
-- **Can cause permanent brick** of the head unit if done wrong. Replacement is R$ 1,000-2,000 (~USD 200-400).
-- **The HU display is also the backup camera** — brick = no backup camera until replacement.
-- **Official Honda OTA updates may revert** the modification. You'll need to redeploy.
-- **CarPlay, Bluetooth, audio, navigation remain functional** — our modification is surgical.
-- **Zero backdoor for Honda to detect.** APK sits in /system/app like any system app.
+- 🧱 **Can cause permanent brick** of the head unit if done wrong. Replacement costs R$ 1,000-2,000 (~USD 200-400).
+- 📷 **The screen is also the backup camera** — brick = no backup camera until replacement.
+- 🔄 **Official Honda OTAs may revert** the modification. You'll need to redeploy.
+- ✅ **CarPlay, Bluetooth, audio, navigation keep working** — our modification is surgical.
+- 🔒 **No backdoor for Honda to detect.** APK sits in /system/app like any system app.
 
 **Read the full [DISCLAIMER.md](DISCLAIMER.md) before executing anything.**
 
-## 📚 Full documentation
+---
 
-- 🇧🇷 Portuguese: [`docs/pt-BR/`](docs/pt-BR/) — complete
-- 🇺🇸 English: [`docs/en/`](docs/en/) — summary (translations welcome!)
+## 📚 Documentation
 
-**Deep technical dive** (for researchers):
+### 🇺🇸 In English
 
-- [`docs/fase7-deploy-2026-10-16/`](docs/fase7-deploy-2026-10-16/) — 7 docs covering journey, discoveries, recipes, dumps, APK architecture, maintenance (currently Portuguese, but technical identifiers are universal)
-- [`docs/images/flow-evilvalet.md`](docs/images/flow-evilvalet.md) — Mermaid diagrams of the deploy flow
+| Doc | Description |
+|---|---|
+| [`docs/en/00-overview.md`](docs/en/00-overview.md) | What the project does and why |
+| [`docs/en/03-finding-your-firmware.md`](docs/en/03-finding-your-firmware.md) | Adapt for other firmware |
+| [`docs/en/07-rollback.md`](docs/en/07-rollback.md) | Revert everything |
+| [`docs/en/08-backups.md`](docs/en/08-backups.md) | Full backup catalog |
+
+### 🇧🇷 In Portuguese (full documentation)
+
+| Doc | Description |
+|---|---|
+| [`QUICKSTART.md`](QUICKSTART.md) | Deploy in 20 min |
+| [`docs/pt-BR/01-arquitetura-ataque.md`](docs/pt-BR/01-arquitetura-ataque.md) | How EvilValet works |
+| [`docs/pt-BR/02-pre-requisitos.md`](docs/pt-BR/02-pre-requisitos.md) | Hardware, software, keystore |
+| [`docs/pt-BR/04-build-do-pacote.md`](docs/pt-BR/04-build-do-pacote.md) | Build the OTA package |
+| [`docs/pt-BR/05-deploy-no-carro.md`](docs/pt-BR/05-deploy-no-carro.md) | Deploy protocol in the car |
+| [`docs/pt-BR/06-troubleshooting.md`](docs/pt-BR/06-troubleshooting.md) | Troubleshooting when something fails |
+
+Translations of these to English welcome! See [Contributing](#-contributing).
+
+### 🔬 Deep technical dive
+
+- [`docs/MAPA.md`](docs/MAPA.md) — **Navigable atlas of the HU** (partitions, APKs, services, pipeline) — mostly Portuguese labels but structure is clear
+- [`docs/fase7-deploy-2026-10-16/`](docs/fase7-deploy-2026-10-16/) — 7 docs with journey, discoveries, recipes, dumps, APK architecture, maintenance (Portuguese)
+
+---
 
 ## 🙏 Credits
 
 This project wouldn't exist without:
 
-- **librick / Eric McDonald** ([juniperspring.org](https://juniperspring.org/), [ic1101](https://github.com/librick/ic1101)) — discovery and technical documentation of the EvilValet vulnerability, `ota-builder`, `apk-rebuilder`.
-- **@codeage** ([root-honda](https://github.com/codeage/root-honda)) — root tool with static ARM `su`, SuperSU, Mitsubishi whitelist analysis.
-- **@jersacct** ([2016PilotOneClick](https://github.com/jersacct/2016PilotOneClick)) — mother project for Honda rooting based on DirtyCOW.
+- **[librick / Eric McDonald](https://juniperspring.org/)** — discovery and technical documentation of the **EvilValet** vulnerability, `ota-builder`, `apk-rebuilder` ([ic1101](https://github.com/librick/ic1101))
+- **[@codeage](https://github.com/codeage/root-honda)** — root tool with static ARM `su`, SuperSU, Mitsubishi whitelist analysis
+- **[@jersacct](https://github.com/jersacct/2016PilotOneClick)** — mother project for Honda rooting via DirtyCOW
 
-**Our contribution is the adaptation to the Brazilian firmware `1.F187.16`** (rom type `0040`, `AUDIO 5s` combo for cold boot, discovery that BR firmware recovery doesn't ship `/sbin/sh` and needs embedded busybox, persistent APK that re-arms after each tap). See [`docs/fase7-deploy-2026-10-16/02-descobertas-tecnicas.md § 0`](docs/fase7-deploy-2026-10-16/02-descobertas-tecnicas.md#0-contribuições-novas-deste-projeto) for details.
+**Our contribution** is the adaptation to the Brazilian firmware `1.F187.16` (rom type `0040`, `AUDIO 5s` combo for cold boot, discovery that BR recovery doesn't ship `/sbin/sh` and needs embedded busybox, persistent APK that re-arms after each tap, deep-scan pipeline to sync the HU atlas).
+
+Technical details: [`docs/fase7-deploy-2026-10-16/02-descobertas-tecnicas.md § 0`](docs/fase7-deploy-2026-10-16/02-descobertas-tecnicas.md#0-contribuições-novas-deste-projeto) (Portuguese).
+
+---
 
 ## 🤝 Contributing
 
 We welcome:
 
-1. **Have another Honda G10 firmware?** Open an issue using the [`nova-safra.md`](.github/ISSUE_TEMPLATE/nova-safra.md) template with: VIN prefix, DA version, `custom_rom.type` (how to find it is in the docs), screen resolution. We'll build a compatibility matrix.
+1. **Have another Honda G10 firmware?** Open an issue using the [`nova-safra.md`](.github/ISSUE_TEMPLATE/nova-safra.md) template. Include VIN prefix, DA version, `custom_rom.type`, screen resolution. We'll build a compatibility matrix.
 2. **Found a bug or improvement?** Issues + PRs welcome.
-3. **Want to translate to another language?** Fork + PR with new `docs/<lang>/` folder. Priority: full English translation of `docs/pt-BR/`.
+3. **Want to translate to another language?** Fork + PR with new `docs/<lang>/` folder. **Priority: complete the English translation of docs 01, 02, 04, 05, 06.**
+4. **Tested on another car and it worked?** Report via issue — becomes a row in the compatibility table.
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for details.
+
+---
 
 ## 📄 License
 
 Code: [MIT](LICENSE). Documentation: CC BY 4.0.
 
-Honda/Mitsubishi proprietary software referenced is owned by respective holders. **This repo does not distribute proprietary firmware** — you must dump from your own HU (see `docs/pt-BR/03-descobrindo-sua-safra.md`).
+Honda/Mitsubishi proprietary software referenced is owned by respective holders. **This repo does NOT distribute proprietary firmware** — you must dump from your own HU (see [`docs/en/03-finding-your-firmware.md`](docs/en/03-finding-your-firmware.md)).
 
 ---
 
 <div align="center">
 
-**Made for the Honda Civic G10 community.**
+**Made by the Honda Civic G10 community, for the Honda Civic G10 community.**
+
+[🇧🇷 Português](README.md) · 🇺🇸 **English**
 
 </div>
