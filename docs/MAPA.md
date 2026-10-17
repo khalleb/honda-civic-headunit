@@ -2,7 +2,7 @@
 
 **Reflexo navegável do estado real da central multimídia (Honda Display Audio 7", Mitsubishi Andromeda, Tegra 3, Android 4.2.2).**
 
-Última sincronização: `2026-10-17` (deep scan via OTA EvilValet).
+Última sincronização: `2026-10-17` (APK v0.4.0 + fix do bug de LP0).
 
 ---
 
@@ -10,11 +10,34 @@
 
 **Para IA:** este é o **primeiro arquivo a ler** no início de qualquer sessão. Ele contém o reflexo navegável da central. Antes de pesquisar documentação, código ou tentar comandos: **consulte aqui primeiro**.
 
-**Regras de manutenção:**
+### 🔴 REGRA DE OURO — SALVAR TUDO IMPORTANTE AQUI
+
+**Tudo que for descoberto, decidido ou aprendido sobre a central vai para este arquivo. Sem exceção. Antes de encerrar qualquer análise/mudança, atualizar o MAPA é obrigatório.**
+
+Isso inclui, mas não se limita a:
+
+| Tipo de descoberta | Onde registrar no MAPA |
+|---|---|
+| Novo nome de Activity, Service, Receiver, BroadcastAction | §11 (serviços + activities) |
+| Nova partição ou mount point descoberto | §3 (partições) + §4 (mounts) |
+| Novo arquivo relevante em alguma partição | §5 (filesystem map) |
+| Novo binário / comando em /system/bin ou xbin | §9 (comandos) |
+| Nova modificação feita por nós (APK, config, su) | §10 (nossas modificações) + §18 (timeline) |
+| Novo cenário operacional (ex: câmera de ré, suspend, resume) | §11 ou §12 (pipeline) + §13 (fluxos) |
+| Novo bug corrigido com causa raiz identificada | §17 (hall of fame) |
+| Caminho avaliado e descartado | §16 (descartados) com motivo |
+| Novo backup, dump ou artefato local | §15 (credenciais → backups essenciais) |
+| Nova rota de deploy ou re-sincronização | §20 (comandos frequentes) |
+
+**O MAPA deve ser mais fiel que a memória**. Se tiver dúvida entre "vale a pena salvar?" vs "é trivial", salve. Linhas a mais no MAPA são baratas; informação perdida é cara.
+
+### Regras operacionais
+
 - Quando **descobrir fato novo** sobre a central → atualizar aqui.
-- Quando **modificar algo real** (APK, su, config) → atualizar aqui + timeline.
+- Quando **modificar algo real** (APK, su, config) → atualizar aqui + timeline (§18).
 - Quando **descartar/adiar algo** → registrar em §16 com motivo.
-- Quando **resolver um bug chato** → registrar em §17.
+- Quando **resolver um bug chato** → registrar em §17 (causa raiz + fix).
+- Quando **mudar um comportamento do APK** → atualizar §10 + §12 (pipeline).
 
 **Como re-sincronizar:**
 Rodar o pacote OTA de deep-scan no carro + script no PC:
@@ -504,8 +527,8 @@ Nosso APK — dispensa automaticamente o aviso de abertura.
 |---|---|
 | Package | `com.khalleb.civichmi.autook` |
 | Instalado em | `/system/app/AutoOk.apk` |
-| Versão atual | **3** (v0.3.0) ✓ confirmado em packages.xml e autook.log |
-| Tamanho | 16890 bytes |
+| Versão atual | **4** (v0.4.0) ✓ confirmado via teste no carro 2026-10-17 (corrige bug de LP0) |
+| Tamanho | ~17 KB |
 | User ID | 10091 |
 | Native lib dir | `/data/app-lib/AutoOk/` |
 | Data dir | `/data/data/com.khalleb.civichmi.autook/` |
@@ -516,10 +539,16 @@ Nosso APK — dispensa automaticamente o aviso de abertura.
 
 **Classes:**
 - `BootReceiver` — ouve `BOOT_COMPLETED`, inicia `AutoOkService`
-- `AutoOkService` — Service persistente (START_STICKY). Monta watcher, watchdog, rearm.
-- `LogcatWatcher` — Thread que lê `logcat -v brief ActivityManager:I *:S` via `su`, procura needle
+- `HmiServiceReceiver` 🆕 v0.4.0 — ouve `com.mitsubishielectric.ada.appservice.powermanager.ACTION_HMI_SERVICE_START`, dispara `ACTION_FORCE_RESTART` no Service. Fundamental em cada exit de LP0 (câmera de ré, abertura de porta, acordar do suspend).
+- `AlarmReceiver` 🆕 v0.4.0 — recebe alarm periódico de 60s do `AlarmManager`, dispara `ACTION_FORCE_RESTART` como fallback.
+- `AutoOkService` — Service persistente (START_STICKY). Monta watcher, watchdog, rearm. **v0.4.0:** novo `forceRestartWatcher()` que mata e recria watcher (quebra thread bloqueado em `readLine()` após LP0). `scheduleAlarm()` via AlarmManager a cada 60s.
+- `LogcatWatcher` — Thread que lê `logcat -v brief ActivityManager:I *:S` via `su`, procura needle. Em v0.3.0+ roda em loop infinito (não é destruído entre taps).
 - `Shell` — Wrapper de `Runtime.exec("su")` + `suTapWithFallback`
 - `FileLogger` — Grava `/data/data/.../files/autook.log` com rotação por sessão
+
+**Permissions declaradas:**
+- `RECEIVE_BOOT_COMPLETED` (boot)
+- `WAKE_LOCK` 🆕 v0.4.0 (AlarmManager fallback)
 
 **Config atual** (`AutoOkConfig.java`):
 ```java
@@ -531,6 +560,11 @@ DELAY_SECONDS_AFTER_DETECT = 1
 REARM_DELAY_SECONDS = 10
 BOOT_INITIAL_WAIT_MS = 2000
 WATCHDOG_INTERVAL_SECONDS = 30
+// Novos em v0.4.0:
+HMI_SERVICE_START_ACTION = "com.mitsubishielectric.ada.appservice.powermanager.ACTION_HMI_SERVICE_START"
+ACTION_FORCE_RESTART = "com.khalleb.civichmi.autook.FORCE_RESTART"
+ACTION_ALARM_HEALTHCHECK = "com.khalleb.civichmi.autook.ALARM_HEALTHCHECK"
+ALARM_HEALTHCHECK_INTERVAL_SECONDS = 60
 ```
 
 ### 10.2 `/system/xbin/su` 🔧
@@ -590,9 +624,61 @@ Visíveis em logcat quando o boot acontece:
 - `AVPlayer` — A/V player
 - `am_proc_start`, `am_new_intent`, `am_resume_activity` — ActivityManager padrão Android
 
+### 11.4 Câmera de ré 🆕
+
+| Campo | Valor |
+|---|---|
+| Package | `com.mitsubishielectric.ada.app.camera` |
+| Activity | `.activity.RearWideCameraDisplayActivity` |
+| Needle completo | `com.mitsubishielectric.ada.app.camera/.activity.RearWideCameraDisplayActivity` |
+| Trigger | Marcha ré engatada |
+| Comportamento | Sobe sobre qualquer Activity ativa (incluindo o aviso). Quando saí da ré, Activity anterior volta ao topo. |
+| Pacote OTA | `/system/vendor/app/Camera.apk` + `/system/vendor/app/CameraAPService.apk` |
+| Impacto no AutoOk v0.3.0 | APK tentava tapar enquanto câmera estava ativa (tap caía na UI da câmera, no vazio) |
+| Impacto no AutoOk v0.4.0 | HmiServiceReceiver re-inicia o watcher após exit de LP0 que acompanha a mudança de ré, cobre o cenário corretamente |
+
+### 11.5 InfoClockOpeningActivity 🆕
+
+Activity do launcher que aparece brevemente em algumas transições pós-LP0:
+
+| Campo | Valor |
+|---|---|
+| Needle | `com.mitsubishielectric.ada.app.dalauncher/.InfoClockOpeningActivity` |
+| Observado em | am_pause_activity logo antes do am_resume_activity do OpeningDivideActivity depois de voltar da câmera |
+| Função provável | Tela de boas vindas/relógio que aparece brevemente antes do aviso em alguns resumos |
+| Não interfere com nosso APK (não é needle do watcher) | — |
+
+### 11.6 Power Management (LP0) 🆕 — CRÍTICO
+
+A central Mitsubishi faz **transições frequentes de power** entre dois estados principais:
+
+- **LP0 (Low Power 0)** — sleep profundo. Processadores desligados, apenas RAM mantida.
+- **Normal operation** — tudo rodando.
+
+Essas transições acontecem **o tempo todo**: ao mudar de ré, abrir/fechar porta, pressionar pedal, qualquer coisa que o PowerManager considere "mudança de estado operacional". **Cada transição afeta processos do Android inteiro**.
+
+| Package | Função |
+|---|---|
+| `com.mitsubishielectric.ada.appservice.powermanager` | PowerManagerApService |
+| Classe chave | `PowerManagerEnterLP0`, `PowerManagerStartUp`, `PowerManagerStateMachine` |
+
+**Broadcasts emitidos pelo PowerManager** (CRÍTICOS pro nosso APK):
+
+| Action | Extra `state` | Emitido quando | Reação do AutoOk v0.4.0 |
+|---|---|---|---|
+| `com.mitsubishielectric.ada.appservice.powermanager.ACTION_HMI_SERVICE_START` | `ExitLP0` | Sistema saiu de LP0 (acordou do sleep) | HmiServiceReceiver → forceRestartWatcher |
+| `com.mitsubishielectric.ada.appservice.powermanager.ACTION_HMI_SERVICE_START` | `AccOnRestart` | ACC foi ligado interrompendo transição LP0 em curso | HmiServiceReceiver → forceRestartWatcher |
+| `com.mitsubishielectric.ada.appservice.powermanager.ACTION_HMI_SERVICE_PRE_STOP` | — | Sistema vai entrar em LP0 | (não escutamos — poderia ser usado pra salvar estado) |
+| `com.mitsubishielectric.ada.appservice.powermanager.ACTION_HMI_SERVICE_RESTART` | `AccOnRestart` | HMI services vão ser reiniciados | (equivalente a HMI_SERVICE_START) |
+| `com.mitsubishielectric.ada.appservice.powermanager.ACTION_FINISH_ALL_RUNNING_TASKS_FOREGROUND` | — | PowerManager mata tasks foreground (power off) | — |
+| `com.mitsubishielectric.ada.appservice.powermanager.ACTION_FINISH_ALL_RUNNING_TASKS_PARTIAL` | — | PowerManager mata tasks parciais (preparando LP0) | — |
+
+**Comportamento ligado a nós:**
+Nosso APK não é tratado como "HMI service" pelo PowerManager (está em /system/app mas não é reconhecido pela whitelist Mitsubishi), então o PowerManager **não re-inicia nosso Service** após LP0. Antes da v0.4.0, isso causava o APK ficar silencioso após qualquer LP0.
+
 ---
 
-## 12. Pipeline do APK AutoOk
+## 12. Pipeline do APK AutoOk (v0.4.0)
 
 ```
 BOOT_COMPLETED (cold boot via AUDIO 5s)
@@ -604,7 +690,7 @@ BootReceiver.onReceive()
 context.startService(AutoOkService)
       │
       ▼
-AutoOkService.onStartCommand(START_STICKY)
+AutoOkService.onStartCommand(START_STICKY, action=null)
       │
       ├─ FileLogger.init(this)
       ├─ FileLogger.startSessionOnce()   ← rotation .log → .log.1
@@ -613,7 +699,23 @@ AutoOkService.onStartCommand(START_STICKY)
       │     watcher = buildWatcher()
       │     watcher.start()              ← Thread "AutoOk-LogcatWatcher"
       │  }
-      └─ startWatchdog()                 ← Thread "AutoOk-Watchdog" (30s loop)
+      ├─ startWatchdog()                 ← Thread "AutoOk-Watchdog" (30s loop)
+      └─ scheduleAlarm()  🆕 v0.4.0      ← AlarmManager repete a cada 60s
+
+OU (v0.4.0): Em resposta a HMI_SERVICE_START ou alarm:
+
+HmiServiceReceiver.onReceive()         ← dispara em cada ExitLP0/AccOnRestart
+   OU
+AlarmReceiver.onReceive()              ← dispara a cada 60s (fallback)
+      │
+      ▼
+startService(AutoOkService, action=ACTION_FORCE_RESTART)
+      │
+      ▼
+AutoOkService.onStartCommand(action=ACTION_FORCE_RESTART)
+      │
+      └─ forceRestartWatcher()         ← mata watcher antigo + cria novo
+                                         (quebra readLine() bloqueado)
       
 LogcatWatcher thread:
       │
@@ -756,6 +858,41 @@ rearmWatcher() → sleep 10s → handled=false → log "rearmed"
 Próxima aparição do needle → dispara callback de novo
 ```
 
+### 13.5 Recovery após LP0 (v0.4.0) 🆕
+
+```
+Sistema em LP0 (sleep profundo)
+   │
+   ▼ Usuário coloca em ré (ou abre porta, ou qualquer wake event)
+PowerManagerApService detecta → inicia saída de LP0
+   │
+   ▼
+Emite broadcast: ACTION_HMI_SERVICE_START com state=ExitLP0
+   │
+   ▼ (HMI services reiniciados, mas nosso APK não é "HMI service")
+   │ Durante LP0, nosso processo logcat (filho do su) foi matado.
+   │ Thread do watcher ficou bloqueado em readLine() num FD morto.
+   │ isAlive() retornava true (falso positivo).
+   │
+   ▼ BroadcastReceiver v0.4.0:
+HmiServiceReceiver.onReceive() → startService(ACTION_FORCE_RESTART)
+   │
+   ▼
+AutoOkService.forceRestartWatcher()
+   ├─ stopWatcher()                    ← mata watcher antigo (interrompe readLine)
+   ├─ handled = false
+   └─ buildWatcher() + start()         ← novo logcat process via novo su
+   │
+   ▼
+Watcher novo captura o am_resume_activity de OpeningDivideActivity que
+estava "represado" no logcat buffer durante o LP0 (ou qualquer aparição
+subsequente) → dismiss normal.
+```
+
+**Fallback (safety net):**
+Se por algum motivo o `HMI_SERVICE_START` broadcast não chegar, AlarmManager
+dispara `ACTION_ALARM_HEALTHCHECK` a cada 60s → mesmo efeito (forceRestart).
+
 ---
 
 ## 14. Pendrive OTA — layout esperado pelo daupdater
@@ -790,10 +927,12 @@ Próxima aparição do needle → dispara callback de novo
 | Needle do Aviso | `com.mitsubishielectric.ada.app.dalauncher/.OpeningDivideActivity` |
 | Package do AutoOk | `com.khalleb.civichmi.autook` |
 | User ID do AutoOk | 10091 |
-| Versão atual AutoOk | 3 (v0.3.0) |
+| Versão atual AutoOk | **4** (v0.4.0 — fix do bug de LP0) |
 | Signing key | debug keystore (Android Debug cert) |
 | Testkey SHA-256 | `A4:0D:A8:0A:59:D1:70:CA:A9:50:CF:15:C1:8C:45:4D:47:A3:9B:26:98:9D:8B:64:0E:CD:74:5B:A7:1B:F5:DC` |
 | Debug cert SHA-256 | `9505deb0b0d8c53178eaade253eee94e1a31f0e6a1dde2b809752914b644cf02` |
+| Broadcast crítico (recovery após LP0) | `com.mitsubishielectric.ada.appservice.powermanager.ACTION_HMI_SERVICE_START` com `state=ExitLP0` |
+| Activity da câmera de ré | `com.mitsubishielectric.ada.app.camera/.activity.RearWideCameraDisplayActivity` |
 
 **Backups essenciais:**
 | Item | Caminho local |
@@ -803,6 +942,7 @@ Próxima aparição do needle → dispara callback de novo
 | deep-scan 2026-10-17 | `~/backup-honda-civic-g10/deep-scan-2026-10-17/` |
 | vendor framework extraído | `tooling/apks-dumped/dump-0040/vendor-framework/` |
 | Externo (Google Drive privado) | `honda-civic-g10-backup-2026-10-17.tar.gz` (269 MB, sha256 `3dbc1994...`) |
+| Error History do bug LP0 (câmera de ré) | `~/backup-honda-civic-g10/error-history-2026-10-17-camera-ride-bug/` (4.5 MB) |
 
 ---
 
@@ -902,6 +1042,32 @@ Próxima aparição do needle → dispara callback de novo
 **Causa:** `packages.xml` está em `/data/system/packages.xml` (dentro de UDA = /data), não dentro de APP (= /system).
 **Fix:** paths corretos — tabela de localização validada contra dump raw local antes de deploy.
 
+### 17.13 ✓ APK fica inoperante após LP0 (v0.3.0 → v0.4.0) 🆕
+
+**Sintoma reportado pelo dono:** liga carro → aviso aparece → coloca em ré → câmera aparece → tira da ré → **aviso persiste e precisa toque manual**.
+
+**Causa raiz** (descoberta analisando `Error History` do carro, 2026-10-17):
+
+1. Mitsubishi faz transições frequentes de power (LP0 ↔ ativo) em QUALQUER mudança de estado operacional (ré, porta, pedal, etc.)
+2. Em cada entrada de LP0, PowerManager emite `FinishAllRunningTasksPartialIntent` que mata processos de baixa prioridade
+3. Nosso processo `logcat` (filho de `su`) morre durante a transição
+4. Nosso APK (processo 2586) **continua vivo em memória**, mas o thread `LogcatWatcher` fica bloqueado em `readLine()` lendo de um FD morto
+5. `watcher.isAlive()` retorna **true** (thread em espera é "vivo"), então o watchdog não detecta e não re-cria
+6. APK fica silencioso até o próximo cold boot
+
+**Diagnóstico via logs:**
+- Último log do APK antes do travamento: `rearmed (watcher reusado)` (14:30:08)
+- Depois, 1 minuto completo de silêncio enquanto câmera e aviso aconteciam
+- Sistema emitiu `am_resume_activity` do OpeningDivideActivity, mas APK não logou "aviso detectado"
+- `am_proc_died` do khalleb nunca apareceu (processo não morreu, só o thread ficou zumbi)
+
+**Fix v0.4.0:**
+Novo `HmiServiceReceiver` escuta `com.mitsubishielectric.ada.appservice.powermanager.ACTION_HMI_SERVICE_START` que o PowerManager emite em cada `ExitLP0`. Quando recebe, chama `AutoOkService` com `ACTION_FORCE_RESTART` → `forceRestartWatcher()` mata watcher antigo (interrompe o `readLine()` bloqueado) e cria novo. Além disso, `AlarmManager` dispara o mesmo caminho a cada 60s como fallback. Nova permissão `WAKE_LOCK` necessária.
+
+**Validado no carro 2026-10-17:** cenário câmera de ré → aviso persiste **não acontece mais**.
+
+**Logs do bug preservados em:** `~/backup-honda-civic-g10/error-history-2026-10-17-camera-ride-bug/`
+
 ---
 
 ## 18. Timeline de modificações feitas por nós
@@ -915,7 +1081,9 @@ Próxima aparição do needle → dispara callback de novo
 | 2026-10-17 | Rodada 1 — APK v0.2.0 (delay reduzido, logs persistentes, watchdog, multi-coord) | Delay session start → tap: 10s → 5s | partial `4a1206d` |
 | 2026-10-17 | Rodada 1 Hotfix — APK v0.3.0 (fix EPERM via reuso do watcher) | Zero stacktraces de EPERM | `4a1206d` |
 | 2026-10-17 | Rodada 2 — framework extraído de cap.img via debugfs (sem ida ao carro) | 104 arquivos em `vendor-framework/` | — (apks-dumped está no .gitignore) |
-| 2026-10-17 | Fase 8A — deep-scan OTA com todas as partições + packages.xml + /proc/* | scan.tar.gz 897 KB extraído → gera este MAPA | pendente |
+| 2026-10-17 | Fase 8A — deep-scan OTA com todas as partições + packages.xml + /proc/* | scan.tar.gz 897 KB extraído → gera este MAPA | `46a99aa` |
+| 2026-10-17 | Documentação GitHub: README bilíngue, GIF animado real do carro, mockups SVG EN, 5 docs pt-BR + 4 EN preenchidos | Repo visualmente pronto para público internacional | `0f5b3cc` + `c55470d` + `d8a2d56` + `7dabe22` |
+| 2026-10-17 | APK v0.4.0 — fix do bug "aviso persiste após câmera de ré" | HmiServiceReceiver + AlarmReceiver + forceRestartWatcher. Resolve inoperância após LP0. Validado no carro. | pendente |
 
 ---
 

@@ -16,11 +16,19 @@ O objetivo foi atingido. Aviso é suprimido automaticamente em cada boot.
 
 **Antes de responder qualquer pergunta sobre o projeto, LEIA EM ORDEM:**
 
-1. **`docs/MAPA.md`** ⭐ — **Atlas navegável da central** (reflexo do estado real: partições, APKs, services, nossas modificações, hall of fame de bugs). Primeira consulta sempre. Atualize sempre que descobrir fato novo ou modificar algo real.
+1. **`docs/MAPA.md`** ⭐ — **Atlas navegável da central** (reflexo do estado real: partições, APKs, services, nossas modificações, hall of fame de bugs). Primeira consulta sempre.
 2. **`docs/fase7-deploy-2026-10-16/README.md`** — Documentação do deploy final.
 3. **`docs/proxima-sessao.md`** — Pontos de entrada específicos ("quero atualizar o APK", "preciso de rollback", etc.).
 
 O MAPA cobre 90% das perguntas; os outros dois complementam quando precisa de narrativa de descoberta ou passo-a-passo detalhado.
+
+### 🔴 REGRA DE OURO — SEMPRE ATUALIZAR O MAPA
+
+**Tudo de importante que for descoberto, decidido ou aprendido sobre a central vai para `docs/MAPA.md`. Sem exceção.** Isso inclui novos nomes de Activity/Service/Receiver/Broadcast, novos arquivos/partições relevantes, novas modificações nossas, novos bugs corrigidos (com causa raiz), novas rotas de deploy, novos backups.
+
+Antes de encerrar qualquer análise, mudança no APK, ou investigação de bug: **atualizar o MAPA é obrigatório** (seção §0 do próprio MAPA tem a tabela de onde registrar cada tipo de descoberta).
+
+O MAPA deve ser mais fiel que a memória da sessão. Quando em dúvida entre "vale salvar?" vs "é trivial", sempre salve.
 
 ## O que foi feito (resumo técnico)
 
@@ -40,6 +48,9 @@ O MAPA cobre 90% das perguntas; os outros dois complementam quando precisa de na
 | Combo cold boot | **`AUDIO 5s`** + confirmar reiniciar |
 | Botão OK do Aviso | X=400, Y=350 (tela 800×480) |
 | Activity do Aviso | `com.mitsubishielectric.ada.app.dalauncher/.OpeningDivideActivity` |
+| Activity da câmera de ré | `com.mitsubishielectric.ada.app.camera/.activity.RearWideCameraDisplayActivity` |
+| Broadcast crítico (recovery LP0) | `com.mitsubishielectric.ada.appservice.powermanager.ACTION_HMI_SERVICE_START` |
+| Versão atual do APK | 4 (v0.4.0 — fix do bug de LP0) |
 | Testkey SHA-256 | `A4:0D:A8:0A:59:D1:70:CA:A9:50:CF:15:C1:8C:45:4D:47:A3:9B:26:98:9D:8B:64:0E:CD:74:5B:A7:1B:F5:DC` |
 
 ## Base de conhecimento histórica
