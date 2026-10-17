@@ -14,12 +14,13 @@ que aparece na partida do carro, construindo um APK auto-OK próprio
 
 O objetivo foi atingido. Aviso é suprimido automaticamente em cada boot.
 
-**Antes de responder qualquer pergunta sobre o projeto, LEIA:**
+**Antes de responder qualquer pergunta sobre o projeto, LEIA EM ORDEM:**
 
-1. **`docs/fase7-deploy-2026-10-16/README.md`** — ponto de entrada da documentação final (resumo + navegação pros outros 6 docs da Fase 7).
-2. **`docs/proxima-sessao.md`** — pontos de entrada específicos ("quero atualizar o APK", "preciso de rollback", "APK parou de funcionar", etc.).
+1. **`docs/MAPA.md`** ⭐ — **Atlas navegável da central** (reflexo do estado real: partições, APKs, services, nossas modificações, hall of fame de bugs). Primeira consulta sempre. Atualize sempre que descobrir fato novo ou modificar algo real.
+2. **`docs/fase7-deploy-2026-10-16/README.md`** — Documentação do deploy final.
+3. **`docs/proxima-sessao.md`** — Pontos de entrada específicos ("quero atualizar o APK", "preciso de rollback", etc.).
 
-Esses dois arquivos cobrem 95% das perguntas que podem surgir.
+O MAPA cobre 90% das perguntas; os outros dois complementam quando precisa de narrativa de descoberta ou passo-a-passo detalhado.
 
 ## O que foi feito (resumo técnico)
 
