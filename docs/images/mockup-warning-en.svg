@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" width="800" height="480" role="img" aria-label="Honda Civic G10 head unit warning screen (English)">
+  <defs>
+    <linearGradient id="bezel" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2a2a2a"/>
+      <stop offset="100%" stop-color="#111"/>
+    </linearGradient>
+    <linearGradient id="btn" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#333"/>
+      <stop offset="100%" stop-color="#1a1a1a"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="480" fill="url(#bezel)"/>
+  <rect x="8" y="8" width="784" height="464" fill="#000" rx="4"/>
+
+  <g>
+    <rect x="88" y="52" width="624" height="360" fill="none" stroke="#f0c93c" stroke-width="4" rx="6"/>
+    <rect x="90" y="54" width="620" height="356" fill="#0d0d0d" rx="4"/>
+
+    <text x="400" y="108" text-anchor="middle" fill="#fff"
+          font-family="Helvetica, Arial, sans-serif" font-size="36" font-weight="500">Warning</text>
+
+    <g font-family="Helvetica, Arial, sans-serif" font-size="18" fill="#f8f8f8">
+      <text x="400" y="170" text-anchor="middle">The driver is responsible for the safe</text>
+      <text x="400" y="196" text-anchor="middle">operation of this vehicle. Use this system</text>
+      <text x="400" y="222" text-anchor="middle">only when traffic conditions permit.</text>
+      <text x="400" y="248" text-anchor="middle">For more details consult your owner's manual.</text>
+    </g>
+
+    <g>
+      <rect x="315" y="286" width="170" height="48" fill="url(#btn)" stroke="#f0c93c" stroke-width="1.5" rx="3"/>
+      <text x="400" y="318" text-anchor="middle" fill="#fff"
+            font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="500">OK</text>
+    </g>
+
+    <text x="400" y="376" text-anchor="middle" fill="#4a90e2"
+          font-family="Helvetica, Arial, sans-serif" font-size="18"
+          text-decoration="underline">Change language</text>
+  </g>
+
+  <g transform="translate(28,52)" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#888" text-anchor="middle">
+    <circle cx="18" cy="12" r="10" fill="none" stroke="#666" stroke-width="1.5"/>
+    <line x1="18" y1="4" x2="18" y2="12" stroke="#666" stroke-width="1.5"/>
+    <text x="18" y="36">AUDIO</text>
+
+    <rect x="4" y="60" width="28" height="20" fill="none" stroke="#666" stroke-width="1.5" rx="2"/>
+    <circle cx="12" cy="70" r="2" fill="#666"/>
+    <circle cx="18" cy="70" r="2" fill="#666"/>
+    <circle cx="24" cy="70" r="2" fill="#666"/>
+    <circle cx="12" cy="76" r="2" fill="#666"/>
+    <circle cx="18" cy="76" r="2" fill="#666"/>
+    <circle cx="24" cy="76" r="2" fill="#666"/>
+    <text x="18" y="98">HOME</text>
+
+    <text x="18" y="140" font-size="14">+</text>
+    <text x="18" y="166" font-size="11">VOL</text>
+    <text x="18" y="188" font-size="14">—</text>
+  </g>
+
+  <g transform="translate(752,52)" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#888" text-anchor="middle">
+    <circle cx="18" cy="78" r="22" fill="none" stroke="#666" stroke-width="1.5"/>
+    <circle cx="18" cy="78" r="8" fill="#555"/>
+  </g>
+</svg>

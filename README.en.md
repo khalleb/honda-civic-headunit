@@ -22,7 +22,7 @@
 
 <div align="center">
 
-<img src="docs/images/antes-depois.gif" alt="Before: warning appears. After: warning goes away on its own in ~3s" width="640"/>
+<img src="docs/images/hero-en.svg" alt="Before: Warning screen. After: Main launcher. Auto-dismissed in ~3s." width="100%"/>
 
 **Every time you turn the car on, the head unit shows the Warning.** Before, you had to tap it manually. Now the warning appears and disappears on its own in ~3 seconds — you don't even touch the screen.
 
@@ -33,7 +33,9 @@
 ## 🎯 The problem
 
 <div align="center">
-<img src="docs/images/foto-aviso-painel.jpg" alt="Warning screen on Honda Civic G10 head unit" width="640"/>
+<img src="docs/images/foto-aviso-painel.jpg" alt="Warning screen on Honda Civic G10 head unit (Brazilian firmware shown)" width="640"/>
+
+<sub>Real photo from the owner's 2017 Civic EXL BR. The international variants show the same screen in English/your local language — the only difference is the translated text; the layout, button position and behavior are identical.</sub>
 </div>
 
 Every time you turn the car on, the head unit shows:
@@ -56,6 +58,14 @@ Once installed, the APK:
 4. **Warning disappears**. You barely noticed.
 
 Zero human touch. Works on every car start, forever.
+
+### 📹 Proof: real deploy in the owner's car
+
+<div align="center">
+<img src="docs/images/antes-depois.gif" alt="Real footage of warning appearing and auto-dismissing on the Brazilian 2017 Civic EXL" width="560"/>
+
+<sub>Real footage from the Brazilian 2017 Civic EXL (firmware `1.F187.16`). The warning in the video is in Portuguese because that's the owner's car. International variants show the same flow with the warning translated to your local language.</sub>
+</div>
 
 ---
 
