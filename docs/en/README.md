@@ -1,22 +1,46 @@
 # 🇺🇸 English Documentation
 
-> ⚠️ **Translation in progress.** Full documentation is currently in Portuguese
-> at [`docs/pt-BR/`](../pt-BR/) and in [`docs/fase7-deploy-2026-10-16/`](../fase7-deploy-2026-10-16/).
-> Translation PRs welcome! See [CONTRIBUTING.md](../../CONTRIBUTING.md).
+Practical documentation to use/adapt the project. For those who just want to deploy on their own HU.
 
-## Quick overview
+## Index
 
-This project automatically dismisses the "Driver Responsibility" disclaimer screen that appears on
-every boot of Honda Civic G10 head units (Mitsubishi Andromeda, Android 4.2.2, Tegra 3). Works
-by installing a custom APK + `su` setuid binary into `/system/` via the **EvilValet** vulnerability
-(testkey AOSP accepted by HU recovery).
+| Doc | Description |
+|---|---|
+| [`00-overview.md`](00-overview.md) | What the project does and why |
+| [`03-finding-your-firmware.md`](03-finding-your-firmware.md) | How to adapt for other firmware |
+| [`07-rollback.md`](07-rollback.md) | Reverting everything |
+| [`08-backups.md`](08-backups.md) | Complete backup catalog |
 
-## Started here
+**Portuguese-only (translation welcome!):**
 
-- **Just want to deploy?** → [`QUICKSTART.md`](../../QUICKSTART.md) (Portuguese, but commands are universal)
-- **Different firmware than ours?** → [`../pt-BR/03-descobrindo-sua-safra.md`](../pt-BR/03-descobrindo-sua-safra.md) (Portuguese — translate help wanted!)
-- **How it works technically?** → [`../fase7-deploy-2026-10-16/`](../fase7-deploy-2026-10-16/) (Portuguese)
-- **Need rollback?** → [`../pt-BR/07-rollback.md`](../pt-BR/07-rollback.md) (Portuguese)
+| Doc | Description |
+|---|---|
+| [`../pt-BR/01-arquitetura-ataque.md`](../pt-BR/01-arquitetura-ataque.md) | How the EvilValet attack works |
+| [`../pt-BR/02-pre-requisitos.md`](../pt-BR/02-pre-requisitos.md) | Hardware, software, keystore |
+| [`../pt-BR/04-build-do-pacote.md`](../pt-BR/04-build-do-pacote.md) | Compile the OTA package step by step |
+| [`../pt-BR/05-deploy-no-carro.md`](../pt-BR/05-deploy-no-carro.md) | Protocol in the car |
+| [`../pt-BR/06-troubleshooting.md`](../pt-BR/06-troubleshooting.md) | Decision tree when something fails |
+
+## Recommended path
+
+### If this is your first contact with the project
+
+1. [`00-overview.md`](00-overview.md) — context
+2. [`../../DISCLAIMER.md`](../../DISCLAIMER.md) — read the risks
+3. If firmware `1.F187.16` BR: follow [`../../QUICKSTART.md`](../../QUICKSTART.md) (Portuguese — commands are universal)
+4. If other firmware: [`03-finding-your-firmware.md`](03-finding-your-firmware.md)
+
+### If you already deployed and something went wrong
+
+1. [`../pt-BR/06-troubleshooting.md`](../pt-BR/06-troubleshooting.md) — complete decision tree (Portuguese)
+2. If nothing helps: [`07-rollback.md`](07-rollback.md) — revert everything
+3. Open an [issue](../../.github/ISSUE_TEMPLATE/) with APK log + deploy logs
+
+### If you're a researcher / want to understand deeply
+
+1. [`00-overview.md`](00-overview.md) — summary
+2. [`../MAPA.md`](../MAPA.md) — navigable atlas of the HU (partitions, APKs, binaries) — mostly Portuguese labels but structure is clear
+3. [`../fase7-deploy-2026-10-16/`](../fase7-deploy-2026-10-16/) — 7 technical docs with discovery narrative, technical findings, deep dives (Portuguese)
 
 ## Tested firmware
 
@@ -29,13 +53,27 @@ by installing a custom APK + `su` setuid binary into `/system/` via the **EvilVa
 - Accord 2016+ with Display Audio
 - Civic Avancier, Civic URV
 
-For other firmware, see [`../pt-BR/03-descobrindo-sua-safra.md`](../pt-BR/03-descobrindo-sua-safra.md) — the procedure to find your `custom_rom.type` via a diagnostic OTA package.
+For other firmware, see [`03-finding-your-firmware.md`](03-finding-your-firmware.md) — the procedure to find your `custom_rom.type` via a diagnostic OTA package.
 
 ## Report your firmware
 
-If you have a different Honda G10 variant, please report via the [issue template](../../.github/ISSUE_TEMPLATE/nova-safra.md). The template is bilingual (PT-BR + EN) — fill in English works.
+If you have a different Honda G10 variant, please report via the [issue template](../../.github/ISSUE_TEMPLATE/nova-safra.md). Both Portuguese and English accepted.
 
 Even if you don't deploy, just the technical fields help build the compatibility matrix.
+
+## Translation help wanted
+
+The following Portuguese docs still need English translation:
+
+- `../pt-BR/01-arquitetura-ataque.md` → `docs/en/01-attack-architecture.md`
+- `../pt-BR/02-pre-requisitos.md` → `docs/en/02-prerequisites.md`
+- `../pt-BR/04-build-do-pacote.md` → `docs/en/04-building-the-package.md`
+- `../pt-BR/05-deploy-no-carro.md` → `docs/en/05-deploying-in-car.md`
+- `../pt-BR/06-troubleshooting.md` → `docs/en/06-troubleshooting.md`
+- All of `../fase7-deploy-2026-10-16/`
+- `../MAPA.md` → `docs/en/MAP.md`
+
+Fork + PR welcome. See [`../../CONTRIBUTING.md`](../../CONTRIBUTING.md).
 
 ## Credits
 
