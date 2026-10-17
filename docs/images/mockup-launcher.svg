@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" width="800" height="480" role="img" aria-label="Tela principal (launcher) da central depois do aviso ser dispensado">
+  <defs>
+    <linearGradient id="bezel2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2a2a2a"/>
+      <stop offset="100%" stop-color="#111"/>
+    </linearGradient>
+    <linearGradient id="iconBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2b2b2b"/>
+      <stop offset="100%" stop-color="#1a1a1a"/>
+    </linearGradient>
+    <linearGradient id="statusBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a1a"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="480" fill="url(#bezel2)"/>
+  <rect x="8" y="8" width="784" height="464" fill="#000" rx="4"/>
+
+  <rect x="48" y="36" width="704" height="30" fill="url(#statusBg)" rx="2"/>
+  <text x="60" y="56" fill="#f8f8f8" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="500">14:32</text>
+  <text x="740" y="56" fill="#f8f8f8" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="end">22°C</text>
+
+  <g font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#eee" text-anchor="middle">
+    <g transform="translate(130,120)">
+      <rect x="0" y="0" width="110" height="110" fill="url(#iconBg)" rx="12" stroke="#333"/>
+      <circle cx="55" cy="48" r="20" fill="none" stroke="#4a90e2" stroke-width="3"/>
+      <text x="55" y="54" fill="#4a90e2" font-size="22" font-weight="bold">♪</text>
+      <text x="55" y="134">Áudio</text>
+    </g>
+
+    <g transform="translate(260,120)">
+      <rect x="0" y="0" width="110" height="110" fill="url(#iconBg)" rx="12" stroke="#333"/>
+      <polygon points="35,25 85,45 85,75 35,95 35,25" fill="none" stroke="#56c271" stroke-width="3"/>
+      <text x="55" y="134">Navegação</text>
+    </g>
+
+    <g transform="translate(390,120)">
+      <rect x="0" y="0" width="110" height="110" fill="url(#iconBg)" rx="12" stroke="#333"/>
+      <path d="M 35 35 L 75 35 L 75 55 L 65 55 L 65 85 L 45 85 L 45 55 L 35 55 Z"
+            fill="none" stroke="#f0c93c" stroke-width="3"/>
+      <text x="55" y="134">Telefone</text>
+    </g>
+
+    <g transform="translate(520,120)">
+      <rect x="0" y="0" width="110" height="110" fill="url(#iconBg)" rx="12" stroke="#333"/>
+      <rect x="30" y="30" width="50" height="50" fill="none" stroke="#e94560" stroke-width="3" rx="4"/>
+      <circle cx="55" cy="55" r="10" fill="none" stroke="#e94560" stroke-width="3"/>
+      <text x="55" y="134">CarPlay</text>
+    </g>
+
+    <g transform="translate(650,120)">
+      <rect x="0" y="0" width="110" height="110" fill="url(#iconBg)" rx="12" stroke="#333"/>
+      <circle cx="55" cy="55" r="22" fill="none" stroke="#9d7cd8" stroke-width="3"/>
+      <circle cx="55" cy="55" r="4" fill="#9d7cd8"/>
+      <text x="55" y="134">Config</text>
+    </g>
+
+    <g transform="translate(195,290)">
+      <rect x="0" y="0" width="110" height="110" fill="url(#iconBg)" rx="12" stroke="#333"/>
+      <circle cx="55" cy="55" r="22" fill="none" stroke="#56c271" stroke-width="3"/>
+      <path d="M 45 50 L 55 60 L 70 42" fill="none" stroke="#56c271" stroke-width="3"
+            stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="55" y="424">Rádio</text>
+    </g>
+
+    <g transform="translate(325,290)">
+      <rect x="0" y="0" width="110" height="110" fill="url(#iconBg)" rx="12" stroke="#333"/>
+      <polygon points="55,30 70,50 60,50 60,75 50,75 50,50 40,50" fill="#4a90e2"/>
+      <text x="55" y="424">Veículo</text>
+    </g>
+
+    <g transform="translate(455,290)">
+      <rect x="0" y="0" width="110" height="110" fill="url(#iconBg)" rx="12" stroke="#333"/>
+      <path d="M 30 45 Q 30 30 55 30 Q 80 30 80 45 L 80 70 Q 80 85 55 85 Q 30 85 30 70 Z"
+            fill="none" stroke="#f0c93c" stroke-width="3"/>
+      <text x="55" y="424">Clima</text>
+    </g>
+
+    <g transform="translate(585,290)">
+      <rect x="0" y="0" width="110" height="110" fill="url(#iconBg)" rx="12" stroke="#333"/>
+      <circle cx="55" cy="55" r="22" fill="none" stroke="#e94560" stroke-width="3"/>
+      <path d="M 55 40 L 55 55 L 65 65" fill="none" stroke="#e94560" stroke-width="3"
+            stroke-linecap="round"/>
+      <text x="55" y="424">Apps</text>
+    </g>
+  </g>
+</svg>

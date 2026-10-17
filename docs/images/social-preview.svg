@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-label="Honda Civic G10 — Skip Disclaimer social preview">
+  <defs>
+    <linearGradient id="pageBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f0c93c"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="screenBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2a2a2a"/>
+      <stop offset="100%" stop-color="#000"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#pageBg)"/>
+
+  <g transform="translate(0,0)">
+    <circle cx="100" cy="100" r="2" fill="#3b82f6" opacity="0.3"/>
+    <circle cx="200" cy="60" r="1.5" fill="#3b82f6" opacity="0.3"/>
+    <circle cx="1180" cy="120" r="2" fill="#60a5fa" opacity="0.3"/>
+    <circle cx="80" cy="580" r="2" fill="#60a5fa" opacity="0.3"/>
+    <circle cx="1200" cy="540" r="1.5" fill="#3b82f6" opacity="0.3"/>
+  </g>
+
+  <g transform="translate(60,160)">
+    <text x="0" y="0" fill="#f8fafc" font-family="Helvetica, Arial, sans-serif" font-size="56" font-weight="800">Honda Civic G10</text>
+    <text x="0" y="68" fill="url(#accent)" font-family="Helvetica, Arial, sans-serif" font-size="48" font-weight="700">Skip Disclaimer</text>
+
+    <rect x="0" y="100" width="80" height="4" fill="url(#accent)"/>
+
+    <text x="0" y="140" fill="#cbd5e1" font-family="Helvetica, Arial, sans-serif" font-size="22">Elimine automaticamente a tela de "Aviso"</text>
+    <text x="0" y="170" fill="#cbd5e1" font-family="Helvetica, Arial, sans-serif" font-size="22">que aparece sempre que você liga o carro.</text>
+
+    <g transform="translate(0,220)" font-family="Helvetica, Arial, sans-serif" font-size="14">
+      <rect x="0" y="0" width="260" height="36" rx="4" fill="#1e40af"/>
+      <text x="130" y="23" text-anchor="middle" fill="#fff" font-weight="500">Android 4.2.2 · Tegra 3 · Mitsubishi</text>
+
+      <rect x="0" y="48" width="200" height="36" rx="4" fill="#166534"/>
+      <text x="100" y="71" text-anchor="middle" fill="#fff" font-weight="500">Safra 1.F187.16 BR ✓</text>
+
+      <rect x="0" y="96" width="140" height="36" rx="4" fill="#9a3412"/>
+      <text x="70" y="119" text-anchor="middle" fill="#fff" font-weight="500">Open source · MIT</text>
+    </g>
+
+    <text x="0" y="400" fill="#64748b" font-family="monospace" font-size="18">github.com/khalleb/honda-civic-headunit</text>
+  </g>
+
+  <g transform="translate(720,120)">
+    <rect x="0" y="0" width="480" height="300" fill="#1a1a1a" stroke="#374151" stroke-width="2" rx="8"/>
+    <rect x="8" y="8" width="464" height="284" fill="#000" rx="4"/>
+
+    <rect x="48" y="40" width="384" height="220" fill="none" stroke="#f0c93c" stroke-width="3" rx="4"/>
+    <rect x="50" y="42" width="380" height="216" fill="#0d0d0d" rx="2"/>
+
+    <text x="240" y="78" text-anchor="middle" fill="#fff" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="500">Aviso</text>
+
+    <g font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#f0f0f0">
+      <text x="240" y="108" text-anchor="middle">O motorista é o responsável pela condução</text>
+      <text x="240" y="124" text-anchor="middle">segura deste veículo. Use este sistema</text>
+      <text x="240" y="140" text-anchor="middle">somente quando as condições de tráfego permitirem.</text>
+    </g>
+
+    <g>
+      <rect x="190" y="168" width="100" height="30" fill="#2a2a2a" stroke="#f0c93c" stroke-width="1" rx="2"/>
+      <text x="240" y="188" text-anchor="middle" fill="#fff" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="500">OK</text>
+    </g>
+
+    <text x="240" y="228" text-anchor="middle" fill="#4a90e2" font-family="Helvetica, Arial, sans-serif" font-size="11" text-decoration="underline">Alterar o idioma</text>
+  </g>
+
+  <g transform="translate(960,440)">
+    <line x1="0" y1="0" x2="60" y2="0" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/>
+    <polygon points="60,-8 76,0 60,8" fill="#60a5fa"/>
+    <text x="38" y="-14" text-anchor="middle" fill="#60a5fa" font-family="monospace" font-size="12">~5s</text>
+  </g>
+
+  <g transform="translate(1050,420)">
+    <rect x="0" y="0" width="180" height="110" fill="#1a1a1a" stroke="#374151" stroke-width="1.5" rx="4"/>
+    <rect x="4" y="4" width="172" height="102" fill="#000" rx="2"/>
+    <g font-family="Helvetica, Arial, sans-serif" font-size="7" fill="#eee" text-anchor="middle">
+      <g transform="translate(20,16)">
+        <rect width="30" height="30" fill="#2b2b2b" rx="4"/>
+        <circle cx="15" cy="15" r="7" fill="none" stroke="#4a90e2" stroke-width="1.5"/>
+      </g>
+      <g transform="translate(60,16)">
+        <rect width="30" height="30" fill="#2b2b2b" rx="4"/>
+        <polygon points="10,8 24,14 24,22 10,28" fill="none" stroke="#56c271" stroke-width="1.5"/>
+      </g>
+      <g transform="translate(100,16)">
+        <rect width="30" height="30" fill="#2b2b2b" rx="4"/>
+        <path d="M 10,10 L 20,10 L 20,15 L 17,15 L 17,24 L 13,24 L 13,15 L 10,15 Z" fill="#f0c93c"/>
+      </g>
+      <g transform="translate(140,16)">
+        <rect width="30" height="30" fill="#2b2b2b" rx="4"/>
+        <rect x="8" y="8" width="14" height="14" fill="none" stroke="#e94560" stroke-width="1.5" rx="2"/>
+      </g>
+
+      <g transform="translate(40,56)">
+        <rect width="30" height="30" fill="#2b2b2b" rx="4"/>
+        <circle cx="15" cy="15" r="6" fill="none" stroke="#56c271" stroke-width="1.5"/>
+      </g>
+      <g transform="translate(80,56)">
+        <rect width="30" height="30" fill="#2b2b2b" rx="4"/>
+        <polygon points="15,8 20,16 10,16" fill="#4a90e2"/>
+      </g>
+      <g transform="translate(120,56)">
+        <rect width="30" height="30" fill="#2b2b2b" rx="4"/>
+        <circle cx="15" cy="15" r="7" fill="none" stroke="#f0c93c" stroke-width="1.5"/>
+      </g>
+    </g>
+  </g>
+
+  <text x="640" y="610" text-anchor="middle" fill="#64748b" font-family="Helvetica, Arial, sans-serif" font-size="14">by @khalleb · based on librick/ic1101 + codeage/root-honda</text>
+</svg>
