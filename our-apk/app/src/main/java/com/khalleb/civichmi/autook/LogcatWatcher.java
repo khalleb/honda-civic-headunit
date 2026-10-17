@@ -37,6 +37,14 @@ public class LogcatWatcher {
         thread.start();
     }
 
+    public synchronized boolean isAlive() {
+        if (!running) {
+            return false;
+        }
+        Thread t = this.thread;
+        return t != null && t.isAlive();
+    }
+
     private static final class WatchRunnable implements Runnable {
         private final LogcatWatcher watcher;
 
@@ -54,10 +62,17 @@ public class LogcatWatcher {
         running = false;
         Process p = logcatProcess;
         if (p != null) {
-            p.destroy();
+            destroyQuietly(p);
         }
         logcatProcess = null;
         thread = null;
+    }
+
+    private static void destroyQuietly(Process p) {
+        try {
+            p.destroy();
+        } catch (Throwable ignored) {
+        }
     }
 
     private void watchLoop() {
@@ -77,7 +92,7 @@ public class LogcatWatcher {
             closeQuietly(reader);
             Process p = logcatProcess;
             if (p != null) {
-                p.destroy();
+                destroyQuietly(p);
                 logcatProcess = null;
             }
         }
@@ -96,7 +111,6 @@ public class LogcatWatcher {
         while (running && (line = reader.readLine()) != null) {
             if (line.contains(activityNeedle)) {
                 callback.onDetected();
-                return;
             }
         }
     }

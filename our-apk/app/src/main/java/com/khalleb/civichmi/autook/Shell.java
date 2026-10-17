@@ -16,6 +16,19 @@ public final class Shell {
         return suExec("input tap " + x + " " + y);
     }
 
+    public static boolean suTapWithFallback(int[][] coords, int intervalMs) {
+        for (int i = 0; i < coords.length; i++) {
+            int[] c = coords[i];
+            if (suTap(c[0], c[1])) {
+                return true;
+            }
+            if (!sleepQuietly(intervalMs)) {
+                return false;
+            }
+        }
+        return false;
+    }
+
     public static boolean suExec(String command) {
         Process p = null;
         DataOutputStream out = null;
@@ -37,6 +50,16 @@ public final class Shell {
             if (p != null) {
                 p.destroy();
             }
+        }
+    }
+
+    private static boolean sleepQuietly(int ms) {
+        try {
+            Thread.sleep(ms);
+            return true;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
         }
     }
 

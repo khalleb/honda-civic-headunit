@@ -3,14 +3,15 @@ package com.khalleb.civichmi.autook;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
-import android.util.Log;
 
 public class AutoOkService extends Service {
 
-    private static final String TAG = AutoOkConfig.LOGCAT_TAG;
-
+    private final Object watcherLock = new Object();
     private LogcatWatcher watcher;
     private volatile boolean handled;
+
+    private Thread watchdogThread;
+    private volatile boolean watchdogRunning;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -19,23 +20,30 @@ public class AutoOkService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        FileLogger.init(this);
+        FileLogger.startSessionOnce();
         if (!isConfigValid()) {
-            Log.e(TAG, "config pendente de preenchimento em AutoOkConfig (Activity e X/Y do OK)");
+            FileLogger.log("ERRO: config invalida em AutoOkConfig");
             stopSelf();
             return START_NOT_STICKY;
         }
-        if (watcher != null) {
-            return START_STICKY;
+        synchronized (watcherLock) {
+            if (watcher != null) {
+                return START_STICKY;
+            }
+            watcher = buildWatcher();
+            watcher.start();
         }
-        watcher = buildWatcher();
-        watcher.start();
-        Log.i(TAG, "watcher iniciado, aguardando " + AutoOkConfig.AVISO_ACTIVITY_NAME);
+        startWatchdog();
+        FileLogger.log("watcher iniciado needle=" + AutoOkConfig.AVISO_ACTIVITY_NAME);
         return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
+        stopWatchdog();
         stopWatcher();
+        FileLogger.log("service destroyed");
         super.onDestroy();
     }
 
@@ -43,7 +51,9 @@ public class AutoOkService extends Service {
         boolean hasActivity = AutoOkConfig.AVISO_ACTIVITY_NAME != null
             && AutoOkConfig.AVISO_ACTIVITY_NAME.length() > 0;
         boolean hasCoords = AutoOkConfig.BUTTON_OK_X >= 0 && AutoOkConfig.BUTTON_OK_Y >= 0;
-        return hasActivity && hasCoords;
+        boolean hasFallback = AutoOkConfig.TAP_FALLBACK_COORDS != null
+            && AutoOkConfig.TAP_FALLBACK_COORDS.length > 0;
+        return hasActivity && hasCoords && hasFallback;
     }
 
     private LogcatWatcher buildWatcher() {
@@ -72,11 +82,15 @@ public class AutoOkService extends Service {
             return;
         }
         handled = true;
+        FileLogger.log("aviso detectado");
         if (!sleepSeconds(AutoOkConfig.DELAY_SECONDS_AFTER_DETECT)) {
             return;
         }
-        boolean ok = Shell.suTap(AutoOkConfig.BUTTON_OK_X, AutoOkConfig.BUTTON_OK_Y);
-        Log.i(TAG, "tap " + AutoOkConfig.BUTTON_OK_X + "," + AutoOkConfig.BUTTON_OK_Y + " -> " + ok);
+        boolean ok = Shell.suTapWithFallback(
+            AutoOkConfig.TAP_FALLBACK_COORDS,
+            AutoOkConfig.TAP_FALLBACK_INTERVAL_MS
+        );
+        FileLogger.log("tap ok=" + ok + " coords=" + AutoOkConfig.TAP_FALLBACK_COORDS.length);
         rearmWatcher();
     }
 
@@ -85,10 +99,7 @@ public class AutoOkService extends Service {
             return;
         }
         handled = false;
-        Log.i(TAG, "watcher rearmado, aguardando proxima aparicao");
-        stopWatcher();
-        watcher = buildWatcher();
-        watcher.start();
+        FileLogger.log("rearmed (watcher reusado)");
     }
 
     private boolean sleepSeconds(int seconds) {
@@ -102,11 +113,78 @@ public class AutoOkService extends Service {
     }
 
     private void stopWatcher() {
-        LogcatWatcher w = watcher;
-        if (w == null) {
+        LogcatWatcher w;
+        synchronized (watcherLock) {
+            w = watcher;
+            watcher = null;
+        }
+        if (w != null) {
+            w.stop();
+        }
+    }
+
+    private void startWatchdog() {
+        if (watchdogThread != null) {
             return;
         }
-        w.stop();
-        watcher = null;
+        watchdogRunning = true;
+        watchdogThread = new Thread(new WatchdogRunnable(this), "AutoOk-Watchdog");
+        watchdogThread.setDaemon(true);
+        watchdogThread.start();
+    }
+
+    private void stopWatchdog() {
+        watchdogRunning = false;
+        Thread t = watchdogThread;
+        if (t != null) {
+            t.interrupt();
+        }
+        watchdogThread = null;
+    }
+
+    private static final class WatchdogRunnable implements Runnable {
+        private final AutoOkService service;
+
+        WatchdogRunnable(AutoOkService service) {
+            this.service = service;
+        }
+
+        @Override
+        public void run() {
+            service.watchdogLoop();
+        }
+    }
+
+    private void watchdogLoop() {
+        while (watchdogRunning) {
+            try {
+                Thread.sleep(AutoOkConfig.WATCHDOG_INTERVAL_SECONDS * 1000L);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+            if (!watchdogRunning) {
+                return;
+            }
+            ensureWatcherAlive();
+        }
+    }
+
+    private void ensureWatcherAlive() {
+        synchronized (watcherLock) {
+            if (handled) {
+                return;
+            }
+            LogcatWatcher w = watcher;
+            if (w != null && w.isAlive()) {
+                return;
+            }
+            if (w != null) {
+                w.stop();
+            }
+            watcher = buildWatcher();
+            watcher.start();
+            FileLogger.log("watchdog: watcher recriado (anterior=" + (w == null ? "null" : "morto") + ")");
+        }
     }
 }
