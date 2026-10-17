@@ -22,9 +22,9 @@
 
 <div align="center">
 
-<img src="docs/images/antes-depois.gif" alt="Antes: aviso aparece. Depois: aviso some sozinho em ~5s" width="640"/>
+<img src="docs/images/antes-depois.gif" alt="Antes: aviso aparece. Depois: aviso some sozinho em ~3s" width="640"/>
 
-**Toda vez que você liga o carro, a central mostra o Aviso.** Antes era clicar manualmente. Agora o aviso aparece e some sozinho em ~5 segundos — você nem precisa tocar na tela.
+**Toda vez que você liga o carro, a central mostra o Aviso.** Antes era clicar manualmente. Agora o aviso aparece e some sozinho em ~3 segundos — você nem precisa tocar na tela.
 
 </div>
 
@@ -78,7 +78,7 @@ Zero toque humano. Funciona em todas as ligadas do carro, pra sempre.
 4. APK + `su` em `/system/` — permanente
 
 **Em operação** (automático, pra sempre):
-- A cada boot do carro, o APK dispensa o aviso em ~5s
+- A cada boot do carro, o APK vê o aviso aparecer e dispensa em ~3s
 - Zero manutenção. Zero interação.
 
 ---

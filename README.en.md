@@ -22,9 +22,9 @@
 
 <div align="center">
 
-<img src="docs/images/antes-depois.gif" alt="Before: warning appears. After: warning goes away on its own in ~5s" width="640"/>
+<img src="docs/images/antes-depois.gif" alt="Before: warning appears. After: warning goes away on its own in ~3s" width="640"/>
 
-**Every time you turn the car on, the head unit shows the Warning.** Before, you had to tap it manually. Now the warning appears and disappears on its own in ~5 seconds — you don't even touch the screen.
+**Every time you turn the car on, the head unit shows the Warning.** Before, you had to tap it manually. Now the warning appears and disappears on its own in ~3 seconds — you don't even touch the screen.
 
 </div>
 
@@ -78,7 +78,7 @@ Zero human touch. Works on every car start, forever.
 4. APK + `su` land in `/system/` — permanent
 
 **In operation** (automatic, forever):
-- On every car boot, the APK dismisses the warning in ~5s
+- On every car boot, the APK sees the warning appear and dismisses it in ~3s
 - Zero maintenance. Zero interaction.
 
 ---
