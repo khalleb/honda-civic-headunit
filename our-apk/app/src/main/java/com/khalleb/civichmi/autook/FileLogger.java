@@ -48,7 +48,7 @@ public final class FileLogger {
                 current.renameTo(backup);
             }
         }
-        log("=== session start versionCode=3 ===");
+        log("=== session start versionCode=4 ===");
     }
 
     public static void log(String msg) {

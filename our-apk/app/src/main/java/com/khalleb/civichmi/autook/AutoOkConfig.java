@@ -27,6 +27,17 @@ public final class AutoOkConfig {
 
     public static final String FILE_LOG_NAME = "autook.log";
 
+    public static final String HMI_SERVICE_START_ACTION =
+        "com.mitsubishielectric.ada.appservice.powermanager.ACTION_HMI_SERVICE_START";
+
+    public static final String ACTION_FORCE_RESTART =
+        "com.khalleb.civichmi.autook.FORCE_RESTART";
+
+    public static final String ACTION_ALARM_HEALTHCHECK =
+        "com.khalleb.civichmi.autook.ALARM_HEALTHCHECK";
+
+    public static final int ALARM_HEALTHCHECK_INTERVAL_SECONDS = 60;
+
     private AutoOkConfig() {
     }
 }

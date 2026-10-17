@@ -1,8 +1,12 @@
 package com.khalleb.civichmi.autook;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
+import android.os.SystemClock;
 
 public class AutoOkService extends Service {
 
@@ -12,6 +16,8 @@ public class AutoOkService extends Service {
 
     private Thread watchdogThread;
     private volatile boolean watchdogRunning;
+
+    private PendingIntent alarmPendingIntent;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -27,15 +33,26 @@ public class AutoOkService extends Service {
             stopSelf();
             return START_NOT_STICKY;
         }
+
+        String action = intent == null ? null : intent.getAction();
+        if (AutoOkConfig.ACTION_FORCE_RESTART.equals(action)) {
+            String source = intent.getStringExtra("source");
+            String cause = intent.getStringExtra("cause");
+            FileLogger.log("FORCE_RESTART source=" + source + " cause=" + cause);
+            forceRestartWatcher();
+            scheduleAlarm();
+            return START_STICKY;
+        }
+
         synchronized (watcherLock) {
-            if (watcher != null) {
-                return START_STICKY;
+            if (watcher == null) {
+                watcher = buildWatcher();
+                watcher.start();
+                FileLogger.log("watcher iniciado needle=" + AutoOkConfig.AVISO_ACTIVITY_NAME);
             }
-            watcher = buildWatcher();
-            watcher.start();
         }
         startWatchdog();
-        FileLogger.log("watcher iniciado needle=" + AutoOkConfig.AVISO_ACTIVITY_NAME);
+        scheduleAlarm();
         return START_STICKY;
     }
 
@@ -43,6 +60,7 @@ public class AutoOkService extends Service {
     public void onDestroy() {
         stopWatchdog();
         stopWatcher();
+        cancelAlarm();
         FileLogger.log("service destroyed");
         super.onDestroy();
     }
@@ -123,6 +141,19 @@ public class AutoOkService extends Service {
         }
     }
 
+    private void forceRestartWatcher() {
+        synchronized (watcherLock) {
+            LogcatWatcher old = watcher;
+            handled = false;
+            if (old != null) {
+                old.stop();
+            }
+            watcher = buildWatcher();
+            watcher.start();
+            FileLogger.log("watcher forcibly recreated");
+        }
+    }
+
     private void startWatchdog() {
         if (watchdogThread != null) {
             return;
@@ -185,6 +216,33 @@ public class AutoOkService extends Service {
             watcher = buildWatcher();
             watcher.start();
             FileLogger.log("watchdog: watcher recriado (anterior=" + (w == null ? "null" : "morto") + ")");
+        }
+    }
+
+    private PendingIntent getAlarmPendingIntent() {
+        if (alarmPendingIntent != null) {
+            return alarmPendingIntent;
+        }
+        Intent i = new Intent(this, AlarmReceiver.class);
+        i.setAction(AutoOkConfig.ACTION_ALARM_HEALTHCHECK);
+        alarmPendingIntent = PendingIntent.getBroadcast(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+        return alarmPendingIntent;
+    }
+
+    private void scheduleAlarm() {
+        AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        if (am == null) {
+            return;
+        }
+        long interval = AutoOkConfig.ALARM_HEALTHCHECK_INTERVAL_SECONDS * 1000L;
+        long first = SystemClock.elapsedRealtime() + interval;
+        am.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, first, interval, getAlarmPendingIntent());
+    }
+
+    private void cancelAlarm() {
+        AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        if (am != null && alarmPendingIntent != null) {
+            am.cancel(alarmPendingIntent);
         }
     }
 }
