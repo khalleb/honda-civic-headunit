@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.khalleb.civichmi.autook"
-    android:versionCode="4"
-    android:versionName="0.4.0">
+    android:versionCode="9"
+    android:versionName="0.5.4">
 
     <uses-sdk android:minSdkVersion="17" android:targetSdkVersion="17" />
 
@@ -28,15 +28,6 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="com.mitsubishielectric.ada.appservice.powermanager.ACTION_HMI_SERVICE_START" />
-            </intent-filter>
-        </receiver>
-
-        <receiver
-            android:name=".AlarmReceiver"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.khalleb.civichmi.autook.ALARM_HEALTHCHECK" />
             </intent-filter>
         </receiver>
 

@@ -17,11 +17,13 @@ public final class AutoOkConfig {
 
     public static final int DELAY_SECONDS_AFTER_DETECT = 1;
 
-    public static final int REARM_DELAY_SECONDS = 10;
+    public static final int REARM_DELAY_SECONDS = 2;
 
-    public static final int BOOT_INITIAL_WAIT_MS = 2000;
+    public static final int BOOT_INITIAL_WAIT_MS = 500;
 
     public static final int WATCHDOG_INTERVAL_SECONDS = 30;
+
+    public static final int TAP_DEDUP_SECONDS = 3;
 
     public static final String LOGCAT_TAG = "AutoOk";
 
@@ -32,11 +34,6 @@ public final class AutoOkConfig {
 
     public static final String ACTION_FORCE_RESTART =
         "com.khalleb.civichmi.autook.FORCE_RESTART";
-
-    public static final String ACTION_ALARM_HEALTHCHECK =
-        "com.khalleb.civichmi.autook.ALARM_HEALTHCHECK";
-
-    public static final int ALARM_HEALTHCHECK_INTERVAL_SECONDS = 60;
 
     private AutoOkConfig() {
     }

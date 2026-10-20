@@ -48,7 +48,7 @@ public final class FileLogger {
                 current.renameTo(backup);
             }
         }
-        log("=== session start versionCode=4 ===");
+        log("=== session start versionCode=" + com.khalleb.civichmi.autook.BuildConfig.VERSION_CODE + " ===");
     }
 
     public static void log(String msg) {

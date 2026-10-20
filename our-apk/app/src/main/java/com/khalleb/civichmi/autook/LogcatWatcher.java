@@ -14,6 +14,10 @@ public class LogcatWatcher {
 
     private static final String TAG = AutoOkConfig.LOGCAT_TAG;
 
+    private static final String EVENT_CREATE = "am_create_activity";
+    private static final String EVENT_NEW_INTENT = "am_new_intent";
+    private static final String ACTION_NORMAL = "dalauncher.action.NORMAL_STARTUP";
+
     private final String activityNeedle;
     private final int initialWaitMs;
     private final OnDetected callback;
@@ -101,7 +105,7 @@ public class LogcatWatcher {
     private Process startLogcat() throws IOException {
         Process p = Runtime.getRuntime().exec("su");
         java.io.DataOutputStream out = new java.io.DataOutputStream(p.getOutputStream());
-        out.writeBytes("exec logcat -v brief ActivityManager:I *:S 2>&1\n");
+        out.writeBytes("exec logcat -b events -v threadtime am_create_activity:I am_new_intent:I *:S 2>&1\n");
         out.flush();
         return p;
     }
@@ -109,9 +113,16 @@ public class LogcatWatcher {
     private void consume(BufferedReader reader) throws IOException {
         String line;
         while (running && (line = reader.readLine()) != null) {
-            if (line.contains(activityNeedle)) {
-                callback.onDetected();
+            if (!line.contains(activityNeedle)) {
+                continue;
             }
+            if (!line.contains(ACTION_NORMAL)) {
+                continue;
+            }
+            if (!line.contains(EVENT_CREATE) && !line.contains(EVENT_NEW_INTENT)) {
+                continue;
+            }
+            callback.onDetected();
         }
     }
 
