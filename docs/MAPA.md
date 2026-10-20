@@ -2,7 +2,7 @@
 
 **Reflexo navegável do estado real da central multimídia (Honda Display Audio 7", Mitsubishi Andromeda, Tegra 3, Android 4.2.2).**
 
-Última sincronização: `2026-10-17` (APK v0.4.0 + fix do bug de LP0).
+Última sincronização: `2026-10-19` (REA integrado + fluxo de deodex automatizado + validação da `OpeningDivideActivity` + análise completa da whitelist Mitsubishi + mapeamento do recovery pós-LP0 via `PowerManagerBroadcastSender` + **raio-x de superfície completo** da plataforma: 364 AIDLs, 445 broadcasts, 27 content authorities, 48 sysprops, 110 APKs mapeados).
 
 ---
 
@@ -378,6 +378,8 @@ Partição exclusiva da safra BR (não aparece em safras US).
 
 ## 7. APKs do `/system/vendor/app/` (78 total)
 
+> ⚠️ **Toda a vendor-app é odex-only (pre-dexed).** Cada APK aqui vem **sem `classes.dex`** — o bytecode está no `.odex` ao lado (ex: `DaLauncher.apk` + `DaLauncher.odex`). JADX/apktool/REA só enxergam o manifest e os resources até esse `.odex` ser transformado em `classes.dex` e re-injetado no APK. Pipeline automatizado em [`tooling/deodex/deodex-apk.sh`](../tooling/deodex/deodex-apk.sh) (ver §20.8). O mesmo vale para `/system/app/`.
+
 | APK | Package | Função |
 |---|---|---|
 | **DaLauncher.apk** 🎯 | com.mitsubishielectric.ada.app.dalauncher | **Launcher principal + OpeningDivideActivity (aviso)** |
@@ -436,6 +438,7 @@ Partição exclusiva da safra BR (não aparece em safras US).
 | StrgSW.apk | com.mitsubishielectric.ada.appservice.strgsw | Steering wheel switches |
 | SystemInfoService.apk | com.mitsubishielectric.ada.app.systeminfoservice | System info |
 | **SystemUpdate.apk** | com.mitsubishielectric.ada.app.systemupdate | **Fluxo OTA (EvilValet target)** |
+| **WhitelistApService.apk** 🎯 | com.mitsubishielectric.ada.appservice.whitelist | **Whitelist Mitsubishi — UX de instalação de apps, NÃO afeta LP0.** Detalhes completos em [`docs/whitelist-mitsubishi-2026-10-19.md`](whitelist-mitsubishi-2026-10-19.md) e §11.7 abaixo. |
 | TaskManager.apk | com.mitsubishielectric.ada.app.taskmanager | Task manager |
 | Telematics.apk | com.mitsubishielectric.ada.appservice.telematics | Telematics |
 | UnitInfoManager.apk | com.mitsubishielectric.ada.appservice.unitinfomanager | Unit info |
@@ -448,7 +451,6 @@ Partição exclusiva da safra BR (não aparece em safras US).
 | VoicePortal.apk | com.mitsubishielectric.ada.app.voiceportal | Voice portal |
 | VoicePortalAp.apk | com.mitsubishielectric.ada.appservice.voiceportalap | Voice service |
 | VRSD.apk | com.mitsubishielectric.ada.framework.speech.vrsd | Voice recognition |
-| WhitelistApService.apk | com.mitsubishielectric.ada.appservice.whitelist | **Whitelist Mitsubishi (bypass signing)** |
 | WifiApp.apk | com.mitsubishielectric.ada.app.wifi | WiFi settings |
 | WifiApService.apk | com.mitsubishielectric.ada.appservice.wifi | WiFi service |
 
@@ -607,6 +609,31 @@ Pacotes OTA do repositório:
 | Comportamento sem AutoOk | Aguarda tap humano no "OK" para liberar launcher |
 | Comportamento com AutoOk v0.3.0 | Tap automático em ~2.5s após detect, aviso some |
 
+### 11.1.1 Internals da `OpeningDivideActivity` (confirmado via REA + jadx, 2026-10-19)
+
+Após deodex do `DaLauncher.apk` (ver §20.8), o REA (`inspect-android-class` + `trace-android-references` + `inspect-android-method`) devolveu:
+
+- Herda de `HomeBaseActivity`.
+- Layout: `R.layout.opening_divide` (não `mm_02_01_02.xml` — este é só o botão interno do `DisclaimerFragment`).
+- 19 fields e 37 métodos. Os reveladores: `createOpeningIntent`, `createCSFIntent`, `createDisclaimerOnHomeIntent`, `createDisclaimerOrEcoIntent`, `createEcoIntent`, `createAntiTheftIntent`, `startNextActivity`, `antiTheftUnlockScreenTransition`, `onHMIServiceReceive`.
+- 6 inner classes (5 anônimas + `HMIServiceReceiver`).
+
+**`onCreate` (decompilação JADX):**
+```java
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    ExpLog.enter("");
+    ExpLog.callApi("onCreate");
+    getWindow().addFlags(1024);
+    setDaThemeTranslucent(true);
+    setDaContentView(R.layout.opening_divide);
+    findViewById(R.id.absoluteBaseLayout);
+    ExpLog.exit("");
+}
+```
+
+**14 classes a referenciam** (`trace-android-references`). O lançador real do aviso no boot é **`com.mitsubishielectric.ada.app.dalauncher.Launcher.HMIServiceReceiver`**: ao receber `ACTION_HMI_SERVICE_START` do PowerManager (§11.6), ele dispara a Activity. As demais referências são colaterais: `CSFFragment`, `DisclaimerFragment` (+ 3 inners), `EcoFragment` (+ 2 inners), `HomeBaseFragment`, `HmiBroadcastReceiver`, `OpeningActivity`, e a própria `OpeningDivideActivity.HMIServiceReceiver`.
+
 ### 11.2 Launcher principal
 
 | Campo | Valor |
@@ -614,6 +641,7 @@ Pacotes OTA do repositório:
 | Package | `com.mitsubishielectric.ada.app.dalauncher` |
 | Activity principal | `.Launcher` (depois do dismiss do aviso) |
 | TaskId | 3 (observado) |
+| Lançador do aviso | `.Launcher$HMIServiceReceiver.onReceive` (confirmado via REA, §11.1.1) |
 
 ### 11.3 Services críticos do boot
 
@@ -674,7 +702,74 @@ Essas transições acontecem **o tempo todo**: ao mudar de ré, abrir/fechar por
 | `com.mitsubishielectric.ada.appservice.powermanager.ACTION_FINISH_ALL_RUNNING_TASKS_PARTIAL` | — | PowerManager mata tasks parciais (preparando LP0) | — |
 
 **Comportamento ligado a nós:**
-Nosso APK não é tratado como "HMI service" pelo PowerManager (está em /system/app mas não é reconhecido pela whitelist Mitsubishi), então o PowerManager **não re-inicia nosso Service** após LP0. Antes da v0.4.0, isso causava o APK ficar silencioso após qualquer LP0.
+Nosso APK não é tratado como "HMI service" pelo PowerManager, então o PowerManager **não re-inicia nosso Service** após LP0. Antes da v0.4.0, isso causava o APK ficar silencioso após qualquer LP0.
+
+**Pattern real descoberto 2026-10-19 (REA, ver [whitelist-mitsubishi-2026-10-19.md](whitelist-mitsubishi-2026-10-19.md) §6):** o PowerManager **não mantém lista** de serviços. Ele é **pub/sub puro** — `PowerManagerBroadcastSender` envia 16 broadcasts, qualquer app com receiver registrado no manifest participa, sem gating de whitelist nem permissão. 33 APKs do shipping referenciam `ACTION_HMI_SERVICE_START` — é o contrato universal. Nossa `HmiServiceReceiver` da v0.4.0 segue esse mesmo pattern.
+
+**Lista dos 16 broadcasts do `PowerManagerBroadcastSender`:**
+
+| Broadcast | Momento |
+|---|---|
+| **`sendHMIServiceStartIntent`** 🎯 | ExitLP0 / AccOnRestart (nós escutamos) |
+| `sendHMIServiceStopIntent` | entrando em LP0 |
+| `sendHMIServicePreStopIntent` | prepare pra LP0 |
+| `sendHMIServiceRestartIntent` | ACC-on durante transição |
+| `sendHMIServiceStopIntentSplit` | variante do stop |
+| `sendFinishAllRunnningTaskForegroundIntent` | mata foreground antes de LP0 |
+| `sendFinishAllRunnningTaskIntent` | mata processos genéricos |
+| `sendFinishAllRunnningTaskPartialIntent` | mata processos parciais |
+| ⭐ `sendResumeCameraIntent` | **retomada da câmera de ré — oportunidade pro AutoOk** (hoje usamos logcat polling) |
+| `sendStartAnimationIntent` | animação de boot |
+| `sendChangeStartCauseNoticeIntent` | mudança de razão de startup |
+| `sendKeyOffLimitNoticeIntent` | timer de key-off expirando |
+| `sendSetVbusResIntent` | VBUS result |
+| `sendSyscomResetStartNoticeIntent` | SysCom reset |
+| `sendVbusOffNoticeIntent` | VBUS desligou |
+
+Causas de startup conhecidas (strings extra em `ACTION_HMI_SERVICE_START`): `"ExitLP0"`, `"AccOnRestart"`, `"ColdBoot"`.
+
+### 11.7 Whitelist Mitsubishi (UX de instalação de apps, não gating de boot) 🆕
+
+Análise estática completa via REA + JADX em 2026-10-19. Documento denso em [`docs/whitelist-mitsubishi-2026-10-19.md`](whitelist-mitsubishi-2026-10-19.md). Resumo:
+
+| Campo | Valor |
+|---|---|
+| APK shell | `com.mitsubishielectric.ada.appservice.whitelist` (`vendor-app/WhitelistApService.apk`) — 5 classes, roda como `android.uid.system` |
+| Biblioteca com a lógica | `vendor-framework/WhitelistLib.jar` — 15 classes (interface AIDL, parser XML, FileManager, Util) |
+| APK portador do XML | `com.honda.displayaudio.whitelist.apk` em `/system/vendor/etc/honda/` (14 KB — **NÃO está no dump 0040**, gap) |
+| XML em runtime | `/data/data/whitelist-1.0.xml` (literal, direto no root de `/data/data/`) |
+| Arquivo temporário durante update | `/data/data/TEMP_whitelist-1.0.xml` |
+| Content URI do provider | `content://com.honda.displayaudio.whitelist/1.0` → AssetFileDescriptor de um ZIP contendo `whitelist-1.0.xml` |
+| Trigger de reload | Boot + `android.intent.action.PACKAGE_REPLACED` com `data=package:com.honda.displayaudio.whitelist` |
+| Regra de substituição | Só se `<contentVersion>` novo > atual (`WhitelistUtil.compareWhitelistContentVersion`) |
+| Interface AIDL | `com.mitsubishielectric.ada.appservice.whitelist.IWhiteListApService` (**action** usa `WhiteList` com L maiúsculo; o resto do código usa `IWhitelistApService`) |
+| Métodos públicos | `checkInstallPackage` (nunca é chamado no shipping), `getPackageNames`, `getApplicationName`, `getAudioInfo`, `getAudioStreamType`, `getRegulation`, `getRevert` |
+
+**Quem consulta a whitelist (grep em 120 odex deodexados):**
+- `AppManager.apk` (gerenciador de apps UI) — `getApplicationName`, `getAudioInfo`, `getRegulation`, `getRevert`.
+- `FileManager.apk` (telas de instalação do USB).
+
+**Ninguém mais.** Nenhum HMI service, nenhum launcher, nenhum PowerManager. Entrar na whitelist tem **efeito cosmético** (nome amigável no AppManager) — não afeta LP0, não remove código da v0.4.0. Ver §16.3.
+
+**Formato do XML:**
+```xml
+<whiteList>
+  <formatVersion>1.0</formatVersion>
+  <contentVersion>N</contentVersion>
+  <controlData>
+    <application>
+      <name>...</name>
+      <package>...</package>
+      <versionCode>...</versionCode>
+      <keyStore>SHA-256_hex_do_certificado</keyStore>
+      <audioStreamType>0..6</audioStreamType>
+      <withAudio>true|false</withAudio>
+      <regulation>0..3</regulation>  <!-- NULL/PARK/SPEED/PARKSPEED -->
+      <revert>0|1</revert>
+    </application>
+  </controlData>
+</whiteList>
+```
 
 ---
 
@@ -960,7 +1055,15 @@ dispara `ACTION_ALARM_HEALTHCHECK` a cada 60s → mesmo efeito (forceRestart).
 
 **Veredito:** reconsiderar só se tiver central de testes dedicada, OU após 6+ meses rodando APK atual sem problema. Alternativa menos invasiva: smali-patch no DaLauncher (surface menor).
 
-### 16.3 ✗ Modificar DaLauncher.apk via smali (não feito)
+### 16.3 ⏸ Adicionar nosso APK à whitelist Mitsubishi (descartado 2026-10-19) 🆕
+
+**Hipótese inicial:** se o PowerManager não reinicia nosso Service após LP0 porque não estamos na whitelist, entrar na whitelist eliminaria o workaround da v0.4.0.
+
+**Investigação (REA + JADX, bulk-deodex de 120 odex):** 100% errada. Dos 120 APKs da vendor, só 2 consomem `IWhitelistApService` — `AppManager` (UI do gerenciador) e `FileManager` (telas de instalação por USB). PowerManager e todos os HMI services são agnósticos à whitelist. Recovery pós-LP0 é pub/sub via `ACTION_HMI_SERVICE_START` — qualquer app com receiver registrado participa, sem lista. Ver [`docs/whitelist-mitsubishi-2026-10-19.md`](whitelist-mitsubishi-2026-10-19.md) §7.
+
+**Veredito:** entrar na whitelist tem **efeito cosmético** (nome amigável no AppManager, metadata de regulação). Não remove código da v0.4.0. Fica no backlog só pra UX futura. Reconsiderar apenas se abrirmos a Fase 9 "AutoOk oficial com nome bonito no gerenciador".
+
+### 16.4 ✗ Modificar DaLauncher.apk via smali (não feito)
 
 **Motivo:** benefício seria aviso realmente nunca aparecer. Risco: brick do launcher = tela preta no boot = precisa rollback OTA de emergência. Rede de segurança existe (dump raw bootable + rollback OTA pronto), mas custo-benefício não compensa dado que AutoOk v0.3.0 funciona em ~5s.
 
@@ -1068,6 +1171,22 @@ Novo `HmiServiceReceiver` escuta `com.mitsubishielectric.ada.appservice.powerman
 
 **Logs do bug preservados em:** `~/backup-honda-civic-g10/error-history-2026-10-17-camera-ride-bug/`
 
+### 17.14 ✓ Mapeamento do recovery pós-LP0 confirma v0.4.0 (REA 2026-10-19) 🆕
+
+**Pergunta de pesquisa:** por que o PowerManager não re-inicia nosso Service após LP0? É porque não estamos na whitelist Mitsubishi?
+
+**Investigação:** deodex de 120 APKs vendor + grep global por `IWhitelistApService` e `ACTION_HMI_SERVICE_START`. Decompilação de `WhitelistApService`, `WhitelistLib`, `PowerManagerApService`, `AppManagerServiceLib` via REA/JADX.
+
+**Causa raiz da nossa confusão inicial:** interpretamos "não ser HMI service" como "não estar na whitelist". Errado em dois níveis:
+1. A whitelist Mitsubishi é consultada só por UI (`AppManager` + `FileManager`) — não é gate de boot.
+2. O PowerManager é pub/sub puro: envia `ACTION_HMI_SERVICE_START` e qualquer app com receiver registrado participa. Não há lista.
+
+**Confirmação da v0.4.0:** nossa `HmiServiceReceiver` + manifest com `intent-filter action=ACTION_HMI_SERVICE_START` é **exatamente o pattern que os 33 APKs do shipping usam** (de `AndroidAuto` a `WifiApService`). Não é workaround — é o jeito oficial.
+
+**Oportunidade descoberta de bônus:** `PowerManagerBroadcastSender.sendResumeCameraIntent` é um broadcast dedicado à retomada da ré. Hoje o AutoOk detecta ré via logcat polling. Pode virar Fase 9 (ver [`docs/whitelist-mitsubishi-2026-10-19.md`](whitelist-mitsubishi-2026-10-19.md) §8.3).
+
+**Documento denso:** [`docs/whitelist-mitsubishi-2026-10-19.md`](whitelist-mitsubishi-2026-10-19.md).
+
 ---
 
 ## 18. Timeline de modificações feitas por nós
@@ -1084,6 +1203,9 @@ Novo `HmiServiceReceiver` escuta `com.mitsubishielectric.ada.appservice.powerman
 | 2026-10-17 | Fase 8A — deep-scan OTA com todas as partições + packages.xml + /proc/* | scan.tar.gz 897 KB extraído → gera este MAPA | `46a99aa` |
 | 2026-10-17 | Documentação GitHub: README bilíngue, GIF animado real do carro, mockups SVG EN, 5 docs pt-BR + 4 EN preenchidos | Repo visualmente pronto para público internacional | `0f5b3cc` + `c55470d` + `d8a2d56` + `7dabe22` |
 | 2026-10-17 | APK v0.4.0 — fix do bug "aviso persiste após câmera de ré" | HmiServiceReceiver + AlarmReceiver + forceRestartWatcher. Resolve inoperância após LP0. Validado no carro. | pendente |
+| 2026-10-19 | REA (`morluto/rea`) integrado como ferramenta de análise estática | MCP server `rea` registrado em `~/.claude.json` com `REA_JADX_MCP_JAR` apontando pro JADX headless. Skill `reverse-engineer-anything` instalado em `~/.claude/skills/`. Script `tooling/deodex/deodex-apk.sh` automatiza o fluxo odex→dex→APK. Primeira validação: `OpeningDivideActivity` do `DaLauncher` (ver §11.1.1). | pendente |
+| 2026-10-19 | Análise estática completa da whitelist Mitsubishi + mapeamento do recovery pós-LP0 | Deodex de 120 APKs vendor. Confirmado que whitelist é UI-only (ver §11.7, §16.3). PowerManager é pub/sub puro com 16 broadcasts (ver §11.6). V0.4.0 segue o pattern correto, nada a mudar. Documento denso em [`docs/whitelist-mitsubishi-2026-10-19.md`](whitelist-mitsubishi-2026-10-19.md). | pendente |
+| 2026-10-19 | Raio-X Camada 1: scan de superfície completo da plataforma | Deodex de 160 APKs/libs (vendor-app + vendor-framework + system-app). 5 scans: 364 interfaces AIDL, 445 broadcasts, 27 content authorities, 48 sysprops, trust map de 110 APKs. Achado-chave: `ICameraAPServiceReverseSignalListener` + `EXIT_REAR_WIDE_CAMERA` + `ACTION_RESUME_CAMERA` abrem caminho pra Fase 9 (ré sem logcat polling). Documentos em [`docs/raio-x/`](raio-x/). | pendente |
 
 ---
 
@@ -1100,6 +1222,14 @@ Novo `HmiServiceReceiver` escuta `com.mitsubishielectric.ada.appservice.powerman
 - [`central-multimidia-civic-g10-kb.md`](../central-multimidia-civic-g10-kb.md) — KB histórico (narrativa de descoberta)
 - [`docs/proxima-sessao.md`](proxima-sessao.md) — Pontos de entrada por tipo de pergunta
 - [`docs/pesquisa-rotas-sem-adb-2026-10-15.md`](pesquisa-rotas-sem-adb-2026-10-15.md) — Pesquisa das 8 rotas sem-ADB
+- [`docs/whitelist-mitsubishi-2026-10-19.md`](whitelist-mitsubishi-2026-10-19.md) — Análise estática da whitelist Mitsubishi + recovery pós-LP0 (REA + JADX)
+- [`docs/raio-x/`](raio-x/) — Raio-X Camada 1 (5 scans do shipping):
+  - [01-apis-aidl.md](raio-x/01-apis-aidl.md) — 364 binder interfaces em 63 domínios
+  - [02-broadcasts.md](raio-x/02-broadcasts.md) — 445 actions em 48 prefixos
+  - [03-content-providers.md](raio-x/03-content-providers.md) — 27 authorities / 52 URIs
+  - [04-system-properties.md](raio-x/04-system-properties.md) — 48 sysprops
+  - [05-trust-map.md](raio-x/05-trust-map.md) — 110 APKs com sharedUserId e perms
+  - [README.md](raio-x/README.md) — índice + metodologia
 
 ### 19.2 Fase 7 (deploy final)
 
@@ -1133,13 +1263,26 @@ Novo `HmiServiceReceiver` escuta `com.mitsubishielectric.ada.appservice.powerman
 - `tooling/apks-dumped/dump-0040/system-framework/` — framework/ parcial (sem symlinks resolvidos)
 - `tooling/apks-dumped/dump-0040/vendor-framework/` — 104 jars/odex de /system/vendor/framework (extraído do raw)
 - `tooling/apks-dumped/dump-0040/vendor-app/` — APKs do /system/vendor/app
+- `tooling/apks-decoded/` — APKs já desodexados, prontos pra análise com REA/JADX:
+  - `DaLauncher-deodexed.apk` (579 smali, 1.2 MB classes.dex) — launcher incluindo `OpeningDivideActivity`
+  - `WhitelistApService-deodexed.apk` (6 smali) — shell binder da whitelist
+  - `WhitelistLib-asapk.apk` (20 smali, APK wrapper) — biblioteca da whitelist (lógica real)
+  - `PowerManagerApService-deodexed.apk` (40 smali, 184 KB classes.dex) — power manager da Mitsubishi
+  - `AppManagerServiceLib-asapk.apk` (41 smali, APK wrapper) — framework de automotive activities
 
 ### 19.6 Referências de terceiros
 
 - https://github.com/codeage/root-honda — su setuid + SuperSU + whitelist Mitsubishi
 - https://github.com/jersacct/2016PilotOneClick — rooteador de Honda Pilot 2016
-- https://github.com/librick/ic1101 — pesquisa RE completa + ota-builder (base do nosso build)
+- https://github.com/librick/ic1101 — pesquisa RE completa + ota-builder (base do nosso build); também fornece `baksmali-2.5.2.jar` + `smali-2.5.2.jar` em `tooling/references/ic1101/apk-rebuilder/input/` (usados pelo script de deodex)
 - https://juniperspring.org — artigo original Eric McDonald sobre EvilValet
+- https://github.com/morluto/rea — ferramenta de reverse engineering com MCP para APK/nativo/firmware. **Como está instalada aqui:** JADX JAR em `~/.local/share/rea/android/jadx-headless-mcp-0.7.1-all.jar`, MCP registrado em `~/.claude.json` (`mcpServers.rea`), skill em `~/.claude/skills/reverse-engineer-anything/`
+
+### 19.7 Nosso tooling (scripts locais)
+
+- [`tooling/deodex/deodex-apk.sh`](../tooling/deodex/deodex-apk.sh) + [`tooling/deodex/README.md`](../tooling/deodex/README.md) — Converte APK odex-only em APK com `classes.dex` injetado (pré-requisito pra JADX/REA funcionarem na vendor-app)
+- `tooling/scripts/` — Scripts de pendrive, deep-scan, dump raw, rollback (ver §20)
+- `tooling/ota-build/` — Build do pacote OTA EvilValet
 
 ---
 
@@ -1226,6 +1369,35 @@ adb shell su -c "cat /data/data/com.khalleb.civichmi.autook/files/autook.log"
 adb shell su -c "cat /data/data/com.khalleb.civichmi.autook/files/autook.log.1"
 ```
 
+### 20.8 Análise estática de APK via REA (odex → dex → REA)
+
+APK em `/system/vendor/app/` e `/system/app/` é odex-only. Pipeline:
+
+```bash
+./tooling/deodex/deodex-apk.sh tooling/apks-dumped/dump-0040/vendor-app/DaLauncher.apk
+```
+A APK sai em `tooling/apks-decoded/DaLauncher-deodexed.apk`.
+
+Via CLI (independente do MCP):
+```bash
+APK=tooling/apks-decoded/DaLauncher-deodexed.apk
+export REA_JADX_MCP_JAR=~/.local/share/rea/android/jadx-headless-mcp-0.7.1-all.jar
+
+npx -y rea-agents@latest inspect-android-package  "$APK" --json
+npx -y rea-agents@latest search-android-classes   "$APK" OpeningDivideActivity --json
+npx -y rea-agents@latest inspect-android-class    "$APK" com.mitsubishielectric.ada.app.dalauncher.OpeningDivideActivity --json
+npx -y rea-agents@latest inspect-android-method   "$APK" com.mitsubishielectric.ada.app.dalauncher.OpeningDivideActivity onCreate --json
+npx -y rea-agents@latest trace-android-references "$APK" com.mitsubishielectric.ada.app.dalauncher.OpeningDivideActivity --json
+```
+
+Via MCP (dentro do Claude Code, após restart): o skill `reverse-engineer-anything` carrega sozinho; é só pedir ao agente para inspecionar a APK.
+
+Re-rodar o setup do MCP após atualizar o REA:
+```bash
+npx -y rea-agents@latest setup --client claude_code --yes
+```
+Depois conferir que `env.REA_JADX_MCP_JAR` segue dentro de `mcpServers.rea` no `~/.claude.json` (se o setup limpar, reinjetar com Python/jq).
+
 ---
 
-**Fim do MAPA. Última atualização: 2026-10-17 após deep-scan v2.**
+**Fim do MAPA. Última atualização: 2026-10-19 após integração REA.**
