@@ -10,7 +10,7 @@
 [![Status](https://img.shields.io/badge/status-funcionando-brightgreen)]()
 [![Platform](https://img.shields.io/badge/platform-Android_4.2.2_%7C_Tegra_3-blue)]()
 [![Safra](https://img.shields.io/badge/safra_testada-1.F187.16_BR-orange)]()
-[![APK](https://img.shields.io/badge/APK-v0.3.0-informational)]()
+[![APK](https://img.shields.io/badge/APK-v0.4.0-informational)]()
 
 🇧🇷 **Português** · [🇺🇸 English](README.en.md)
 
@@ -139,6 +139,40 @@ sudo ./tooling/scripts/prepare-pendrive-install.sh /dev/sda
 
 ---
 
+## 🔬 O que descobrimos no caminho
+
+Além do APK que resolve o aviso, mapeamos muito da plataforma Mitsubishi Andromeda. Útil pra quem quer adaptar pra outra safra, construir outros apps no mesmo HU, ou entender o fluxo real de power da central (LP0, câmera de ré, HMI service start).
+
+Resumo com links pros docs densos: [`DISCOVERIES.md`](DISCOVERIES.md).
+
+Alguns highlights:
+
+- **16 broadcasts do PowerManager** mapeados, com causas conhecidas (`ColdBoot`, `ExitLP0`, `AccOnRestart`). 33 APKs do shipping escutam `ACTION_HMI_SERVICE_START` — é o contrato oficial de recovery pós-LP0, não workaround.
+- **364 interfaces AIDL** em 63 domínios. `appservice.vehicleinfomanager` sozinho tem 37 listeners cobrindo marcha, velocidade, VIN, FOB key atual, ângulo do volante.
+- **445 broadcasts vendor** em 48 prefixos (navi, HFT, câmera, launcher, PowerManager, diag).
+- **27 ContentProvider authorities** (9 vendor, incluindo o fluxo real da whitelist Mitsubishi — que, surpresa, é UX-only e não afeta LP0).
+- **Hall of fame de 14 bugs** resolvidos com causa raiz documentada — útil pra outros projetos de RE Mitsubishi.
+
+## 🧰 Ferramentas reusáveis
+
+Infraestrutura que vive junto do projeto e serve pra outros HUs com mesmo stack:
+
+- [`tooling/deodex/deodex-apk.sh`](tooling/deodex/deodex-apk.sh) — automatiza odex → APK pra qualquer APK Mitsubishi (toda a vendor-app é pre-dexed). Validado em 160 APKs do dump.
+- Pacote OTA EvilValet com `busybox` ARM embarcado — nossa safra precisa porque o recovery BR não tem `/sbin/sh`. Serve pra outras safras do mesmo recovery.
+- Pacote OTA de deep-scan — dumpa `/system`, `/data/system/packages.xml`, árvore de partições + `/proc/*` numa passada só. Alimenta o atlas da central.
+- Fluxo [REA](https://github.com/morluto/rea) + MCP já configurado em [`tooling/deodex/`](tooling/deodex/) — análise estática de qualquer APK Android pelo agente.
+
+## 🗺️ Para onde isso vai
+
+Nenhum destes está em execução hoje — todos aguardam decisão de abrir fase nova. Lista curta, detalhes em [`ROADMAP.md`](ROADMAP.md).
+
+- **Fase 9 — câmera de ré via API oficial.** Trocar o logcat polling atual por bind no `ICameraAPServiceReverseSignalListener`, com `ACTION_RESUME_CAMERA` como fallback.
+- Validar `DISCLAIMER_COMPLETE` como sinal canônico de aviso dispensado — 1 teste no carro, zero código.
+- Dumpar `com.honda.displayaudio.whitelist.apk` real pra confirmar formato do XML (hoje é inferido do parser).
+- Testar `persist.sys.keyoff_reboot=1` — teoricamente força cold boot a cada keyoff e elimina a complexidade LP0.
+
+---
+
 ## 📚 Documentação
 
 ### 🇧🇷 Em português
@@ -168,6 +202,10 @@ sudo ./tooling/scripts/prepare-pendrive-install.sh /dev/sda
 
 ### 🔬 Deep technical dive
 
+- [`DISCOVERIES.md`](DISCOVERIES.md) — Índice navegável dos achados técnicos
+- [`ROADMAP.md`](ROADMAP.md) — Próximos passos, descartados com motivo
+- [`docs/raio-x/`](docs/raio-x/) — Scan estático da plataforma: 364 AIDLs, 445 broadcasts, 27 providers, 48 sysprops, trust map de 110 APKs
+- [`docs/whitelist-mitsubishi-2026-10-19.md`](docs/whitelist-mitsubishi-2026-10-19.md) — Fluxo completo da whitelist Mitsubishi + mapeamento do recovery pós-LP0
 - [`docs/MAPA.md`](docs/MAPA.md) — **Atlas navegável da central** (partições, APKs, services, pipeline)
 - [`docs/fase7-deploy-2026-10-16/`](docs/fase7-deploy-2026-10-16/) — 7 docs com jornada, descobertas, receitas, dumps, arquitetura do APK, manutenção
 

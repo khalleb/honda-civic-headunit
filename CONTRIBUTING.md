@@ -24,11 +24,16 @@ Prioridade: **tradução completa para inglês** do `docs/pt-BR/`.
 
 ### 💡 Melhorias técnicas
 
-Veja roadmap em [`docs/fase7-deploy-2026-10-16/05-manutencao-e-futuro.md § Roadmap futuro`](docs/fase7-deploy-2026-10-16/05-manutencao-e-futuro.md#roadmap-futuro). Ideias:
+Roadmap vivo: [`ROADMAP.md`](ROADMAP.md). Catálogo dos achados (plataforma mapeada, APIs AIDL, broadcasts, trust map) em [`DISCOVERIES.md`](DISCOVERIES.md).
 
-- **Baixo risco:** reduzir delay do tap, logs persistentes, watchdog self-check, multi-coord fallback
-- **Médio risco:** modificar `DaLauncher.apk` para pular `DisclaimerFragment`, SuperSU opcional, Xposed Framework
-- **Alto risco:** modificar framework Mitsubishi
+Resumo dos candidatos atuais:
+
+- Fase 9 — câmera de ré via `ICameraAPServiceReverseSignalListener` (sem logcat polling)
+- Validar `DISCLAIMER_COMPLETE` como sinal canônico
+- Dumpar `com.honda.displayaudio.whitelist.apk` real
+- Testar `persist.sys.keyoff_reboot=1` como alternativa ao fluxo LP0
+
+Caminhos descartados (com motivo) também vivem no ROADMAP — ler antes de propor para evitar reinventar.
 
 ### 📊 Dumps de outras safras
 

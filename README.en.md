@@ -10,7 +10,7 @@
 [![Status](https://img.shields.io/badge/status-working-brightgreen)]()
 [![Platform](https://img.shields.io/badge/platform-Android_4.2.2_%7C_Tegra_3-blue)]()
 [![Firmware](https://img.shields.io/badge/tested_firmware-1.F187.16_BR-orange)]()
-[![APK](https://img.shields.io/badge/APK-v0.3.0-informational)]()
+[![APK](https://img.shields.io/badge/APK-v0.4.0-informational)]()
 
 [🇧🇷 Português](README.md) · 🇺🇸 **English**
 
@@ -149,6 +149,40 @@ sudo ./tooling/scripts/prepare-pendrive-install.sh /dev/sda
 
 ---
 
+## 🔬 What we discovered along the way
+
+Beyond the APK that dismisses the warning, we mapped a lot of the Mitsubishi Andromeda platform. Useful if you want to adapt the project for another firmware, build other apps on the same HU, or understand the real power flow of the unit (LP0, backup camera, HMI service start).
+
+Summary with links to the dense docs: [`DISCOVERIES.md`](DISCOVERIES.md).
+
+Some highlights:
+
+- **16 PowerManager broadcasts** mapped, with known causes (`ColdBoot`, `ExitLP0`, `AccOnRestart`). 33 shipping APKs listen for `ACTION_HMI_SERVICE_START` — this is the official recovery contract after LP0, not a workaround.
+- **364 AIDL interfaces** in 63 domains. `appservice.vehicleinfomanager` alone has 37 listeners covering gear, speed, VIN, current FOB key, steering angle.
+- **445 vendor broadcasts** across 48 prefixes (navi, HFT, camera, launcher, PowerManager, diag).
+- **27 ContentProvider authorities** (9 vendor, including the real flow of the Mitsubishi whitelist — which, surprise, is UX-only and does not affect LP0).
+- **Hall of fame of 14 bugs** fixed with documented root causes — useful for other Mitsubishi RE projects.
+
+## 🧰 Reusable tooling
+
+Infrastructure that lives alongside the project and works for other HUs with the same stack:
+
+- [`tooling/deodex/deodex-apk.sh`](tooling/deodex/deodex-apk.sh) — automates odex → APK for any Mitsubishi APK (all vendor-app is pre-dexed). Validated on 160 APKs from the dump.
+- EvilValet OTA package with embedded `busybox` ARM — ours needs it because the BR recovery lacks `/sbin/sh`. Works for other firmwares on the same recovery.
+- Deep-scan OTA package — dumps `/system`, `/data/system/packages.xml`, partition tree + `/proc/*` in a single pass. Feeds the unit atlas.
+- [REA](https://github.com/morluto/rea) + MCP flow already configured in [`tooling/deodex/`](tooling/deodex/) — static analysis of any Android APK through the agent.
+
+## 🗺️ Where this is heading
+
+None of the below is in progress today — all await a decision to open a new phase. Short list, details in [`ROADMAP.md`](ROADMAP.md).
+
+- **Phase 9 — backup camera via official API.** Replace the current logcat polling with a bind on `ICameraAPServiceReverseSignalListener`, with `ACTION_RESUME_CAMERA` as fallback.
+- Validate `DISCLAIMER_COMPLETE` as the canonical "warning dismissed" signal — 1 test in the car, zero code.
+- Dump the real `com.honda.displayaudio.whitelist.apk` to confirm the XML format (today it's inferred from the parser).
+- Try `persist.sys.keyoff_reboot=1` — theoretically forces a cold boot on every keyoff and eliminates the whole LP0 complexity.
+
+---
+
 ## 📚 Documentation
 
 ### 🇺🇸 In English
@@ -175,6 +209,10 @@ Translations of these to English welcome! See [Contributing](#-contributing).
 
 ### 🔬 Deep technical dive
 
+- [`DISCOVERIES.md`](DISCOVERIES.md) — Navigable index of technical findings (Portuguese, link labels mostly English)
+- [`ROADMAP.md`](ROADMAP.md) — Next steps, discarded routes with reason
+- [`docs/raio-x/`](docs/raio-x/) — Static platform scan: 364 AIDLs, 445 broadcasts, 27 providers, 48 sysprops, trust map of 110 APKs
+- [`docs/whitelist-mitsubishi-2026-10-19.md`](docs/whitelist-mitsubishi-2026-10-19.md) — Full Mitsubishi whitelist flow + mapping of recovery after LP0
 - [`docs/MAPA.md`](docs/MAPA.md) — **Navigable atlas of the HU** (partitions, APKs, services, pipeline) — mostly Portuguese labels but structure is clear
 - [`docs/fase7-deploy-2026-10-16/`](docs/fase7-deploy-2026-10-16/) — 7 docs with journey, discoveries, recipes, dumps, APK architecture, maintenance (Portuguese)
 
