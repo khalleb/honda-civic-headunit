@@ -10,7 +10,8 @@
 [![Status](https://img.shields.io/badge/status-working-brightgreen)]()
 [![Platform](https://img.shields.io/badge/platform-Android_4.2.2_%7C_Tegra_3-blue)]()
 [![Firmware](https://img.shields.io/badge/tested_firmware-1.F187.16_BR-orange)]()
-[![APK](https://img.shields.io/badge/APK-v0.4.0-informational)]()
+[![APK](https://img.shields.io/badge/APK-v0.5.4-informational)]()
+[![CI](https://github.com/khalleb/honda-civic-headunit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/khalleb/honda-civic-headunit/actions/workflows/ci.yml)
 
 [🇧🇷 Português](README.md) · 🇺🇸 **English**
 
