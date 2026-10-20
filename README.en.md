@@ -33,14 +33,14 @@
 ## 🎯 The problem
 
 <div align="center">
-<img src="docs/images/foto-aviso-painel.jpg" alt="Warning screen on Honda Civic G10 head unit (Brazilian firmware shown)" width="640"/>
+<img src="docs/images/screenshots-en/notice-en.jpg" alt="Notice screen on Honda Civic G10 head unit, English firmware" width="640"/>
 
-<sub>Real photo from the owner's 2017 Civic EXL BR. The international variants show the same screen in English/your local language — the only difference is the translated text; the layout, button position and behavior are identical.</sub>
+<sub>Real photo from the Brazilian 2017 Civic EXL with the head unit switched to English. The dialog layout, OK button position and the auto-dismiss behavior are the same in every supported locale — only the text changes.</sub>
 </div>
 
 Every time you turn the car on, the head unit shows:
 
-> **"Warning — The driver is responsible for safe driving..."**
+> **"Notice — The driver is responsible for the safe operation of this vehicle. Use this system only when traffic conditions permit. For further details see your owner's manual."**
 
 And you have to tap **OK**. Every. Single. Time. Before CarPlay starts. Every ignition cycle, 365 days a year, for years.
 

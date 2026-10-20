@@ -4,11 +4,28 @@
 
 Every time you turn on your Honda Civic G10 (Brazilian or international firmware), the head unit shows this screen:
 
-> **"Warning — The driver is responsible for safe driving..."**
+<div align="center">
+<img src="../images/screenshots-en/notice-en.jpg" alt="Notice dialog on the Honda Civic G10 head unit, English locale" width="640"/>
+</div>
+
+The literal text from the Honda firmware (English locale):
+
+> **Notice** — The driver is responsible for the safe operation of this vehicle. Use this system only when traffic conditions permit. For further details see your owner's manual. **[OK]**
 
 You have to tap OK before using CarPlay, radio, or anything else. Small pain. Daily. Multiplied by years of ownership = considerable annoyance.
 
 Honda has **never** released a configuration to disable this screen — they treat it as legal liability.
+
+### Multi-locale support confirmed
+
+The head unit supports 14 locales out of the box. The dialog layout, OK button position and our APK's auto-dismiss behavior are identical in every one — only the translated text changes. Primary and secondary language lists:
+
+<div align="center">
+<img src="../images/screenshots-en/language-list-primary.jpg" alt="Language list — English (US), Français, Español, Português (Brasil/Portugal), Русский, Türkçe" width="420"/>
+<img src="../images/screenshots-en/language-list-secondary.jpg" alt="Language list continued — Türkçe, العربية, ไทย, Bahasa Melayu, Bahasa Indonesia, 繁体中文/普通话, 한국어" width="420"/>
+</div>
+
+The implication for anyone adapting this project: `OpeningDivideActivity` is the only intent target to watch, and tap coordinates `(400, 350)` on a 800×480 screen hit the OK button regardless of locale.
 
 ## Existing options before this project
 
