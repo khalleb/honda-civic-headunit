@@ -37,6 +37,7 @@ tooling/ota-build/output/
 tooling/ota-build/output-rollback/
 tooling/ota-build/output-dump-raw/
 tooling/ota-build/output-deep-scan/
+tooling/ota-build/output-diagnostic/
 
 # ---- Overlay do pacote OTA ----
 # AutoOk.apk no overlay é rebuildável via `./gradlew assembleRelease`.

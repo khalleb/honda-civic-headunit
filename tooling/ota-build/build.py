@@ -121,6 +121,10 @@ def our_create_updater_script(overlay_paths, meta, partitions):
     out.append('unmount("/system");')
     out.append(sh(f"{BB} echo === INSTALL END $({BB} date) === >> {LOG}; {BB} sync"))
 
+    out.append(sh(f"{BB} mv {USB}/SwUpdate2.txt {USB}/SwUpdate2.txt.done 2>>{LOG}; {BB} echo mv-trigger-exit=$? >> {LOG}"))
+    out.append(sh(f"{BB} rm -f /cache/.copy_complete 2>>{LOG}; {BB} echo rm-copy-complete-exit=$? >> {LOG}"))
+    out.append(sh(f"{BB} sync"))
+
     out.append(f'package_extract_file("{upstream.SLEEP_PKG_PATH}", "/tmp/sleep");')
     out.append('set_perm(0, 0, 0755, "/tmp/sleep");')
     out.append("set_progress(1.000000);")
