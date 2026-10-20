@@ -189,23 +189,20 @@ None of the below is in progress today — all await a decision to open a new ph
 
 | Doc | Description |
 |---|---|
+| [`QUICKSTART.md`](QUICKSTART.md) | Deploy in 20 min (Portuguese — commands universal) |
 | [`docs/en/00-overview.md`](docs/en/00-overview.md) | What the project does and why |
+| [`docs/en/01-attack-architecture.md`](docs/en/01-attack-architecture.md) | How the EvilValet attack works |
+| [`docs/en/02-prerequisites.md`](docs/en/02-prerequisites.md) | Hardware, software, keystore |
 | [`docs/en/03-finding-your-firmware.md`](docs/en/03-finding-your-firmware.md) | Adapt for other firmware |
+| [`docs/en/04-building-the-package.md`](docs/en/04-building-the-package.md) | Build the OTA package step by step |
+| [`docs/en/05-deploying-in-car.md`](docs/en/05-deploying-in-car.md) | Deploy protocol in the car |
+| [`docs/en/06-troubleshooting.md`](docs/en/06-troubleshooting.md) | Decision tree when something fails |
 | [`docs/en/07-rollback.md`](docs/en/07-rollback.md) | Revert everything |
 | [`docs/en/08-backups.md`](docs/en/08-backups.md) | Full backup catalog |
 
-### 🇧🇷 In Portuguese (full documentation)
+### 🇧🇷 In Portuguese (original)
 
-| Doc | Description |
-|---|---|
-| [`QUICKSTART.md`](QUICKSTART.md) | Deploy in 20 min |
-| [`docs/pt-BR/01-arquitetura-ataque.md`](docs/pt-BR/01-arquitetura-ataque.md) | How EvilValet works |
-| [`docs/pt-BR/02-pre-requisitos.md`](docs/pt-BR/02-pre-requisitos.md) | Hardware, software, keystore |
-| [`docs/pt-BR/04-build-do-pacote.md`](docs/pt-BR/04-build-do-pacote.md) | Build the OTA package |
-| [`docs/pt-BR/05-deploy-no-carro.md`](docs/pt-BR/05-deploy-no-carro.md) | Deploy protocol in the car |
-| [`docs/pt-BR/06-troubleshooting.md`](docs/pt-BR/06-troubleshooting.md) | Troubleshooting when something fails |
-
-Translations of these to English welcome! See [Contributing](#-contributing).
+Same docs under [`docs/pt-BR/`](docs/pt-BR/). The deep technical dive and the deploy narrative in [`docs/fase7-deploy-2026-10-16/`](docs/fase7-deploy-2026-10-16/) are still Portuguese-only — PRs welcome.
 
 ### 🔬 Deep technical dive
 

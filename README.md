@@ -196,7 +196,12 @@ Nenhum destes está em execução hoje — todos aguardam decisão de abrir fase
 |---|---|
 | [`README.en.md`](README.en.md) | README |
 | [`docs/en/00-overview.md`](docs/en/00-overview.md) | What the project does and why |
+| [`docs/en/01-attack-architecture.md`](docs/en/01-attack-architecture.md) | How the EvilValet attack works |
+| [`docs/en/02-prerequisites.md`](docs/en/02-prerequisites.md) | Hardware, software, keystore |
 | [`docs/en/03-finding-your-firmware.md`](docs/en/03-finding-your-firmware.md) | Adapt for other firmware |
+| [`docs/en/04-building-the-package.md`](docs/en/04-building-the-package.md) | Build the OTA package step by step |
+| [`docs/en/05-deploying-in-car.md`](docs/en/05-deploying-in-car.md) | Deploy protocol in the car |
+| [`docs/en/06-troubleshooting.md`](docs/en/06-troubleshooting.md) | Decision tree when something fails |
 | [`docs/en/07-rollback.md`](docs/en/07-rollback.md) | Revert everything |
 | [`docs/en/08-backups.md`](docs/en/08-backups.md) | Full backup catalog |
 
