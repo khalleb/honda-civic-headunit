@@ -4,12 +4,13 @@
 
 ## Estado atual (2026-10-20)
 
-- APK **AutoOk v0.4.0** em produção no veículo testado (Civic 2017 EXL BR `1.F187.16`). Suprime automaticamente a tela de Aviso em cada ligada, inclusive após transições LP0 provocadas por câmera de ré, troca de porta, etc.
+- APK **AutoOk v0.5.4** em produção no veículo testado (Civic 2017 EXL BR `1.F187.16`). Suprime automaticamente a tela de Aviso tanto em cold boot (AUDIO 5s) quanto em LP0 resume (keyoff/keyon normal). Zero taps falsos, zero conflito com ligação CarPlay via BT.
+- v0.5.4 fecha 4 iterações num mesmo dia (v0.5.0 → v0.5.4) resolvendo: bug do mudo em CarPlay (AlarmManager + needle frouxo do v0.4.0); regressão do EPERM (fix 17.9); duas Activities disparadas em LP0 resume (`PRECEDING_STARTUP` da tela de logo vs `NORMAL_STARTUP` do aviso real); formato errado do `-v brief`; bug do Android 4.2.2 que não combina `-b A -b B`.
 - `su` setuid permanente em `/system/xbin/`
-- Deploy via pacote OTA EvilValet validado
+- Deploy via pacote OTA EvilValet validado, com fix do loop infinito no `build.py` (renomeia `SwUpdate2.txt → .done`)
 - Pacote de rollback construído e pronto
 
-Nada do roadmap abaixo compromete a estabilidade do v0.4.0. Tudo listado é opcional / exploratório.
+Nada do roadmap abaixo compromete a estabilidade do v0.5.4. Tudo listado é opcional / exploratório.
 
 ## Em curto prazo (candidatos a próxima fase)
 
@@ -46,6 +47,20 @@ O APK portador do XML da whitelist deveria estar em `/system/vendor/etc/honda/co
 **O que precisa:** incluir `/system/vendor/etc/honda/*` no próximo deep-scan OTA. Baixo custo.
 
 → [`docs/whitelist-mitsubishi-2026-10-19.md § 2.3`](docs/whitelist-mitsubishi-2026-10-19.md)
+
+### Fase 10 — Remover o aviso de vez (patch smali no DaLauncher)
+
+**Gate descoberto em 2026-10-20:** o `DaLauncher.OpeningDivideActivity.sDisclamerFlg` é `static boolean` em memória (não persistido em SharedPrefs, databases ou property). Reseta `false` a cada boot da classe, por isso o aviso aparece sempre. Patch mínimo em `OpeningDivideActivity.smali:671` (`if-nez v0, :cond_9` → `goto :cond_9`) força o fluxo direto pra `createEcoIntent()`, ignorando o flag. Aviso **nunca aparece**.
+
+**Complicação do deploy:** DaLauncher é assinado com chave corporativa Mitsubishi (`Melco Honda16MY`, SHA-256 `93:14:CE:...:05:AD`), não AOSP testkey. Outros vendor-apps usam chave Mitsubishi distinta (`A2:09:0F:...:EF:65`), então DaLauncher é singular — substituir só ele não quebra outros apps por mismatch, mas o PackageManager pode tratar como "new install" perdendo permissões `/system/*`.
+
+**Rotas:**
+- **A (recomendada):** Odex-level patch — modificar só o `.odex`, APK fica intocado com assinatura Mitsubishi original. Risco baixo mas requer tooling pra re-odex.
+- **B (fallback):** Resign com testkey AOSP + aceitar "new install" + rede de segurança total.
+
+**Pré-requisito:** v0.5.0 estável por 1 semana + rollback OTA específico do DaLauncher construído e testado antes.
+
+→ [`docs/fase10-pre-planejamento-2026-10-20.md`](docs/fase10-pre-planejamento-2026-10-20.md) (briefing técnico completo)
 
 ### Experimentar `persist.sys.keyoff_reboot=1`
 
@@ -109,7 +124,7 @@ Rotas que foram investigadas e descartadas. Documentar pra não re-descobrir:
 | Entrar na whitelist Mitsubishi pra remover v0.4.0 | Whitelist é UX-only. Não afeta LP0. V0.4.0 já é o padrão oficial. [`MAPA` §16.3](docs/MAPA.md) |
 | SuperSU como mediator | Substituiria nosso `su` por um com prompt Activity → bloqueia `Runtime.exec("su")`. Quebra o AutoOk. [`MAPA` §16.1](docs/MAPA.md) |
 | Xposed Framework | Alto risco de bootloop. Zero precedente em Andromeda. Recuperável só via rollback OTA. [`MAPA` §16.2](docs/MAPA.md) |
-| Modificar `DaLauncher.apk` via smali | Benefício: aviso sumir de vez. Risco: brick do launcher = sem câmera de ré. Custo-benefício não compensa. [`MAPA` §16.4](docs/MAPA.md) |
+| ~~Modificar `DaLauncher.apk` via smali~~ | **Re-habilitada como Fase 10 em 2026-10-20** após descoberta do gate `sDisclamerFlg` + signature singular do DaLauncher. Ver seção "Em curto prazo" acima. [`docs/fase10-pre-planejamento-2026-10-20.md`](docs/fase10-pre-planejamento-2026-10-20.md) |
 
 ## Melhorias de ferramentas (não ligadas ao carro)
 

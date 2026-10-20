@@ -1187,6 +1187,119 @@ Novo `HmiServiceReceiver` escuta `com.mitsubishielectric.ada.appservice.powerman
 
 **Documento denso:** [`docs/whitelist-mitsubishi-2026-10-19.md`](whitelist-mitsubishi-2026-10-19.md).
 
+### 17.15 ✓ Bug do mudo em ligação CarPlay via BT + jornada v0.4.0 → v0.5.4 🆕
+
+**Sintoma inicial:** com APK v0.4.0 e CarPlay via BT, ligações recebidas ficavam em mudo sozinhas poucos segundos depois de atendidas. Reproduzível.
+
+**Investigação (2026-10-20):** pacote OTA novo `build-diagnostic.py` coletou `/data/data/com.khalleb.civichmi.autook/files/autook.log` + SharedPrefs do DaLauncher + persist props + logcat/kmsg do próprio HU.
+
+**Evidência do autook.log v0.4.0:**
+
+```
+09:24:57 FORCE_RESTART source=alarm_60s cause=null
+09:24:59 FORCE_RESTART source=hmi_broadcast cause=ExitLP0
+09:24:59 tap ok=true coords=3
+09:25:01 aviso detectado    ← match "falso"
+09:25:05 tap ok=true coords=3
+...
+```
+
+Janelas de 10-15 minutos com um tap a cada ~12s, totalizando centenas de taps por dia. Taps em `(400, 350)` acertam o botão de mudo quando a tela de ligação do CarPlay está sobreposta.
+
+**Causa raiz do v0.4.0 — 3 bugs compostos:**
+
+1. `AutoOkConfig.ALARM_HEALTHCHECK_INTERVAL_SECONDS = 60` agenda AlarmManager que chama `FORCE_RESTART` a cada 60s
+2. `forceRestartWatcher()` recria o `LogcatWatcher` e reseta `handled = false`
+3. O watcher novo lê o buffer do logcat que ainda tem linhas antigas mencionando `OpeningDivideActivity` (eventos `am_destroy_activity`, `onActivityPauseComplete`, `onStop`). O match `line.contains(activityNeedle)` casa com qualquer uma — inclusive destruída
+
+**Jornada de fix em 4 iterações no mesmo dia:**
+
+| Versão | Mudanças | Regressão | Validada no carro |
+|---|---|---|---|
+| **v0.5.0** | AlarmManager removido, needle `am_create_activity`/`START u0` com buffer `main` em `-v brief`, pre-check `isActivityOnTop`, dedup 30s, rearm 10s, `logcat -c`, `BOOT_INITIAL_WAIT_MS=2000` | Needle no formato errado (`-v brief` cuspia `I/TAG(PID):` sem `: START`); pre-check nunca casava; `logcat -c` zerava buffer antes do watcher ler. Zero taps | Sim, aviso parou de ser tapado |
+| **v0.5.1** | Removido `logcat -c` e pre-check; `forceRestartWatcher()` passa a reusar watcher vivo em vez de recriar (regressão do fix 17.9 — EPERM voltou em v0.5.0) | Needle ainda com formato errado | Sim, aviso continuou aparecendo |
+| **v0.5.2** | `-v brief` → `-v threadtime`; `-b main -b events`; `BOOT_INITIAL_WAIT_MS=500` | Em LP0 resume, central dispara `PRECEDING_STARTUP` (tela de logo) ANTES do `NORMAL_STARTUP` (o aviso real). v0.5.2 tapava no primeiro e bloqueava o segundo com `handled=true` | Parcial: pegava cold boot mas não LP0 resume |
+| **v0.5.3** | Needle exige `NORMAL_STARTUP` + `START u0`; rearm 10s → 2s; dedup 30s → 3s | Buffer errado: Android 4.2.2 ignora `-b main` quando `-b events` vem depois, lia só events. Needle `ActivityManager: START u0` é tag do buffer `main` → nunca casava | Sim, aviso continuou |
+| **v0.5.4** | `-b events` sozinho + needle casa `am_create_activity` (cold boot) OU `am_new_intent` (LP0 resume) + `OpeningDivideActivity` + `NORMAL_STARTUP` | — | **Sim: cold boot ✓, LP0 resume ✓, zero taps falsos, mudo CarPlay OK** |
+
+**Config final em v0.5.4:**
+
+- `REARM_DELAY_SECONDS = 2`
+- `TAP_DEDUP_SECONDS = 3`
+- `BOOT_INITIAL_WAIT_MS = 500`
+- `WATCHDOG_INTERVAL_SECONDS = 30`
+- Logcat: `-b events -v threadtime am_create_activity:I am_new_intent:I *:S`
+- Needle: casa `am_create_activity` OU `am_new_intent` + `OpeningDivideActivity` + `dalauncher.action.NORMAL_STARTUP`
+- `forceRestartWatcher`: reusa watcher vivo (só reseta `handled`), recria só se morto
+
+**Lições técnicas:**
+
+1. `logcat -v brief` cuspe `I/TAG(PID): msg` — needle `"TAG: msg"` não casa. Use `-v threadtime` que gera `date pid tid I TAG: msg` padrão.
+2. Android 4.2.2 `logcat -b A -b B` **não** combina buffers — o segundo sobrescreve. Pra ler múltiplos buffers precisa de duas instâncias.
+3. `am_create_activity`, `am_resume_activity`, `am_new_intent` vivem no buffer `events`. `ActivityManager: START u0` vive em `main`. **Buffers diferentes.**
+4. LP0 resume reutiliza Activity com `SINGLE_TOP` flag → não dispara `am_create_activity`, só `am_new_intent`. Needle de LP0 resume precisa casar `am_new_intent`.
+5. Central dispara 2 Activities no LP0 resume: `PRECEDING_STARTUP` (tela de logo, não é o aviso) e `NORMAL_STARTUP` (o aviso). Precisa filtrar pelo action.
+6. Logs do próprio HU vão pro pendrive automaticamente quando ele está plugado (`logcat.txt`, `kmsgcat.txt`, `*.dat`). Diagnóstico ad-hoc sem OTA custom.
+
+### 17.16 ✓ Gate do disclaimer é static `sDisclamerFlg` em memória (2026-10-20) 🆕
+
+**Pergunta de pesquisa:** dá pra remover o aviso de vez (sem tap, sem watcher)? Onde o DaLauncher persiste a aceitação do disclaimer?
+
+**Investigação:** diagnóstico (`build-diagnostic.py`) copiou SharedPrefs + databases + persist props do DaLauncher. Nenhum gate persistido encontrado:
+
+- `com.mitsubishielectric.ada.app.dalauncher.prefs.xml`: só `apps.new.list` / `apps.new.page`
+- `HMI_SERVICE_START_SHARED_PREF.xml`: `HMI_SERVICE_START_IS_CALLED=false`
+- `HMI_SERVICE_STATUS.xml` + `SP_LAST_SCREEN_NAME.xml`: vazios
+- `launcher.preferences`: só locale `en_US`
+- `/data/property/*`: nenhum `persist.*` relacionado a disclaimer
+
+Grep no smali deodex local (`tooling/apks-decoded/DaLauncher-deodexed/`) revelou:
+
+```
+OpeningDivideActivity.smali:17   .field public static sDisclamerFlg:Z
+OpeningDivideActivity.smali:669  sget-boolean v0, ...sDisclamerFlg:Z
+OpeningDivideActivity.smali:671  if-nez v0, :cond_9    ← SE true, pula o aviso
+```
+
+**O gate é static boolean em memória**, não persistido em disco. Explica por que o aviso aparece em todo boot: static reseta pra `false` no reload da classe. `DisclaimerFragment.smali:4363` seta `true` depois do tap OK, `HmiBroadcastReceiver.smali:492` e `:636` resetam `false` em certos eventos HMI.
+
+**Patch mínimo** em `OpeningDivideActivity.smali:671`:
+
+```
+Antes:   if-nez v0, :cond_9
+Depois:  goto :cond_9
+```
+
+Pula sempre pro `createEcoIntent()`, ignorando o flag. Aviso nunca aparece.
+
+**Signature do DaLauncher**: `CN=Melco Honda16MY, Mitsubishi Electric, Japan` — SHA-256 `93:14:CE:...:05:AD`. **Não é AOSP testkey**. Outros vendor-apps usam chave Mitsubishi distinta (`A2:09:0F:...:EF:65`). DaLauncher é singular, provavelmente sem `sharedUserId` compartilhado.
+
+Resign com nossa testkey AOSP = PackageManager detecta mismatch no boot, trata como "new install" perdendo permissões `/system/*`. Pode funcionar OU travar — risco médio.
+
+**Rota recomendada = odex-level patch** (preserva signature). Fase 10 planejada em [`docs/fase10-pre-planejamento-2026-10-20.md`](fase10-pre-planejamento-2026-10-20.md).
+
+**Pré-requisito pra Fase 10:** v0.5.0 do AutoOk estável por 1 semana primeiro.
+
+### 17.17 ✓ Install OTA entrava em loop infinito sem renomear `SwUpdate2.txt` (2026-10-20) 🆕
+
+**Sintoma:** depois de deployar o v0.5.0 e v0.5.1 do AutoOk, a central aplicava o OTA, chegava a 100%, ficava segundos com tela preta, e **começava a aplicar o OTA de novo**. Único workaround manual: puxar o pendrive durante a janela de tela preta.
+
+**Causa raiz:** o `daupdater` em cada boot escaneia o pendrive montado em `/mnt/usbdrive1` procurando pelo trigger `SwUpdate2.txt`. Se encontra, aplica o OTA que está em `0040/SwUpdate.mdt`. Como o updater-script do `build.py` **não renomeava** esse trigger após instalar, no reboot pós-OTA o daupdater via o trigger de novo e re-aplicava — loop infinito.
+
+**Por que só o install tinha o bug?** Os builders mais recentes (`build-deep-scan.py`, `build-dump-raw.py`, `build-diagnostic.py`) já tinham o fix. O `build.py` original (de 2026-10-16) foi feito antes dessa lição aparecer e nunca foi atualizado. `build-rollback.py` tinha o mesmo problema por omissão análoga.
+
+**Mitigação:** adicionar nos dois builders antes do sleep final:
+
+```python
+out.append(sh(f"{BB} mv {USB}/SwUpdate2.txt {USB}/SwUpdate2.txt.done 2>>{LOG}; {BB} echo mv-trigger-exit=$? >> {LOG}"))
+out.append(sh(f"{BB} rm -f /cache/.copy_complete 2>>{LOG}; {BB} echo rm-copy-complete-exit=$? >> {LOG}"))
+out.append(sh(f"{BB} sync"))
+```
+
+O `.done` evita re-match. O `rm /cache/.copy_complete` cobre um flag secundário que o daupdater também consulta.
+
+**Regra arquitetural permanente:** todo `build-*.py` novo em `tooling/ota-build/` **PRECISA** incluir esses dois comandos imediatamente antes do `run_program("/tmp/sleep", N)` final. Sem exceção. Documentado em memória pessoal ([[ota-script-sempre-quebra-loop]]) pra garantir que não vai esquecer de novo.
+
 ---
 
 ## 18. Timeline de modificações feitas por nós
@@ -1206,6 +1319,13 @@ Novo `HmiServiceReceiver` escuta `com.mitsubishielectric.ada.appservice.powerman
 | 2026-10-19 | REA (`morluto/rea`) integrado como ferramenta de análise estática | MCP server `rea` registrado em `~/.claude.json` com `REA_JADX_MCP_JAR` apontando pro JADX headless. Skill `reverse-engineer-anything` instalado em `~/.claude/skills/`. Script `tooling/deodex/deodex-apk.sh` automatiza o fluxo odex→dex→APK. Primeira validação: `OpeningDivideActivity` do `DaLauncher` (ver §11.1.1). | pendente |
 | 2026-10-19 | Análise estática completa da whitelist Mitsubishi + mapeamento do recovery pós-LP0 | Deodex de 120 APKs vendor. Confirmado que whitelist é UI-only (ver §11.7, §16.3). PowerManager é pub/sub puro com 16 broadcasts (ver §11.6). V0.4.0 segue o pattern correto, nada a mudar. Documento denso em [`docs/whitelist-mitsubishi-2026-10-19.md`](whitelist-mitsubishi-2026-10-19.md). | pendente |
 | 2026-10-19 | Raio-X Camada 1: scan de superfície completo da plataforma | Deodex de 160 APKs/libs (vendor-app + vendor-framework + system-app). 5 scans: 364 interfaces AIDL, 445 broadcasts, 27 content authorities, 48 sysprops, trust map de 110 APKs. Achado-chave: `ICameraAPServiceReverseSignalListener` + `EXIT_REAR_WIDE_CAMERA` + `ACTION_RESUME_CAMERA` abrem caminho pra Fase 9 (ré sem logcat polling). Documentos em [`docs/raio-x/`](raio-x/). | pendente |
+| 2026-10-20 | APK v0.5.0 — primeira tentativa de fix do bug do mudo em CarPlay | Diagnóstico via `build-diagnostic.py` novo (coletou autook.log + prefs/dbs do DaLauncher + persist props). AlarmManager removido, needle tentou `-v brief`+`main`, pre-check, dedup 30s, rearm 10s. **Regrediu**: zero taps + EPERM voltou (§17.9 regressão). Validado no carro. (ver §17.15) | pendente |
+| 2026-10-20 | APK v0.5.1 — fix EPERM | `forceRestartWatcher()` reusa watcher vivo (lição 17.9). Removido `logcat -c` + pre-check. Needle ainda errado pro formato brief. Zero taps. | pendente |
+| 2026-10-20 | APK v0.5.2 — threadtime + buffers | `-v threadtime`, `-b main -b events`, `BOOT_INITIAL_WAIT_MS=500`. Cold boot ✓, LP0 resume ✗ (tapa `PRECEDING_STARTUP` em vez de `NORMAL_STARTUP`). | pendente |
+| 2026-10-20 | APK v0.5.3 — needle NORMAL_STARTUP | Needle exige `NORMAL_STARTUP`; rearm 2s; dedup 3s. **Regrediu**: Android 4.2.2 `-b main -b events` falha silenciosa, só lê events. `ActivityManager: START u0` nunca casa. | pendente |
+| 2026-10-20 | APK v0.5.4 — baseline estável | `-b events` sozinho; needle casa `am_create_activity` (cold boot) ou `am_new_intent` (LP0 resume, Activity SINGLE_TOP) + `NORMAL_STARTUP`. **Validado no carro: cold boot ✓, LP0 resume ✓, mudo CarPlay ✓, zero taps falsos**. (ver §17.15) | pendente |
+| 2026-10-20 | Fix do loop OTA infinito em `build.py` + `build-rollback.py` | Updater-script agora renomeia `SwUpdate2.txt` → `.done` + remove `/cache/.copy_complete` antes do sleep final. Antes o pendrive precisava ser puxado manualmente durante a tela preta. Regra arquitetural permanente: todo `build-*.py` novo precisa dos dois comandos. (ver §17.17, memória `ota-script-sempre-quebra-loop`) | pendente |
+| 2026-10-20 | Fase 10 pré-planejada — gate do disclaimer descoberto | `OpeningDivideActivity.sDisclamerFlg` é static boolean em memória (não persistido). Patch mínimo de 1 instrução no smali remove o aviso de vez. DaLauncher assinado com key Mitsubishi `Melco Honda16MY` (não AOSP testkey) — deploy requer odex-level patch pra preservar signature, ou resign aceitando risco de "new install". Fase 10 bloqueada até v0.5.4 estável. (ver §17.16, doc denso em [`docs/fase10-pre-planejamento-2026-10-20.md`](fase10-pre-planejamento-2026-10-20.md)) | pendente |
 
 ---
 
@@ -1223,6 +1343,7 @@ Novo `HmiServiceReceiver` escuta `com.mitsubishielectric.ada.appservice.powerman
 - [`docs/proxima-sessao.md`](proxima-sessao.md) — Pontos de entrada por tipo de pergunta
 - [`docs/pesquisa-rotas-sem-adb-2026-10-15.md`](pesquisa-rotas-sem-adb-2026-10-15.md) — Pesquisa das 8 rotas sem-ADB
 - [`docs/whitelist-mitsubishi-2026-10-19.md`](whitelist-mitsubishi-2026-10-19.md) — Análise estática da whitelist Mitsubishi + recovery pós-LP0 (REA + JADX)
+- [`docs/fase10-pre-planejamento-2026-10-20.md`](fase10-pre-planejamento-2026-10-20.md) — Fase 10 (remover aviso de vez): gate smali descoberto, rotas de deploy, rede de segurança requerida
 - [`docs/raio-x/`](raio-x/) — Raio-X Camada 1 (5 scans do shipping):
   - [01-apis-aidl.md](raio-x/01-apis-aidl.md) — 364 binder interfaces em 63 domínios
   - [02-broadcasts.md](raio-x/02-broadcasts.md) — 445 actions em 48 prefixos
