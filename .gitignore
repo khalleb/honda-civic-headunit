@@ -38,6 +38,11 @@ tooling/ota-build/output-rollback/
 tooling/ota-build/output-dump-raw/
 tooling/ota-build/output-deep-scan/
 tooling/ota-build/output-diagnostic/
+tooling/ota-build/output-dalauncher-restore/
+tooling/ota-build/output-dalauncher-fase10/
+
+# ---- Fase 10 (APK rebuildado, reconstruível via tooling/fase10/rebuild-dalauncher.sh) ----
+tooling/fase10/output/
 
 # ---- Overlay do pacote OTA ----
 # AutoOk.apk no overlay é rebuildável via `./gradlew assembleRelease`.

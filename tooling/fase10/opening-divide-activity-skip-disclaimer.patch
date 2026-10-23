@@ -1,0 +1,11 @@
+--- a/com/mitsubishielectric/ada/app/dalauncher/OpeningDivideActivity.smali
++++ b/com/mitsubishielectric/ada/app/dalauncher/OpeningDivideActivity.smali
+@@ -668,7 +668,7 @@
+     .line 869
+     sget-boolean v0, Lcom/mitsubishielectric/ada/app/dalauncher/OpeningDivideActivity;->sDisclamerFlg:Z
+ 
+-    if-nez v0, :cond_9
++    goto :cond_9
+ 
+     .line 870
+     invoke-direct {p0}, Lcom/mitsubishielectric/ada/app/dalauncher/OpeningDivideActivity;->createDisclaimerOnHomeIntent()Landroid/content/Intent;
