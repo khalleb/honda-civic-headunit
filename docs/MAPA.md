@@ -1063,11 +1063,23 @@ dispara `ACTION_ALARM_HEALTHCHECK` a cada 60s → mesmo efeito (forceRestart).
 
 **Veredito:** entrar na whitelist tem **efeito cosmético** (nome amigável no AppManager, metadata de regulação). Não remove código da v0.4.0. Fica no backlog só pra UX futura. Reconsiderar apenas se abrirmos a Fase 9 "AutoOk oficial com nome bonito no gerenciador".
 
-### 16.4 ✗ Modificar DaLauncher.apk via smali (não feito)
+### 16.4 🎯 Modificar DaLauncher.apk via smali — EM PREPARAÇÃO (Fase 10, deploy 2026-10-27)
 
-**Motivo:** benefício seria aviso realmente nunca aparecer. Risco: brick do launcher = tela preta no boot = precisa rollback OTA de emergência. Rede de segurança existe (dump raw bootable + rollback OTA pronto), mas custo-benefício não compensa dado que AutoOk v0.3.0 funciona em ~5s.
+**Reaberto 2026-10-20** após descoberta do gate `sDisclamerFlg` (ver §17.16). **Rota B escolhida 2026-10-23** após análise do `AndroidManifest.xml` do DaLauncher: nenhuma permission signature-pura, `VEHICLE_RW` é GID-only. Doc da decisão: [`fase10-decisao-rotas-2026-10-23.md`](fase10-decisao-rotas-2026-10-23.md).
 
-**Status:** parado no backlog; só fazer se Xposed-equivalente for necessário (zero delay real).
+**Patch:** `OpeningDivideActivity.smali:671` `if-nez v0, :cond_9` → `goto :cond_9` (força rota pra `createEcoIntent()`, flag `sDisclamerFlg` nunca mais é lido).
+
+**Validação:** segundo caller de `createDisclaimerOnHomeIntent` (linha 1754, em `notifyDisclaimerDestroy`) é código morto pós-patch — único caller indireto é `DisclaimerFragment:1741`, e o fragment nunca é instanciado.
+
+**Patch versionado:** `tooling/fase10/opening-divide-activity-skip-disclaimer.patch` (1 hunk, 1 instrução). O `rebuild-dalauncher.sh` deodexa o `.odex` original fresh, aplica o patch, e **prova** que a única diferença de bytecode orig→patch é a classe `OpeningDivideActivity` (assemble+disassemble dos dois lados, diff). Não depende mais da árvore pré-patcheada local.
+
+**Pacotes prontos (2026-10-23):**
+- Install: `tooling/ota-build/output-dalauncher-fase10/<ts>/0040/SwUpdate.mdt` (APK rebuildado 17.8MB `1774136c...`, signado com testkey AOSP; o builder recusa APK não assinado com o testkey). Deleta o `.odex` velho e grava `FASE10-ODEX-REMOVED.OK`/`.FAIL` no pendrive (gate inequívoco, não trava o loop).
+- Rollback: `tooling/ota-build/output-dalauncher-restore/<ts>/0040/SwUpdate.mdt` (APK + odex originais; verifica md5 pós-restore e grava `ROLLBACK-RESTORED.OK`/`.FAIL`)
+- Rebuild script: `tooling/fase10/rebuild-dalauncher.sh`
+- Execução passo-a-passo: [`fase10-execucao-2026-10-27.md`](fase10-execucao-2026-10-27.md)
+
+**Risco secundário (hipótese a confirmar no deploy):** espera-se que o PackageManager trate o signature mismatch como "new install" (apaga `/data/data/.../dalauncher/*` — wallpaper, ícones; launcher recria defaults). O caminho alternativo `INSTALL_FAILED_UPDATE_INCOMPATIBLE` desabilitaria o launcher — só se confirma no carro, por isso o rollback é gated. Detalhe em [`fase10-decisao-rotas-2026-10-23.md`](fase10-decisao-rotas-2026-10-23.md).
 
 ---
 
@@ -1326,6 +1338,7 @@ O `.done` evita re-match. O `rm /cache/.copy_complete` cobre um flag secundário
 | 2026-10-20 | APK v0.5.4 — baseline estável | `-b events` sozinho; needle casa `am_create_activity` (cold boot) ou `am_new_intent` (LP0 resume, Activity SINGLE_TOP) + `NORMAL_STARTUP`. **Validado no carro: cold boot ✓, LP0 resume ✓, mudo CarPlay ✓, zero taps falsos**. (ver §17.15) | pendente |
 | 2026-10-20 | Fix do loop OTA infinito em `build.py` + `build-rollback.py` | Updater-script agora renomeia `SwUpdate2.txt` → `.done` + remove `/cache/.copy_complete` antes do sleep final. Antes o pendrive precisava ser puxado manualmente durante a tela preta. Regra arquitetural permanente: todo `build-*.py` novo precisa dos dois comandos. (ver §17.17, memória `ota-script-sempre-quebra-loop`) | pendente |
 | 2026-10-20 | Fase 10 pré-planejada — gate do disclaimer descoberto | `OpeningDivideActivity.sDisclamerFlg` é static boolean em memória (não persistido). Patch mínimo de 1 instrução no smali remove o aviso de vez. DaLauncher assinado com key Mitsubishi `Melco Honda16MY` (não AOSP testkey) — deploy requer odex-level patch pra preservar signature, ou resign aceitando risco de "new install". Fase 10 bloqueada até v0.5.4 estável. (ver §17.16, doc denso em [`docs/fase10-pre-planejamento-2026-10-20.md`](fase10-pre-planejamento-2026-10-20.md)) | pendente |
+| 2026-10-23 | Fase 10 preparada offline — Rota B escolhida + 2 pacotes OTA construídos | Análise do manifesto do DaLauncher confirmou que `VEHICLE_RW` é GID-only e não há `sharedUserId` → Rota B (resign AOSP) é viável. Patch versionado em `tooling/fase10/opening-divide-activity-skip-disclaimer.patch`; `rebuild-dalauncher.sh` deodexa fresh + aplica o patch + prova que só `OpeningDivideActivity` muda no bytecode + verifica cert testkey AOSP (classes.dex 1.25MB, zipalign + apksigner). Pacotes install (APK `1774136c...`) e rollback construídos e smoke-tested, ambos com gate de status-file no pendrive (`FASE10-ODEX-REMOVED.OK` / `ROLLBACK-RESTORED.OK`). Deploy no carro agendado 2026-10-27 (fecha janela de v0.5.4 estável por 1 semana). Checklist em [`fase10-execucao-2026-10-27.md`](fase10-execucao-2026-10-27.md). (ver §16.4) | pendente |
 
 ---
 
@@ -1518,6 +1531,22 @@ Re-rodar o setup do MCP após atualizar o REA:
 npx -y rea-agents@latest setup --client claude_code --yes
 ```
 Depois conferir que `env.REA_JADX_MCP_JAR` segue dentro de `mcpServers.rea` no `~/.claude.json` (se o setup limpar, reinjetar com Python/jq).
+
+### 20.9 Fase 10 — rebuild do DaLauncher patcheado + pacotes OTA
+
+Rota B (ver §16.4). Precisa dos originais em `tooling/apks-dumped/dump-0040/vendor-app/` (dump, gitignored) e do patch versionado `tooling/fase10/opening-divide-activity-skip-disclaimer.patch`. Não depende mais da árvore smali pré-patcheada local.
+
+```bash
+# Rebuilda: deodex fresh + aplica patch versionado + prova (so OpeningDivideActivity muda) + zipalign + apksigner testkey AOSP
+bash tooling/fase10/rebuild-dalauncher.sh
+# Saída: tooling/fase10/output/DaLauncher-fase10.apk
+
+# Pacote OTA de install (deploya o APK rebuildado + remove .odex antigo + gate FASE10-ODEX-REMOVED.OK)
+python3 tooling/ota-build/build-dalauncher-fase10.py
+
+# Pacote OTA de rollback (restaura APK + .odex originais + verifica md5 -> ROLLBACK-RESTORED.OK)
+python3 tooling/ota-build/build-dalauncher-restore.py
+```
 
 ---
 
