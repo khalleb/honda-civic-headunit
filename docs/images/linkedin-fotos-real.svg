@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 2200 800" width="2200" height="800" role="img" aria-label="Antes e depois: foto real do aviso e do launcher do Civic">
+  <defs>
+    <linearGradient id="pageBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <marker id="arrowHero" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#60a5fa"/>
+    </marker>
+  </defs>
+
+  <rect width="2200" height="800" fill="url(#pageBg)"/>
+
+  <g transform="translate(60,60)">
+    <text x="500" y="24" text-anchor="middle" fill="#ef4444" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="700" letter-spacing="6">ANTES</text>
+
+    <g transform="translate(0,56)">
+      <rect x="-6" y="-6" width="1012" height="574" fill="#000" stroke="#ef4444" stroke-width="3" rx="8"/>
+      <image x="0" y="0" width="1000" height="562" href="file:///home/khalleb/repositorios/honda-civic-headunit/docs/images/foto-aviso-painel.jpg" preserveAspectRatio="xMidYMid slice"/>
+    </g>
+
+    <text x="500" y="686" text-anchor="middle" fill="#cbd5e1" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="500">Toda vez que ligo o carro, tap no OK manual.</text>
+  </g>
+
+  <g transform="translate(1090,380)">
+    <circle cx="0" cy="0" r="54" fill="#1e40af" stroke="#60a5fa" stroke-width="3"/>
+    <text x="0" y="-6" text-anchor="middle" fill="#fff" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="700">~3s</text>
+    <text x="0" y="20" text-anchor="middle" fill="#dbeafe" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="500">automático</text>
+    <line x1="-80" y1="60" x2="80" y2="60" stroke="#60a5fa" stroke-width="4" stroke-linecap="round" marker-end="url(#arrowHero)"/>
+  </g>
+
+  <g transform="translate(1140,60)">
+    <text x="500" y="24" text-anchor="middle" fill="#22c55e" font-family="Helvetica, Arial, sans-serif" font-size="26" font-weight="700" letter-spacing="6">DEPOIS</text>
+
+    <g transform="translate(0,56)">
+      <rect x="-6" y="-6" width="1012" height="574" fill="#000" stroke="#22c55e" stroke-width="3" rx="8"/>
+      <image x="0" y="0" width="1000" height="562" href="file:///home/khalleb/repositorios/honda-civic-headunit/docs/images/foto-depois.jpg" preserveAspectRatio="xMidYMid slice"/>
+    </g>
+
+    <text x="500" y="686" text-anchor="middle" fill="#cbd5e1" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="500">Aviso sumiu. Vai direto pro CarPlay.</text>
+  </g>
+</svg>

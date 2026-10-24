@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1700 500" width="1700" height="500" role="img" aria-label="Antes e depois: tela do aviso e launcher principal">
+  <defs>
+    <linearGradient id="pageBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="bezelHero" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2a2a2a"/>
+      <stop offset="100%" stop-color="#111"/>
+    </linearGradient>
+    <linearGradient id="btnHero" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#333"/>
+      <stop offset="100%" stop-color="#1a1a1a"/>
+    </linearGradient>
+    <linearGradient id="iconBgHero" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2b2b2b"/>
+      <stop offset="100%" stop-color="#1a1a1a"/>
+    </linearGradient>
+    <marker id="arrowHero" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#60a5fa"/>
+    </marker>
+  </defs>
+
+  <rect width="1700" height="500" fill="url(#pageBg)"/>
+
+  <g transform="translate(40,40)">
+    <text x="400" y="22" text-anchor="middle" fill="#ef4444" font-family="Helvetica, Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="4">ANTES</text>
+
+    <g transform="translate(0,36)">
+      <rect width="800" height="400" fill="url(#bezelHero)" rx="6"/>
+      <rect x="8" y="8" width="784" height="384" fill="#000" rx="4"/>
+
+      <rect x="88" y="44" width="624" height="300" fill="none" stroke="#f0c93c" stroke-width="4" rx="6"/>
+      <rect x="90" y="46" width="620" height="296" fill="#0d0d0d" rx="4"/>
+
+      <text x="400" y="94" text-anchor="middle" fill="#fff" font-family="Helvetica, Arial, sans-serif" font-size="32" font-weight="500">Aviso</text>
+
+      <g font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#f8f8f8">
+        <text x="400" y="146" text-anchor="middle">O motorista é o responsável pela condução</text>
+        <text x="400" y="170" text-anchor="middle">segura deste veículo. Use este sistema</text>
+        <text x="400" y="194" text-anchor="middle">somente quando as condições de tráfego permitirem.</text>
+        <text x="400" y="218" text-anchor="middle">Para mais detalhes consulte o seu manual do proprietário.</text>
+      </g>
+
+      <g>
+        <rect x="315" y="248" width="170" height="44" fill="url(#btnHero)" stroke="#f0c93c" stroke-width="1.5" rx="3"/>
+        <text x="400" y="278" text-anchor="middle" fill="#fff" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="500">OK</text>
+      </g>
+
+      <text x="400" y="326" text-anchor="middle" fill="#4a90e2" font-family="Helvetica, Arial, sans-serif" font-size="16" text-decoration="underline">Alterar o idioma</text>
+    </g>
+
+    <text x="400" y="486" text-anchor="middle" fill="#94a3b8" font-family="Helvetica, Arial, sans-serif" font-size="14">Toda vez que você liga o carro, tap no OK manual.</text>
+  </g>
+
+  <g transform="translate(840,220)">
+    <line x1="0" y1="0" x2="60" y2="0" stroke="#60a5fa" stroke-width="4" stroke-linecap="round" marker-end="url(#arrowHero)"/>
+    <text x="38" y="-16" text-anchor="middle" fill="#60a5fa" font-family="Helvetica, Arial, sans-serif" font-size="18" font-weight="600">~3s</text>
+    <text x="38" y="30" text-anchor="middle" fill="#94a3b8" font-family="Helvetica, Arial, sans-serif" font-size="11">automático</text>
+  </g>
+
+  <g transform="translate(940,40)">
+    <text x="400" y="22" text-anchor="middle" fill="#22c55e" font-family="Helvetica, Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="4">DEPOIS</text>
+
+    <g transform="translate(0,36)">
+      <rect width="800" height="400" fill="url(#bezelHero)" rx="6"/>
+      <rect x="8" y="8" width="784" height="384" fill="#000" rx="4"/>
+
+      <rect x="48" y="28" width="704" height="24" fill="#111" rx="2"/>
+      <text x="60" y="45" fill="#f8f8f8" font-family="Helvetica, Arial, sans-serif" font-size="12">14:32</text>
+      <text x="740" y="45" fill="#f8f8f8" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">22°C</text>
+
+      <g font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#eee" text-anchor="middle">
+        <g transform="translate(130,80)">
+          <rect width="100" height="100" fill="url(#iconBgHero)" rx="10" stroke="#333"/>
+          <circle cx="50" cy="42" r="18" fill="none" stroke="#4a90e2" stroke-width="3"/>
+          <text x="50" y="48" fill="#4a90e2" font-size="20" font-weight="bold">♪</text>
+          <text x="50" y="120">Áudio</text>
+        </g>
+        <g transform="translate(250,80)">
+          <rect width="100" height="100" fill="url(#iconBgHero)" rx="10" stroke="#333"/>
+          <polygon points="30,24 80,42 80,70 30,88 30,24" fill="none" stroke="#56c271" stroke-width="3"/>
+          <text x="50" y="120">Navegação</text>
+        </g>
+        <g transform="translate(370,80)">
+          <rect width="100" height="100" fill="url(#iconBgHero)" rx="10" stroke="#333"/>
+          <path d="M 32 32 L 68 32 L 68 50 L 60 50 L 60 78 L 40 78 L 40 50 L 32 50 Z" fill="none" stroke="#f0c93c" stroke-width="3"/>
+          <text x="50" y="120">Telefone</text>
+        </g>
+        <g transform="translate(490,80)">
+          <rect width="100" height="100" fill="url(#iconBgHero)" rx="10" stroke="#333"/>
+          <rect x="28" y="28" width="44" height="44" fill="none" stroke="#e94560" stroke-width="3" rx="4"/>
+          <circle cx="50" cy="50" r="9" fill="none" stroke="#e94560" stroke-width="3"/>
+          <text x="50" y="120">CarPlay</text>
+        </g>
+        <g transform="translate(610,80)">
+          <rect width="100" height="100" fill="url(#iconBgHero)" rx="10" stroke="#333"/>
+          <circle cx="50" cy="50" r="20" fill="none" stroke="#9d7cd8" stroke-width="3"/>
+          <circle cx="50" cy="50" r="4" fill="#9d7cd8"/>
+          <text x="50" y="120">Config</text>
+        </g>
+
+        <g transform="translate(190,230)">
+          <rect width="100" height="100" fill="url(#iconBgHero)" rx="10" stroke="#333"/>
+          <circle cx="50" cy="50" r="20" fill="none" stroke="#56c271" stroke-width="3"/>
+          <path d="M 40 46 L 50 56 L 65 38" fill="none" stroke="#56c271" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="50" y="330">Rádio</text>
+        </g>
+        <g transform="translate(310,230)">
+          <rect width="100" height="100" fill="url(#iconBgHero)" rx="10" stroke="#333"/>
+          <polygon points="50,28 65,46 55,46 55,70 45,70 45,46 35,46" fill="#4a90e2"/>
+          <text x="50" y="330">Veículo</text>
+        </g>
+        <g transform="translate(430,230)">
+          <rect width="100" height="100" fill="url(#iconBgHero)" rx="10" stroke="#333"/>
+          <path d="M 28 42 Q 28 28 50 28 Q 72 28 72 42 L 72 64 Q 72 78 50 78 Q 28 78 28 64 Z" fill="none" stroke="#f0c93c" stroke-width="3"/>
+          <text x="50" y="330">Clima</text>
+        </g>
+        <g transform="translate(550,230)">
+          <rect width="100" height="100" fill="url(#iconBgHero)" rx="10" stroke="#333"/>
+          <circle cx="50" cy="50" r="20" fill="none" stroke="#e94560" stroke-width="3"/>
+          <path d="M 50 36 L 50 50 L 60 58" fill="none" stroke="#e94560" stroke-width="3" stroke-linecap="round"/>
+          <text x="50" y="330">Apps</text>
+        </g>
+      </g>
+    </g>
+
+    <text x="400" y="486" text-anchor="middle" fill="#94a3b8" font-family="Helvetica, Arial, sans-serif" font-size="14">Aviso some sozinho. Zero toque. Vai direto pro CarPlay.</text>
+  </g>
+</svg>
