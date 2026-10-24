@@ -79,6 +79,17 @@ Trechos técnicos (comandos, flags, nomes de pacotes) podem ficar em inglês.
 - **Zero comentários no código** (regra do dono — ver `~/.claude/CLAUDE.md`)
 - Documentação em Markdown
 - Commits em português no imperativo
+- **Testes obrigatórios para código com lógica** (ver abaixo)
+
+## Testes obrigatórios
+
+Regra do dono, a partir de 2026-10-24. Código com lógica de runtime **não entra sem teste**; o resto entra com **prova executável**. Teste decorativo não conta — vale a régua do `/review-khalleb`: se nenhuma mudança na lógica deixa o teste vermelho, ele documenta, não prova.
+
+- **Código com lógica de runtime → teste unitário obrigatório.**
+  - `our-apk/` (AutoOk): a lógica pura (match do needle do logcat, dedup temporal, decisão de tap) sai das bordas Android e é testada em JVM/JUnit, sem device nem emulador. É onde moram os bugs reais — ex.: a saga v0.5.0→v0.5.4 (needle frouxo, dedup, formato de logcat) seria pega aqui antes de ir ao carro.
+  - `tooling/**/*.py` (geradores de pacote OTA): pytest que asserta as invariantes do artefato gerado — loop-break presente (`mv SwUpdate2.txt` + `rm /cache/.copy_complete`), device-guard `vcm30t30`, gate do `rm` do `.odex`, paths caindo nas partições certas.
+- **RE / smali / análise estática / docs → não força unit test**, mas **exige prova executável** sempre que produz um artefato (patch smali, pacote OTA, APK rebuildado). Ex.: `tooling/fase10/rebuild-dalauncher.sh` prova que só `OpeningDivideActivity` muda no bytecode entre orig e patch.
+- **Shell de orquestração** (sem lógica testável) → a prova é o próprio artefato que ele gera, verificado no fim do script.
 
 ## Links úteis
 
