@@ -77,7 +77,7 @@ Depois os greps/awks de cada scan sobre `$BULK/**/*.smali` + `unzip -p AndroidMa
 Hierarquizados por valor imediato pro projeto:
 
 1. **Camera** — a AIDL `IRearWideCameraDisplay` + actions `com.mitsubishielectric.android.action.camera.*` são o caminho correto pra substituir o logcat-polling de ré no AutoOk v0.4.0. Fase 9 natural.
-2. **Diag** (DealerDiag, DeveloperDiag, PreShipmentDiag, LetDiag) — tipicamente carregam PINs, modos de serviço, menus escondidos. Alto potencial de Easter egg.
+2. **Diag** (DealerDiag, DeveloperDiag, PreShipmentDiag, LetDiag) — tipicamente carregam PINs, modos de serviço, menus escondidos. **→ aprofundado em [`06-diag-apks.md`](06-diag-apks.md) (2026-10-24):** não há PIN (telas `exported=false`, sem gate interno; root abre via `am start`); 91 telas do DealerDiag classificadas em leitura / teste de hardware / escrita; o "unlock code" é licenciamento de mapa Garmin, não senha.
 3. **Vehicle** (VehicleRW, VehicleInfoManager, VehicleDbManager — 55 interfaces AIDL) — lá mora a leitura/escrita de CAN. Fase 10+, risco alto se escrever.
 4. **StrgSW** — mapeamento dos botões físicos do volante. Baixo custo, útil pra hooks diretos.
 5. **AV + MediaCoreService** — pipeline de áudio, roteamento. Potencial de bypass de ducking (áudio nosso não baixar com voz Honda).
