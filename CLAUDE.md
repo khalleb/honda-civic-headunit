@@ -91,6 +91,8 @@ Regra do dono, a partir de 2026-10-24. Código com lógica de runtime **não ent
 - **RE / smali / análise estática / docs → não força unit test**, mas **exige prova executável** sempre que produz um artefato (patch smali, pacote OTA, APK rebuildado). Ex.: `tooling/fase10/rebuild-dalauncher.sh` prova que só `OpeningDivideActivity` muda no bytecode entre orig e patch.
 - **Shell de orquestração** (sem lógica testável) → a prova é o próprio artefato que ele gera, verificado no fim do script.
 
+Rodar os testes de tooling (stdlib, sem dependências): `python3 -m unittest discover -s tooling/ota-build/tests`
+
 ## Links úteis
 
 - Repositório (privado): https://github.com/khalleb/honda-civic-headunit
