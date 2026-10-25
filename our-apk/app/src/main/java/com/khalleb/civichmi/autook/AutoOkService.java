@@ -92,9 +92,8 @@ public class AutoOkService extends Service {
             return;
         }
         long now = System.currentTimeMillis();
-        long sinceLast = now - lastTapAtMs;
-        if (lastTapAtMs > 0 && sinceLast < AutoOkConfig.TAP_DEDUP_SECONDS * 1000L) {
-            FileLogger.log("dedup: tap suprimido (" + sinceLast + "ms desde ultimo)");
+        if (TapDeduper.shouldSuppress(now, lastTapAtMs, AutoOkConfig.TAP_DEDUP_SECONDS)) {
+            FileLogger.log("dedup: tap suprimido (" + (now - lastTapAtMs) + "ms desde ultimo)");
             return;
         }
         handled = true;
