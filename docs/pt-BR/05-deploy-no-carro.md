@@ -37,21 +37,36 @@ sudo ./tooling/scripts/format-pendrive.sh /dev/sda
 sudo ./tooling/scripts/prepare-pendrive-install.sh /dev/sda
 ```
 
-**O que o `prepare-pendrive-install.sh` faz:**
-1. Confirma que `/dev/sda` tem transport `usb` (guarda contra `/dev/nvme`)
-2. Monta temporariamente o pendrive
-3. Limpa conteúdo anterior
-4. Copia `SwUpdate2.txt` (trigger) + `0040/SwUpdate.mdt` (pacote)
-5. Unmount + sync
+**O que o `prepare-pendrive-install.sh` faz** (a sequência é a de `tooling/scripts/lib-pendrive.sh`, igual nos 5 `prepare-pendrive-*.sh`):
+1. Confirma que `/dev/sda` é o disco inteiro de um pendrive USB (guarda contra `/dev/nvme` e contra passar `/dev/sda1`)
+2. Escolhe o build mais novo de `tooling/ota-build/output/` (ou do diretório passado como 2º argumento) e confere que ele tem `SwUpdate2.txt` + `0040/SwUpdate.mdt`, antes de tocar no pendrive
+3. Confere tabela MSDOS + partição vfat, o formato que o daupdater enxerga
+4. Monta o pendrive (ou reaproveita a montagem do desktop)
+5. Mostra modelo, rótulo e conteúdo atual do pendrive e só segue se você digitar `yes`
+6. Limpa conteúdo anterior e copia `SwUpdate2.txt` (trigger) + `0040/SwUpdate.mdt` (pacote)
+7. Confere o SHA-256 dos dois arquivos lendo do pendrive, sem cache, e para com erro se não bater
+8. Desmonta, inclusive quando a montagem era do desktop
 
 Saída esperada:
 ```
+=== Vai APAGAR o conteúdo deste pendrive ===
+  Device:   /dev/sda (Cruzer Fit 29,3G)
+  Rótulo:   HONDA_OTA
+  Montado:  /run/media/<usuario>/HONDA_OTA
+  Conteúdo: 0040 install-0040.log logcat.txt result.log SwUpdate2.txt.done ...
+Apagar e gravar o pacote INSTALL? (yes/no): yes
+...
+=== Conferindo a cópia (SHA-256 lido do pendrive, sem cache) ===
+OK   SwUpdate2.txt  <sha256>
+OK   0040/SwUpdate.mdt  <sha256>
+
 === Conteúdo final ===
 drwxr-xr-x. 2 khalleb khalleb 16384 ... 0040
 -rw-r--r--. 1 khalleb khalleb    28 ... SwUpdate2.txt
 
 === PRONTO ===
-Pendrive em /dev/sda carregado com pacote INSTALL.
+Pendrive em /dev/sda carregado com pacote INSTALL de <diretório do build>.
+Já está desmontado: pode puxar.
 ```
 
 ### 1.3 Puxa o pendrive do notebook

@@ -529,7 +529,7 @@ Nosso APK — dispensa automaticamente o aviso de abertura.
 |---|---|
 | Package | `com.khalleb.civichmi.autook` |
 | Instalado em | `/system/app/AutoOk.apk` |
-| Versão atual | **4** (v0.4.0) ✓ confirmado via teste no carro 2026-10-17 (corrige bug de LP0) |
+| Versão atual | **9** (v0.5.4) ✓ validado no carro 2026-10-20 (mudo CarPlay + LP0 resume; baseline estável, ver §17.15) |
 | Tamanho | ~17 KB |
 | User ID | 10091 |
 | Native lib dir | `/data/app-lib/AutoOk/` |
@@ -541,32 +541,34 @@ Nosso APK — dispensa automaticamente o aviso de abertura.
 
 **Classes:**
 - `BootReceiver` — ouve `BOOT_COMPLETED`, inicia `AutoOkService`
-- `HmiServiceReceiver` 🆕 v0.4.0 — ouve `com.mitsubishielectric.ada.appservice.powermanager.ACTION_HMI_SERVICE_START`, dispara `ACTION_FORCE_RESTART` no Service. Fundamental em cada exit de LP0 (câmera de ré, abertura de porta, acordar do suspend).
-- `AlarmReceiver` 🆕 v0.4.0 — recebe alarm periódico de 60s do `AlarmManager`, dispara `ACTION_FORCE_RESTART` como fallback.
-- `AutoOkService` — Service persistente (START_STICKY). Monta watcher, watchdog, rearm. **v0.4.0:** novo `forceRestartWatcher()` que mata e recria watcher (quebra thread bloqueado em `readLine()` após LP0). `scheduleAlarm()` via AlarmManager a cada 60s.
-- `LogcatWatcher` — Thread que lê `logcat -v brief ActivityManager:I *:S` via `su`, procura needle. Em v0.3.0+ roda em loop infinito (não é destruído entre taps).
+- `HmiServiceReceiver` — ouve `com.mitsubishielectric.ada.appservice.powermanager.ACTION_HMI_SERVICE_START`, dispara `ACTION_FORCE_RESTART` no Service. Fundamental em cada exit de LP0 (câmera de ré, abertura de porta, acordar do suspend).
+- `AutoOkService` — Service persistente (START_STICKY). Monta watcher, watchdog, rearm. `forceRestartWatcher()` mata/recria o watcher (quebra thread bloqueado em `readLine()` após LP0), mas **reusa o watcher se ainda estiver vivo** (lição 17.9: recriar à toa trazia EPERM de volta).
+- `LogcatWatcher` — Thread que lê `logcat -b events -v threadtime am_create_activity:I am_new_intent:I *:S` via `su`, procura needle. Roda em loop infinito desde v0.3.0 (não é destruído entre taps; sem `logcat -c`, por isso relê o buffer `events` ao recriar).
+- `AvisoMatcher` — lógica pura do match (needle + `NORMAL_STARTUP` + `am_create_activity`/`am_new_intent`), testada em JVM.
+- `TapDeduper` — lógica pura do dedup temporal (janela de 3s), testada em JVM.
 - `Shell` — Wrapper de `Runtime.exec("su")` + `suTapWithFallback`
 - `FileLogger` — Grava `/data/data/.../files/autook.log` com rotação por sessão
 
+> **v0.5.0 removeu o `AlarmManager`/`AlarmReceiver`** que a v0.4.0 tinha como fallback de 60s (ver §17.15). A permissão `WAKE_LOCK` continua declarada no manifesto, mas sem uso ativo depois disso.
+
 **Permissions declaradas:**
 - `RECEIVE_BOOT_COMPLETED` (boot)
-- `WAKE_LOCK` 🆕 v0.4.0 (AlarmManager fallback)
+- `WAKE_LOCK` (declarada desde v0.4.0; sem uso ativo depois que a v0.5.0 tirou o AlarmManager)
 
-**Config atual** (`AutoOkConfig.java`):
+**Config atual** (`AutoOkConfig.java`, v0.5.4):
 ```java
 AVISO_ACTIVITY_NAME = "com.mitsubishielectric.ada.app.dalauncher/.OpeningDivideActivity"
 BUTTON_OK_X = 400, BUTTON_OK_Y = 350
 TAP_FALLBACK_COORDS = {(400,350), (400,340), (400,360)}
 TAP_FALLBACK_INTERVAL_MS = 200
 DELAY_SECONDS_AFTER_DETECT = 1
-REARM_DELAY_SECONDS = 10
-BOOT_INITIAL_WAIT_MS = 2000
+REARM_DELAY_SECONDS = 2
+BOOT_INITIAL_WAIT_MS = 500
 WATCHDOG_INTERVAL_SECONDS = 30
-// Novos em v0.4.0:
+TAP_DEDUP_SECONDS = 3
 HMI_SERVICE_START_ACTION = "com.mitsubishielectric.ada.appservice.powermanager.ACTION_HMI_SERVICE_START"
 ACTION_FORCE_RESTART = "com.khalleb.civichmi.autook.FORCE_RESTART"
-ACTION_ALARM_HEALTHCHECK = "com.khalleb.civichmi.autook.ALARM_HEALTHCHECK"
-ALARM_HEALTHCHECK_INTERVAL_SECONDS = 60
+// Needle: am_create_activity (cold boot) OU am_new_intent (LP0 resume) + OpeningDivideActivity + NORMAL_STARTUP
 ```
 
 ### 10.2 `/system/xbin/su` 🔧
@@ -633,6 +635,10 @@ protected void onCreate(Bundle savedInstanceState) {
 ```
 
 **14 classes a referenciam** (`trace-android-references`). O lançador real do aviso no boot é **`com.mitsubishielectric.ada.app.dalauncher.Launcher.HMIServiceReceiver`**: ao receber `ACTION_HMI_SERVICE_START` do PowerManager (§11.6), ele dispara a Activity. As demais referências são colaterais: `CSFFragment`, `DisclaimerFragment` (+ 3 inners), `EcoFragment` (+ 2 inners), `HomeBaseFragment`, `HmiBroadcastReceiver`, `OpeningActivity`, e a própria `OpeningDivideActivity.HMIServiceReceiver`.
+
+**Sequência pós-aviso e `DISCLAIMER_COMPLETE` (smali do DaLauncher deodexado, 2026-10-26).** A action `com.mitsubishielectric.ada.app.dalauncher.action.DISCLAIMER_COMPLETE` é enviada em quatro métodos: `DisclaimerFragment.finishDisclaimer(Z)` (o OK do aviso), `OpeningDivideActivity.onFinishFragment()` (quando o fragment atual é `EcoFragment`), `OpeningDivideActivity.startNextActivity()` e `EcoFragment.startNextActivity()`. O `createEcoIntent()` manda `ECO_START` e coloca um `EcoFragment` na tela. O `EcoFragment.startNextActivity()` tem as mesmas chamadas que rodam depois do OK: `setDisclaimerPassed`, o broadcast `DISCLAIMER_COMPLETE`, `INavigationApService.disclaimerDisappeared()` e `IPhoneCoordinationApService.setDisplayPermission()`. Fora do DaLauncher, a string da action aparece em quatro `.odex`: `CameraAPService`, `SystemInfoService`, `VehicleCoordination` e `AcuraLinkApService` (prováveis receivers; o código deles não foi lido). O impacto disso na Fase 10 está em §16.4.
+
+**Confirmado no carro (logcat que a central gravou no pendrive em 2026-10-20, com o v0.5.4; backup em `~/backup-honda-civic-g10/pendrive-honda-ota-2026-10-20/`).** O tap do AutoOk dispara a sequência inteira do fabricante, no cold boot e no resume de LP0. Até ~220 ms depois de `AutoOk: tap ok=true` aparecem `NavigationApService.disclaimerDisappeared`, `DisclaimerFragment.finishDisclaimer` (`DisclaimerComplete!`), `SystemDisplayApService$ActionDisclaimerCompleteReceiver.onReceive` com `act=com.mitsubishielectric.ada.app.dalauncher.action.DISCLAIMER_COMPLETE` e `CarPlayApService.setDisplayPermission(status=true)`. Então o `DISCLAIMER_COMPLETE` dispara com tap programático, o `SystemInfoService` é receiver de verdade, e o CarPlay só ganha permissão de tela depois do aviso. Nesses logs `ECO_START` não aparece nenhuma vez: depois do patch da Fase 10, o caminho Eco vai rodar pela primeira vez neste carro.
 
 ### 11.2 Launcher principal
 
@@ -773,7 +779,7 @@ Análise estática completa via REA + JADX em 2026-10-19. Documento denso em [`d
 
 ---
 
-## 12. Pipeline do APK AutoOk (v0.4.0)
+## 12. Pipeline do APK AutoOk (v0.5.4)
 
 ```
 BOOT_COMPLETED (cold boot via AUDIO 5s)
@@ -794,14 +800,12 @@ AutoOkService.onStartCommand(START_STICKY, action=null)
       │     watcher = buildWatcher()
       │     watcher.start()              ← Thread "AutoOk-LogcatWatcher"
       │  }
-      ├─ startWatchdog()                 ← Thread "AutoOk-Watchdog" (30s loop)
-      └─ scheduleAlarm()  🆕 v0.4.0      ← AlarmManager repete a cada 60s
+      └─ startWatchdog()                 ← Thread "AutoOk-Watchdog" (30s loop)
+         (v0.5.0 tirou o scheduleAlarm()/AlarmManager que a v0.4.0 tinha)
 
-OU (v0.4.0): Em resposta a HMI_SERVICE_START ou alarm:
+OU: Em resposta a HMI_SERVICE_START:
 
 HmiServiceReceiver.onReceive()         ← dispara em cada ExitLP0/AccOnRestart
-   OU
-AlarmReceiver.onReceive()              ← dispara a cada 60s (fallback)
       │
       ▼
 startService(AutoOkService, action=ACTION_FORCE_RESTART)
@@ -809,13 +813,13 @@ startService(AutoOkService, action=ACTION_FORCE_RESTART)
       ▼
 AutoOkService.onStartCommand(action=ACTION_FORCE_RESTART)
       │
-      └─ forceRestartWatcher()         ← mata watcher antigo + cria novo
-                                         (quebra readLine() bloqueado)
+      └─ forceRestartWatcher()         ← recria o watcher só se morto; se vivo,
+                                         só reseta handled (lição 17.9: EPERM)
       
 LogcatWatcher thread:
       │
-      ├─ sleep(BOOT_INITIAL_WAIT_MS=2000)
-      ├─ Runtime.exec("su") → stdin: "exec logcat -v brief ActivityManager:I *:S"
+      ├─ sleep(BOOT_INITIAL_WAIT_MS=500)
+      ├─ Runtime.exec("su") → stdin: "exec logcat -b events -v threadtime am_create_activity:I am_new_intent:I *:S"
       ├─ while (running && readLine()):
       │     if (line.contains(NEEDLE)):
       │        callback.onDetected()     ← NÃO retorna! Loop infinito desde v0.3.0
@@ -823,8 +827,9 @@ LogcatWatcher thread:
 AutoOkService.onAvisoDetected() (chamada pelo watcher):
       │
       ├─ if (handled) return
+      ├─ if (TapDeduper.shouldSuppress(now, lastTapAtMs, 3s)) return  ← dedup temporal
       ├─ handled = true
-      ├─ FileLogger.log("aviso detectado")
+      ├─ FileLogger.log("aviso detectado (NORMAL_STARTUP match)")
       ├─ sleep(DELAY_SECONDS_AFTER_DETECT=1)
       ├─ Shell.suTapWithFallback(coords, intervalMs)
       │     ├─ tap (400,350) → se exit 0, return true
@@ -837,7 +842,7 @@ AutoOkService.onAvisoDetected() (chamada pelo watcher):
       
 AutoOkService.rearmWatcher():
       │
-      ├─ sleep(REARM_DELAY_SECONDS=10)
+      ├─ sleep(REARM_DELAY_SECONDS=2)
       ├─ handled = false                ← só reseta flag, NÃO recria watcher (v0.3.0 fix)
       └─ FileLogger.log("rearmed (watcher reusado)")
       
@@ -1022,7 +1027,7 @@ dispara `ACTION_ALARM_HEALTHCHECK` a cada 60s → mesmo efeito (forceRestart).
 | Needle do Aviso | `com.mitsubishielectric.ada.app.dalauncher/.OpeningDivideActivity` |
 | Package do AutoOk | `com.khalleb.civichmi.autook` |
 | User ID do AutoOk | 10091 |
-| Versão atual AutoOk | **4** (v0.4.0 — fix do bug de LP0) |
+| Versão atual AutoOk | **9** (v0.5.4 — mudo CarPlay + LP0 resume; baseline estável) |
 | Signing key | debug keystore (Android Debug cert) |
 | Testkey SHA-256 | `A4:0D:A8:0A:59:D1:70:CA:A9:50:CF:15:C1:8C:45:4D:47:A3:9B:26:98:9D:8B:64:0E:CD:74:5B:A7:1B:F5:DC` |
 | Debug cert SHA-256 | `9505deb0b0d8c53178eaade253eee94e1a31f0e6a1dde2b809752914b644cf02` |
@@ -1038,6 +1043,7 @@ dispara `ACTION_ALARM_HEALTHCHECK` a cada 60s → mesmo efeito (forceRestart).
 | vendor framework extraído | `tooling/apks-dumped/dump-0040/vendor-framework/` |
 | Externo (Google Drive privado) | `honda-civic-g10-backup-2026-10-17.tar.gz` (269 MB, sha256 `3dbc1994...`) |
 | Error History do bug LP0 (câmera de ré) | `~/backup-honda-civic-g10/error-history-2026-10-17-camera-ride-bug/` (4.5 MB) |
+| Pendrive HONDA_OTA de 2026-10-20 (logcat/kmsg/exception da central depois do v0.5.4 + logs do install) | `~/backup-honda-civic-g10/pendrive-honda-ota-2026-10-20/` (3.6 MB, `SHA256SUMS`) |
 
 ---
 
@@ -1073,13 +1079,21 @@ dispara `ACTION_ALARM_HEALTHCHECK` a cada 60s → mesmo efeito (forceRestart).
 
 **Patch versionado:** `tooling/fase10/opening-divide-activity-skip-disclaimer.patch` (1 hunk, 1 instrução). O `rebuild-dalauncher.sh` deodexa o `.odex` original fresh, aplica o patch, e **prova** que a única diferença de bytecode orig→patch é a classe `OpeningDivideActivity` (assemble+disassemble dos dois lados, diff). Não depende mais da árvore pré-patcheada local.
 
-**Pacotes prontos (2026-10-23):**
-- Install: `tooling/ota-build/output-dalauncher-fase10/<ts>/0040/SwUpdate.mdt` (APK rebuildado 17.8MB `1774136c...`, signado com testkey AOSP; o builder recusa APK não assinado com o testkey). Deleta o `.odex` velho e grava `FASE10-ODEX-REMOVED.OK`/`.FAIL` no pendrive (gate inequívoco, não trava o loop).
-- Rollback: `tooling/ota-build/output-dalauncher-restore/<ts>/0040/SwUpdate.mdt` (APK + odex originais; verifica md5 pós-restore e grava `ROLLBACK-RESTORED.OK`/`.FAIL`)
+**Pacotes prontos (regerados em 2026-10-26, sem assert de device e sem `set_perm` em `/system`; o nome da pasta tem o horário em UTC):**
+- Install: `tooling/ota-build/output-dalauncher-fase10/20261027T020208Z/0040/SwUpdate.mdt` (SHA-256 `4c31cb4d...`; APK rebuildado 17.8MB `1774136c...`, signado com testkey AOSP; o builder recusa APK não assinado com o testkey). Deleta o `.odex` velho e grava `FASE10-ODEX-REMOVED.OK`/`.FAIL` no pendrive (gate inequívoco, não trava o loop).
+- Rollback: `tooling/ota-build/output-dalauncher-restore/20261027T020209Z/0040/SwUpdate.mdt` (SHA-256 `6445ec80...`; APK + odex originais; verifica md5 pós-restore e grava `ROLLBACK-RESTORED.OK`/`.FAIL`)
 - Rebuild script: `tooling/fase10/rebuild-dalauncher.sh`
 - Execução passo-a-passo: [`fase10-execucao-2026-10-27.md`](fase10-execucao-2026-10-27.md)
 
 **Risco secundário (hipótese a confirmar no deploy):** espera-se que o PackageManager trate o signature mismatch como "new install" (apaga `/data/data/.../dalauncher/*` — wallpaper, ícones; launcher recria defaults). O caminho alternativo `INSTALL_FAILED_UPDATE_INCOMPATIBLE` desabilitaria o launcher — só se confirma no carro, por isso o rollback é gated. Detalhe em [`fase10-decisao-rotas-2026-10-23.md`](fase10-decisao-rotas-2026-10-23.md).
+
+**Revisão pré-deploy (2026-10-26):**
+
+- **O caminho Eco refaz a sequência pós-aviso.** Depois do patch, `createDisclaimerOrEcoIntent()` sempre devolve `createEcoIntent()`, e o `EcoFragment` faz as chamadas que o OK do aviso faria, inclusive o broadcast `DISCLAIMER_COMPLETE` que aparece em `CameraAPService`, `SystemInfoService`, `VehicleCoordination` e `AcuraLinkApService` (§11.1.1). A análise estática não diz qual branch roda. No carro, depois do deploy, conferir câmera de ré, navegação e projeção do CarPlay.
+- **Resolvido: assert de device removido dos dois pacotes.** Os builds de 2026-10-23 geravam `assert(getprop("ro.product.device") == "vcm30t30" || getprop("ro.build.product") == "vcm30t30")`, que nenhum dos 18 pacotes anteriores (install, rollback, dump-raw, deep-scan, diagnostic) tinha. O `build.py` tira esse assert de propósito: se ele falha dentro do recovery, o comando `--update_package=/mnt/usbdrive1/0040/SwUpdate.mdt` fica em `/cache/recovery/command` e a central entra em recovery loop. Pelo CAUTION do `ic1101/docs/updates.md`, tirar o pendrive ou a bateria não sai do loop; sai plugando na porta frontal um pendrive com um pacote que o recovery consiga aplicar. O `/system/build.prop` do dump tem os dois valores iguais a `vcm30t30`, mas no recovery o `getprop` lê as props do ramdisk do recovery, cuja imagem (MTD `recovery`, §3.3) nunca foi dumpada, e o rollback tinha o mesmo assert. Os builders não geram mais a linha, e dois testes mantêm `assert(`/`abort(` fora dos 7 geradores. Os pacotes regerados diferem dos anteriores só nessa linha e na assinatura. A assinatura whole-file foi conferida contra o testkey (RSA 2048, e=3, SHA-1), com controle positivo (install do v0.5.4, aceito pelo carro) e negativo (cópia adulterada em 1 byte).
+- **Resolvido: `set_perm` em `/system` trocado por `chown`/`chmod` do busybox.** O `set_perm` também aborta: no `update-binary` empacotado, ele aborta com `some changes failed` quando o chown/chmod falha, por exemplo se o CAP não montou e o arquivo não foi extraído (§17.18). Os dois pacotes agora acertam dono e modo do APK (e do odex, no rollback) com o busybox via `run_program`, que não aborta e grava no log `perm <arquivo> chown-exit=N chmod-exit=N`. O `set_perm` ficou só em `/tmp`, com teste. Os pacotes regerados diferem dos `20261026T214450Z`/`20261026T214451Z` só nessas linhas do `updater-script` e na assinatura, conferida contra o testkey com os mesmos controles; APK, odex, busybox e `update-binary` são os mesmos bytes. O busybox tem os applets `chown` e `chmod` (tabela de applets do binário), mas eles nunca rodaram no carro: o §2.1 do checklist os exercita no rollback antes do install.
+- **Resolvido: scripts de pendrive aceitam o diretório do build.** `prepare-pendrive-install.sh` e `prepare-pendrive-rollback.sh` ignoravam o 2º argumento e sempre copiavam o build mais novo de `output/` e `output-rollback/` (pacotes do AutoOk); seguindo o checklist como estava, o §2.1 removeria `AutoOk.apk` + `su` do carro. Agora o 2º argumento é um diretório de builds (usa o mais novo) ou um build exato. O script valida `SwUpdate2.txt` + `0040/SwUpdate.mdt` antes de limpar o pendrive e, no fim, confere o SHA-256 lido do pendrive contra o build, depois de `drop_caches` para ler do dispositivo e não do cache. Sem o 2º argumento, o comportamento é o de antes. A sequência dos 5 `prepare-pendrive-*.sh` fica em `tooling/scripts/lib-pendrive.sh` (testada em `tooling/ota-build/tests/test_prepare_pendrive.py`, inclusive a sequência inteira, com stub no lugar do que exige root), que também recusa partição no lugar do disco, tabela que não seja MSDOS e partição que não seja vfat, mostra modelo, rótulo e conteúdo do pendrive e só limpa com `yes`, e no fim desmonta, inclusive quando a montagem era do desktop. As guardas e a confirmação foram conferidas, sem apagar nada, no pendrive HONDA_OTA real (`/dev/sda`, Cruzer Fit 29 GB).
+- **Builds velhos no mesmo diretório.** Os de 2026-10-23 e os `20261026T214450Z`/`20261026T214451Z` continuam em `output-dalauncher-fase10/` e `output-dalauncher-restore/` e não devem ir pro pendrive: todos têm `set_perm` em `/system`, os de 2026-10-23 têm também o assert, e `...210720Z`/`...210007Z` nem gravam `.OK`/`.FAIL`. Os scripts pegam o build mais novo.
 
 ---
 
@@ -1312,6 +1326,16 @@ O `.done` evita re-match. O `rm /cache/.copy_complete` cobre um flag secundário
 
 **Regra arquitetural permanente:** todo `build-*.py` novo em `tooling/ota-build/` **PRECISA** incluir esses dois comandos imediatamente antes do `run_program("/tmp/sleep", N)` final. Sem exceção. Documentado em memória pessoal ([[ota-script-sempre-quebra-loop]]) pra garantir que não vai esquecer de novo.
 
+### 17.18 ✓ `set_perm` em `/system` abortaria o updater-script (latente, 2026-10-26) 🆕
+
+**Sintoma:** nenhum no carro. Achado no review pré-deploy da Fase 10, antes de algum pacote falhar por isso.
+
+**Causa raiz:** o `update-binary` dos nossos pacotes (`ic1101/ota-builder/input/update-binary`) tem o `set_perm` do AOSP JB: se o `chown` ou o `chmod` falha, ele imprime `chown of %s to %d %d failed` e aborta com `%s: some changes failed` (as strings estão no binário). O `mount` e o `package_extract_file` não abortam quando falham, então um CAP que não montou deixa o arquivo sem extrair e o `set_perm` seguinte aborta. O abort deixa o comando estagiado em `/cache/recovery/command`: recovery loop (§3.6 do checklist da Fase 10).
+
+**Mitigação:** nos pacotes da Fase 10, dono e modo em `/system` saem do `chown`/`chmod` do busybox via `run_program`, que não aborta, e o resultado vai para o log (`perm <arquivo> chown-exit=N chmod-exit=N`). O `set_perm` fica só em `/tmp` (busybox e sleep que o próprio pacote extrai), com teste em `test_dalauncher_ota.py` e `test_ota_generators.py`.
+
+**Pendente:** o `build.py` (AutoOk) ainda faz `set_perm` em `/system/app/AutoOk.apk` e `/system/xbin/su` (06755). Foi aplicado no carro sem falha desde a Fase 7, e trocar exige regerar o pacote estável; fica para o próximo rebuild do AutoOk. O teste de `set_perm` exclui o `build.py` de propósito.
+
 ---
 
 ## 18. Timeline de modificações feitas por nós
@@ -1340,6 +1364,7 @@ O `.done` evita re-match. O `rm /cache/.copy_complete` cobre um flag secundário
 | 2026-10-20 | Fase 10 pré-planejada — gate do disclaimer descoberto | `OpeningDivideActivity.sDisclamerFlg` é static boolean em memória (não persistido). Patch mínimo de 1 instrução no smali remove o aviso de vez. DaLauncher assinado com key Mitsubishi `Melco Honda16MY` (não AOSP testkey) — deploy requer odex-level patch pra preservar signature, ou resign aceitando risco de "new install". Fase 10 bloqueada até v0.5.4 estável. (ver §17.16, doc denso em [`docs/fase10-pre-planejamento-2026-10-20.md`](fase10-pre-planejamento-2026-10-20.md)) | pendente |
 | 2026-10-23 | Fase 10 preparada offline — Rota B escolhida + 2 pacotes OTA construídos | Análise do manifesto do DaLauncher confirmou que `VEHICLE_RW` é GID-only e não há `sharedUserId` → Rota B (resign AOSP) é viável. Patch versionado em `tooling/fase10/opening-divide-activity-skip-disclaimer.patch`; `rebuild-dalauncher.sh` deodexa fresh + aplica o patch + prova que só `OpeningDivideActivity` muda no bytecode + verifica cert testkey AOSP (classes.dex 1.25MB, zipalign + apksigner). Pacotes install (APK `1774136c...`) e rollback construídos e smoke-tested, ambos com gate de status-file no pendrive (`FASE10-ODEX-REMOVED.OK` / `ROLLBACK-RESTORED.OK`). Deploy no carro agendado 2026-10-27 (fecha janela de v0.5.4 estável por 1 semana). Checklist em [`fase10-execucao-2026-10-27.md`](fase10-execucao-2026-10-27.md). (ver §16.4) | pendente |
 | 2026-10-24 | Análise RE dos Diag APKs (Camada 2) | 5 apps (`DealerDiag`, `DeveloperDiag`, `PreShipmentDiag`, `LetDiag`) + backend AIDL `DiagApService`. **Sem PIN**: as 91 telas do DealerDiag são `exported=false` sem gate interno (sem checagem de permission/UID/senha). Acesso normal via ferramenta LET ou triggers de arquivo em `/data/data/inlinediag/rcv_{dealer,let}_launch`; nossa rota é `su -c "am start -n ...dealerdiag/.DealerDiagActivity"` (root bypassa exported, a validar no carro). 91 telas classificadas leitura/teste/escrita — escrita perigosa: `DisplayReprogram` (StartRepro), `BackupDataCleat` (DealerClearAll), `factoryResetSettings` (AIDL). O "unlock code" (`getUnLockCode`) é licenciamento de mapa Garmin (ESN + `GarminUnlock*.csv`), **não** senha de menu. Doc: [`raio-x/06-diag-apks.md`](raio-x/06-diag-apks.md). | pendente (validar am start no carro) |
+| 2026-10-26 | Revisão pré-deploy da Fase 10 | Assert de device removido de `build-dalauncher-fase10.py` e `build-dalauncher-restore.py` (nenhum pacote aplicado no carro tinha; falha dele no recovery vira recovery loop), e o `set_perm` em `/system` desses dois trocado por `chown`/`chmod` do busybox, porque também aborta (§17.18). Testes mantêm `assert(`/`abort(` fora dos 7 geradores e `set_perm` só em `/tmp` (menos no `build.py`, §17.18). `prepare-pendrive-install.sh`/`-rollback.sh` passam a aceitar o diretório do build e conferem o SHA-256 lido do pendrive. Pacotes regerados (`20261027T020208Z`/`20261027T020209Z`, horário UTC), assinatura whole-file conferida contra o testkey. Sequência dos 5 scripts de pendrive extraída para `lib-pendrive.sh`, com guardas de disco/MSDOS/vfat, `yes` antes de limpar, umount no fim e teste da sequência inteira; o CI ganhou o job `unit-tests`. Caminho Eco do DaLauncher patcheado mapeado, e o logcat do carro de 2026-10-20 confirma que `DISCLAIMER_COMPLETE` dispara com o tap do AutoOk (§11.1.1). (ver §16.4) | pendente |
 
 ---
 
@@ -1417,6 +1442,7 @@ O `.done` evita re-match. O `rm /cache/.copy_complete` cobre um flag secundário
 
 - [`tooling/deodex/deodex-apk.sh`](../tooling/deodex/deodex-apk.sh) + [`tooling/deodex/README.md`](../tooling/deodex/README.md) — Converte APK odex-only em APK com `classes.dex` injetado (pré-requisito pra JADX/REA funcionarem na vendor-app)
 - `tooling/scripts/` — Scripts de pendrive, deep-scan, dump raw, rollback (ver §20)
+- `tooling/scripts/lib-pendrive.sh` — Sequência comum dos `prepare-pendrive-*.sh`: guardas (USB, disco inteiro, MSDOS, vfat), escolha do build, `yes` antes de limpar, limpeza, cópia, conferência de SHA-256 lida do pendrive e umount no fim. Testes em `tooling/ota-build/tests/test_prepare_pendrive.py`
 - `tooling/ota-build/` — Build do pacote OTA EvilValet
 
 ---
@@ -1549,6 +1575,13 @@ python3 tooling/ota-build/build-dalauncher-fase10.py
 python3 tooling/ota-build/build-dalauncher-restore.py
 ```
 
+Pendrives: aqui o 2º argumento é obrigatório; sem ele, os scripts gravam os pacotes do AutoOk. Cada script usa o build mais novo do diretório, pede `yes` antes de apagar, confere o SHA-256 lido do pendrive e desmonta no fim.
+
+```bash
+sudo tooling/scripts/prepare-pendrive-install.sh /dev/sdX tooling/ota-build/output-dalauncher-fase10
+sudo tooling/scripts/prepare-pendrive-rollback.sh /dev/sdY tooling/ota-build/output-dalauncher-restore
+```
+
 ---
 
-**Fim do MAPA. Última atualização: 2026-10-19 após integração REA.**
+**Fim do MAPA. Última atualização: 2026-10-26 (revisão pré-deploy da Fase 10).**

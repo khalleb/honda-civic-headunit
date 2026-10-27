@@ -37,21 +37,32 @@ sudo ./tooling/scripts/format-pendrive.sh /dev/sda
 sudo ./tooling/scripts/prepare-pendrive-install.sh /dev/sda
 ```
 
-**What `prepare-pendrive-install.sh` does:**
-1. Confirms `/dev/sda` has transport `usb` (guards against `/dev/nvme`)
-2. Mounts the flash drive temporarily
-3. Clears previous content
-4. Copies `SwUpdate2.txt` (trigger) + `0040/SwUpdate.mdt` (package)
-5. Unmount + sync
+**What `prepare-pendrive-install.sh` does** (the shared sequence lives in `tooling/scripts/lib-pendrive.sh`, same for all five `prepare-pendrive-*.sh`):
+1. Confirms `/dev/sda` is the whole disk of a USB stick (guards against `/dev/nvme` and against passing `/dev/sda1`)
+2. Picks the newest build in `tooling/ota-build/output/` (or in the directory passed as the 2nd argument) and checks it has `SwUpdate2.txt` + `0040/SwUpdate.mdt` before touching the drive
+3. Checks MSDOS table + vfat partition, the format the daupdater expects
+4. Mounts the flash drive (or reuses the desktop mount)
+5. Shows the model, label and current contents and only proceeds if you type `yes`
+6. Wipes previous content and copies `SwUpdate2.txt` (trigger) + `0040/SwUpdate.mdt` (package)
+7. Verifies the SHA-256 of both files read back from the drive (cache dropped) and stops with an error if they don't match
+8. Unmounts, even when the mount was the desktop's
 
 Expected output:
 ```
-=== Final contents ===
-drwxr-xr-x. 2 khalleb khalleb 16384 ... 0040
--rw-r--r--. 1 khalleb khalleb    28 ... SwUpdate2.txt
+=== Vai APAGAR o conteúdo deste pendrive ===
+  Device:   /dev/sda (Cruzer Fit 29,3G)
+  Rótulo:   HONDA_OTA
+  Montado:  /run/media/<user>/HONDA_OTA
+  Conteúdo: 0040 install-0040.log SwUpdate2.txt.done ...
+Apagar e gravar o pacote INSTALL? (yes/no): yes
+...
+=== Conferindo a cópia (SHA-256 lido do pendrive, sem cache) ===
+OK   SwUpdate2.txt  <sha256>
+OK   0040/SwUpdate.mdt  <sha256>
 
-=== READY ===
-Flash drive on /dev/sda loaded with INSTALL package.
+=== PRONTO ===
+Pendrive em /dev/sda carregado com pacote INSTALL de <build directory>.
+Já está desmontado: pode puxar.
 ```
 
 ### 1.3 Pull the flash drive from the laptop

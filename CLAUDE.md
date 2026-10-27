@@ -50,7 +50,7 @@ O MAPA deve ser mais fiel que a memória da sessão. Quando em dúvida entre "va
 | Activity do Aviso | `com.mitsubishielectric.ada.app.dalauncher/.OpeningDivideActivity` |
 | Activity da câmera de ré | `com.mitsubishielectric.ada.app.camera/.activity.RearWideCameraDisplayActivity` |
 | Broadcast crítico (recovery LP0) | `com.mitsubishielectric.ada.appservice.powermanager.ACTION_HMI_SERVICE_START` |
-| Versão atual do APK | 4 (v0.4.0 — fix do bug de LP0) |
+| Versão atual do APK | 9 (v0.5.4 — fix do mudo CarPlay + LP0 resume; baseline estável) |
 | Testkey SHA-256 | `A4:0D:A8:0A:59:D1:70:CA:A9:50:CF:15:C1:8C:45:4D:47:A3:9B:26:98:9D:8B:64:0E:CD:74:5B:A7:1B:F5:DC` |
 
 ## Base de conhecimento histórica
@@ -59,7 +59,9 @@ O `central-multimidia-civic-g10-kb.md` **tem o histórico de descoberta** (pesqu
 
 ## Como ajudar o dono do projeto
 
-1. **Antes de qualquer modificação do /system do carro:** garantir que o pacote de rollback (`tooling/ota-build/output-rollback/`) está construído e pronto. Rede de segurança obrigatória.
+1. **Antes de qualquer modificação do /system do carro:** garantir que o pacote de rollback está construído e pronto. Rede de segurança obrigatória. **Existem dois "rollback" diferentes — não confundir:**
+   - `tooling/ota-build/output-rollback/` — rollback do **AutoOk**: remove `AutoOk.apk` + `su`. É o que os `prepare-pendrive-rollback.sh` sem argumento geram.
+   - `tooling/ota-build/output-dalauncher-restore/` — restore do **DaLauncher** original (Fase 10): desfaz o patch do disclaimer. Precisa ser passado explicitamente: `prepare-pendrive-rollback.sh /dev/sdX tooling/ota-build/output-dalauncher-restore`. Para abortar a Fase 10 é **este**, não o do AutoOk.
 
 2. **Nunca editar código em `tooling/references/*` diretamente.** São clones de projetos de terceiros. Usar monkey patch em `tooling/ota-build/`.
 
@@ -76,7 +78,7 @@ Trechos técnicos (comandos, flags, nomes de pacotes) podem ficar em inglês.
 
 ## Convenções
 
-- **Zero comentários no código** (regra do dono — ver `~/.claude/CLAUDE.md`)
+- **Comentários no código são permitidos neste projeto** (liberado pelo dono em 2026-10-26). A regra global de zero comentários (`~/.claude/CLAUDE.md`) é do code review da Sittax e não vale aqui. Comentário explica o porquê, a invariante ou o workaround; não narra o que a linha faz.
 - Documentação em Markdown
 - Commits em português no imperativo
 - **Testes obrigatórios para código com lógica** (ver abaixo)
@@ -87,15 +89,16 @@ Regra do dono, a partir de 2026-10-24. Código com lógica de runtime **não ent
 
 - **Código com lógica de runtime → teste unitário obrigatório.**
   - `our-apk/` (AutoOk): a lógica pura (match do needle do logcat, dedup temporal, decisão de tap) sai das bordas Android e é testada em JVM/JUnit, sem device nem emulador. É onde moram os bugs reais — ex.: a saga v0.5.0→v0.5.4 (needle frouxo, dedup, formato de logcat) seria pega aqui antes de ir ao carro.
-  - `tooling/**/*.py` (geradores de pacote OTA): pytest que asserta as invariantes do artefato gerado — loop-break presente (`mv SwUpdate2.txt` + `rm /cache/.copy_complete`), device-guard `vcm30t30`, gate do `rm` do `.odex`, paths caindo nas partições certas.
+  - `tooling/**/*.py` (geradores de pacote OTA): pytest que asserta as invariantes do artefato gerado — loop-break presente (`mv SwUpdate2.txt` + `rm /cache/.copy_complete`), nada que aborte o updater-script (falha dentro do recovery deixa o comando estagiado e vira recovery loop — por isso não há device-guard): nenhum `assert(`/`abort(`, e `set_perm` só em `/tmp`, porque no `update-binary` empacotado ele aborta quando o chown/chmod falha; em `/system`, `chown`/`chmod` do busybox via `run_program` (exceção conhecida: `build.py`, MAPA §17.18), gate do `rm` do `.odex`, paths caindo nas partições certas.
 - **RE / smali / análise estática / docs → não força unit test**, mas **exige prova executável** sempre que produz um artefato (patch smali, pacote OTA, APK rebuildado). Ex.: `tooling/fase10/rebuild-dalauncher.sh` prova que só `OpeningDivideActivity` muda no bytecode entre orig e patch.
+- **Shell com decisão** (ex.: `tooling/scripts/lib-pendrive.sh`: escolha do build, confirmação, limpeza, conferência de SHA-256) → funções isoladas e a sequência inteira testadas chamando `bash` a partir do unittest (`tooling/ota-build/tests/test_prepare_pendrive.py`), com stub no lugar do que exige root ou pendrive.
 - **Shell de orquestração** (sem lógica testável) → a prova é o próprio artefato que ele gera, verificado no fim do script.
 
-Rodar os testes de tooling (stdlib, sem dependências): `python3 -m unittest discover -s tooling/ota-build/tests`
+Rodar os testes de tooling (stdlib, sem dependências): `python3 -m unittest discover -s tooling/ota-build/tests`. O CI (`.github/workflows/ci.yml`, job `unit-tests`) roda a mesma suíte.
 
 ## Links úteis
 
-- Repositório (privado): https://github.com/khalleb/honda-civic-headunit
+- Repositório (público): https://github.com/khalleb/honda-civic-headunit
 - **Documentação do deploy final:** [`./docs/fase7-deploy-2026-10-16/`](docs/fase7-deploy-2026-10-16/)
 - **Ponto de partida de nova sessão:** [`./docs/proxima-sessao.md`](docs/proxima-sessao.md)
 - Base de conhecimento histórica: [`./central-multimidia-civic-g10-kb.md`](central-multimidia-civic-g10-kb.md)

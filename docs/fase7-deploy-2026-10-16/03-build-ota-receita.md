@@ -420,6 +420,6 @@ Nunca deployar INSTALL sem o ROLLBACK pronto.
 - [ ] `python3 tooling/ota-build/build.py` executou sem erro.
 - [ ] `unzip -l` do `SwUpdate.mdt` lista: `busybox`, `su`, `AutoOk.apk`, `sleep`, `update-binary`, `updater-script`.
 - [ ] Pacote ROLLBACK já construído em `output-rollback/`.
-- [ ] Script `prepare-pendrive-install.sh` atualizado para apontar para o novo timestamp.
+- [ ] Saída do `prepare-pendrive-install.sh` mostra `=== Usando build: .../output/<timestamp novo>` (o script pega o mais novo; não precisa editar).
 - [ ] Pendrive formatado FAT32 MSDOS, não superfloppy.
-- [ ] Script rodado via `sudo bash ...-install.sh` e contagem final = `1`.
+- [ ] Script rodado via `sudo bash ...-install.sh` e a conferência mostra `OK` em `SwUpdate2.txt` e `0040/SwUpdate.mdt`.
