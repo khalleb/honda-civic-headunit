@@ -1,4 +1,5 @@
 import importlib.util
+import re
 import unittest
 from pathlib import Path
 
@@ -21,9 +22,25 @@ RESTORE_SCRIPT = restore._updater_script("0040", None)
 
 
 class InvariantesComunsDoUpdaterScript(unittest.TestCase):
-    def test_tem_device_guard_vcm30t30_nos_dois_pacotes(self):
+    def test_nao_tem_assert_nem_abort_que_prenderiam_o_recovery_em_loop(self):
         for script in (FASE10_SCRIPT, RESTORE_SCRIPT):
-            self.assertIn('getprop("ro.product.device") == "vcm30t30"', script)
+            self.assertNotIn("assert(", script)
+            self.assertNotIn("abort(", script)
+
+    def test_set_perm_so_em_tmp_porque_aborta_quando_o_arquivo_falta(self):
+        for script in (FASE10_SCRIPT, RESTORE_SCRIPT):
+            alvos = re.findall(r'set_perm\(.*"([^"]+)"\);', script)
+            self.assertTrue(alvos)
+            self.assertTrue(all(alvo.startswith("/tmp/") for alvo in alvos), alvos)
+
+    def test_todo_arquivo_extraido_em_system_ganha_dono_e_modo_pelo_busybox(self):
+        for script in (FASE10_SCRIPT, RESTORE_SCRIPT):
+            destinos = re.findall(r'package_extract_file\("[^"]+", "(/system/[^"]+)"\);', script)
+            self.assertTrue(destinos)
+            for destino in destinos:
+                pos_extract = script.find(f'"{destino}");')
+                self.assertLess(pos_extract, script.find(f"chown 0:0 {destino} "))
+                self.assertLess(pos_extract, script.find(f"chmod 0644 {destino} "))
 
     def test_monta_app_e_vendor_na_ordem_certa(self):
         for script in (FASE10_SCRIPT, RESTORE_SCRIPT):

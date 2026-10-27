@@ -100,8 +100,22 @@ def _updater_script(rom_type: str, partitions) -> str:
         esc = cmd.replace("\\", "\\\\").replace('"', '\\"')
         return f'run_program("{BB}", "sh", "-c", "{esc}");'
 
+    # Dono e modo em /system pelo busybox, que só registra a falha no log: o
+    # set_perm do update-binary empacotado aborta com "some changes failed"
+    # quando o chown/chmod falha (ex.: o CAP não montou e o arquivo não foi
+    # extraído).
+    def perm(path: str, mode: str) -> str:
+        return sh(
+            f"{BB} chown 0:0 {path} 2>>{LOG}; c=$?; {BB} chmod {mode} {path} 2>>{LOG}; "
+            f"{BB} echo perm {path} chown-exit=$c chmod-exit=$? >> {LOG}"
+        )
+
+    # Nada aqui pode abortar o updater-script: sem assert() nem abort(), e
+    # set_perm só em /tmp. Se o recovery falha no meio, o comando estagiado em
+    # /cache/recovery/command fica lá e a central entra em recovery loop (ic1101
+    # docs/updates.md). Por isso a verificação grava .OK/.FAIL no pendrive em
+    # vez de abortar.
     out = [
-        'assert(getprop("ro.product.device") == "vcm30t30" || getprop("ro.build.product") == "vcm30t30");',
         "show_progress(1.000000, 0);",
         "set_progress(0.000000);",
         'package_extract_file("busybox", "/tmp/busybox");',
@@ -113,10 +127,12 @@ def _updater_script(rom_type: str, partitions) -> str:
         sh(f"{BB} mount >> {LOG} 2>&1; {BB} echo mount-done >> {LOG}"),
         sh(f"{BB} md5sum {APK} {ODEX} >> {LOG} 2>&1; {BB} echo pre-restore-md5 >> {LOG}"),
         'package_extract_file("system/vendor/app/DaLauncher.apk", "/system/vendor/app/DaLauncher.apk");',
-        'set_perm(0, 0, 0644, "/system/vendor/app/DaLauncher.apk");',
+        perm(APK, "0644"),
         'package_extract_file("system/vendor/app/DaLauncher.odex", "/system/vendor/app/DaLauncher.odex");',
-        'set_perm(0, 0, 0644, "/system/vendor/app/DaLauncher.odex");',
+        perm(ODEX, "0644"),
         sh(f"{BB} md5sum {APK} {ODEX} >> {LOG} 2>&1; {BB} echo post-restore-md5 >> {LOG}"),
+        # .OK só quando APK e odex restaurados têm o md5 do original da safra. É o
+        # gate primário do §2.1 do checklist: ver o arquivo sem precisar ler o log.
         sh(
             f"if {BB} md5sum {APK} | {BB} grep -q {EXPECTED_APK_MD5} && {BB} md5sum {ODEX} | {BB} grep -q {EXPECTED_ODEX_MD5}; "
             f"then {BB} echo OK > {OKF}; {BB} echo restore-verified-OK >> {LOG}; "
@@ -126,6 +142,8 @@ def _updater_script(rom_type: str, partitions) -> str:
         'unmount("/system/vendor");',
         'unmount("/system");',
         sh(f"{BB} echo === DALAUNCHER-RESTORE END $({BB} date) === >> {LOG}; {BB} sync"),
+        # Quebra o loop do daupdater: sem renomear o gatilho e apagar o
+        # .copy_complete, ele reaplica o pacote a cada boot (MAPA §17.17).
         sh(f"{BB} mv {USB}/SwUpdate2.txt {USB}/SwUpdate2.txt.done 2>>{LOG}; {BB} echo mv-trigger-exit=$? >> {LOG}"),
         sh(f"{BB} rm -f /cache/.copy_complete 2>>{LOG}; {BB} echo rm-copy-complete-exit=$? >> {LOG}"),
         sh(f"{BB} sync"),
