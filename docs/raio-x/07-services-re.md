@@ -56,7 +56,22 @@ Service `VehicleInfoManager` (36 classes). Centraliza os sinais de B-CAN e os ex
 
 **Sinais confirmados:** velocidade (`vehiclespeedpulse`), VIN (`C_VINBYTE2..7`, `C_VINDATACOUNT`, `VINNO`), freio de mão (`C_PBRAKE`), e posição do câmbio CVT: **`CVT_SHFT_IN_PARKING`**, **`CVT_SHFT_IN_REVERSE`**, `CVT_GEAR_POSITION_IND_CVT`, mais os sensores de estacionamento (`PARKSENS`/`PARKSENS2`).
 
-**Por que importa (Fase 9):** `CVT_SHFT_IN_REVERSE` é o sinal de ré **por B-CAN**, não por logcat. A Fase 9 (câmera de ré sem polling de logcat) pode sair daqui ou do `ICameraAPServiceReverseSignalListener` — vale comparar os dois. O `getDrivingOperationStatus` também é candidato a gate de "carro em movimento" para qualquer UI nossa.
+**TX codes resolvidos** (via [`alexpotv/Clusters`](https://github.com/alexpotv/Clusters), varredura de 2026-10-27 — ver [`08-github-landscape-2026-10-27.md §3.2`](08-github-landscape-2026-10-27.md)):
+
+| TX | Método |
+|----|--------|
+| 12 | `getVehicleInfo(int subkey)` |
+| 25 | `registerBcanListener(IBinder)` |
+| 35 | `registerFcanListener(IBinder)` |
+| 88 | `notifyBcanReceiveSetting(int canId)` — inscreve no frame |
+| 102 | `getFootBrake()` |
+| 103 | `getTurnSignals()` |
+
+Subkeys de `getVehicleInfo(int)`: `0=ILLUMINATION`, `1=SHIFT`, `6=PARKING_BRAKE`, `8=SPEED`, `9=GEAR`.
+
+**IDs internos do B-CAN** (`type` que o `IVehicleBcanInformationListener.onReceive` recebe): `318263376 VSPNE` (speed+rpm), `318263632 AT` (câmbio), `318264400 ILLUMI`, `318337360 STEERING`, `318246936/318246928 MICU_BCM/ICU` (**luz de ré**), `318334800 MAINTENANCE`, `318333520 TRICOM` (autonomia), `318336336 MET_CUSTOM` (ADAS). Lista completa em `08-github-landscape §3.3`.
+
+**Por que importa (Fase 9):** `CVT_SHFT_IN_REVERSE` é o sinal de ré **por B-CAN**, não por logcat. Com os TX codes acima + os IDs `MICU_*`, dá para `bindService(VehicleInfoManagerApService)` → `transact(25, bcanListener)` → `transact(88, writeInt(318246936))` e tratar o callback — sem polling de logcat. Alternativa já conhecida: `ICameraAPServiceReverseSignalListener` (MAPA Raio-X §1).
 
 ---
 
@@ -69,6 +84,17 @@ Service grande (440 classes). **O mute de áudio em si não mora aqui** — é f
 - Sistema de "interrupt header" (telops): `ACTION_INTERRUPT_FAN_CLIMATE`, `hideHeaderInterrupt`, e um ramo `"Disclaimer not Passed and CLIMATE_INTERRUPT_TYPE0"` que amarra com o gate do disclaimer
 
 **Relação com o bug do mudo (v0.4.0):** o tap falso do AutoOk acertava um botão de mute cuja ação final é `IAvApService.setMute`. Para entender o ducking de verdade (abaixar vs. mutar, foco transiente) o próximo passo é deodexar o `AvApService` e seguir `setMute`/`getMute` + a lista de mix (`Can not get MixPlayList`). Com o v0.5.4 o bug já não acontece (o needle não casa mais o contexto errado), então isto é investigação de fundo, não correção pendente.
+
+**TX codes do `IAvApService`** resolvidos pelo Clusters (varredura 2026-10-27):
+
+| TX | Método |
+|----|--------|
+| 22 | `getVolume(int type)` — type `MAIN = 0` |
+| 24 | `getMute()` |
+| 72 | `getSource()` |
+| 160 | `getVolumeMax()` |
+
+**Para um AutoOk v0.6.0:** `getMute` + `getSource` + um dedup por fonte de áudio removeria o restante do risco do bug do mudo que o v0.5.4 ainda carrega como "ausência comprovada no v0.5.4" em vez de "impossível por construção".
 
 ---
 
