@@ -61,9 +61,8 @@ jobs:
           java-version: '17'
 
       - uses: android-actions/setup-android@v3
-
-      - name: Install SDK platform + build-tools
-        run: sdkmanager "platforms;android-33" "build-tools;33.0.2"
+        with:
+          packages: 'platforms;android-33 build-tools;33.0.2'
 
       - name: AutoOk JVM unit tests (AvisoMatcher + TapDeduper)
         working-directory: our-apk
