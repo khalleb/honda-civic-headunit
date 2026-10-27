@@ -10,74 +10,17 @@
 #   - /data/property/ - persist.* salvos
 #
 # Zero modificacao no /system. Deploy ~3 min no carro.
-# Pendrive precisa de >= 50MB livres (coleta e pequena).
+# Pendrive precisa de >= 50MB (coleta e pequena; o script confere).
 #
 # Uso:
-#   sudo ./tooling/scripts/prepare-pendrive-diagnostic.sh <device>
+#   sudo ./tooling/scripts/prepare-pendrive-diagnostic.sh <device> [diretorio-de-build]
+#
+# Guardas, limpeza, cópia e conferência ficam em lib-pendrive.sh.
 # ============================================================
 set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/lib-pendrive.sh"
 
-DEV="${1:-}"
-if [ -z "$DEV" ]; then
-  echo "ERRO: passar device do pendrive. Ex: sudo $0 /dev/sda"
-  exit 1
-fi
-
-if [ ! -b "$DEV" ]; then
-  echo "ERRO: $DEV nao e um block device"
-  exit 1
-fi
-
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-OUTPUT_DIR="$PROJECT_ROOT/tooling/ota-build/output-diagnostic"
-
-BUILD_TS=$(ls -1 "$OUTPUT_DIR" 2>/dev/null | sort | tail -1)
-if [ -z "$BUILD_TS" ]; then
-  echo "ERRO: nenhum build diagnostico encontrado em $OUTPUT_DIR"
-  echo "Rode primeiro: python3 tooling/ota-build/build-diagnostic.py"
-  exit 1
-fi
-
-SRC="$OUTPUT_DIR/$BUILD_TS"
-echo "=== Usando build: $SRC ==="
-
-TRAN=$(lsblk -no TRAN "$DEV" | head -1 | xargs)
-if [ "$TRAN" != "usb" ]; then
-  echo "ERRO: $DEV nao e USB (tran=$TRAN). Abortando por seguranca."
-  exit 1
-fi
-
-mp=$(lsblk -no MOUNTPOINT "${DEV}1" | head -1)
-if [ -z "$mp" ]; then
-  MP=$(mktemp -d)
-  mount "${DEV}1" "$MP"
-  OWN_MOUNT=1
-else
-  MP="$mp"
-  OWN_MOUNT=0
-fi
-echo "Pendrive em: $MP"
-
-echo "=== Limpando pendrive ==="
-find "$MP" -mindepth 1 -maxdepth 1 ! -name 'lost+found' -exec rm -rf {} +
-
-echo "=== Copiando pacote DIAGNOSTICO ==="
-cp -v "$SRC/SwUpdate2.txt" "$MP/"
-cp -rv "$SRC/0040" "$MP/"
-sync
-
-echo ""
-echo "=== Conteudo final ==="
-ls -la "$MP"
-
-if [ "$OWN_MOUNT" = "1" ]; then
-  umount "$MP"
-  rmdir "$MP"
-fi
-
-echo ""
-echo "=== PRONTO ==="
-echo "Pendrive em $DEV carregado com pacote DIAGNOSTICO."
+prepare_pendrive DIAGNOSTICO "$OTA_BUILD_DIR/output-diagnostic" "python3 tooling/ota-build/build-diagnostic.py" 50 "$@"
 echo "Protocolo: porta frontal + AUDIO 5s + confirmar reiniciar."
 echo "ESPERAR ~3 min pelo fim."
 echo ""
