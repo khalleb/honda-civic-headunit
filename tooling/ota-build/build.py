@@ -70,13 +70,13 @@ upstream.stage_tree = _patched_stage_tree
 
 def our_create_updater_script(overlay_paths, meta, partitions):
     """Updater-script de INSTALL do AutoOk. Monta /system (bloco APP), extrai
-    AutoOk.apk para /system/app e o su setuid (06755) para /system/xbin, loga
-    um ls antes/depois no pendrive, desmonta e quebra o loop do daupdater.
+    AutoOk.apk para /system/app e o su setuid para /system/xbin, grava um gate
+    .OK/.FAIL no pendrive, desmonta e quebra o loop do daupdater.
 
-    Sem assert/abort (não prende o recovery em loop se falhar no meio). Este é o
-    único gerador que ainda usa set_perm em /system (no AutoOk.apk e no su): é o
-    pacote já aplicado no carro, exceção conhecida no MAPA §17.18, fora do teste
-    test_set_perm_so_em_tmp. A conferência real do install fica nos ls do pendrive.
+    Sem assert/abort e set_perm só em /tmp: dono/modo em /system saem do
+    chown/chmod do busybox, que não abortam o updater-script (set_perm abortaria
+    e deixaria a central em recovery loop, §17.18). O gate confirma o setuid do
+    su com test -u, porque su sem setuid = AutoOk sem root.
     """
     _ = overlay_paths, meta, partitions
     rt = CURRENT_ROM_TYPE
@@ -88,25 +88,45 @@ def our_create_updater_script(overlay_paths, meta, partitions):
     BB = "/tmp/busybox"
     USB = "/mnt/usbdrive1"
     LOG = f"{USB}/install-{rt}.log"
+    OKF = f"{USB}/AUTOOK-INSTALLED.OK"
+    FAILF = f"{USB}/AUTOOK-INSTALLED.FAIL"
 
     def sh(cmd: str) -> str:
         esc = cmd.replace("\\", "\\\\").replace('"', '\\"')
         return f'run_program("{BB}", "sh", "-c", "{esc}");'
 
+    # Dono e modo em /system pelo busybox: o set_perm do update-binary empacotado
+    # aborta com "some changes failed" quando o chown/chmod falha (ex.: o APP não
+    # montou), e abortar o updater-script deixa a central em recovery loop (§17.18).
+    def perm(path: str, mode: str) -> str:
+        return sh(
+            f"{BB} chown 0:0 {path} 2>>{LOG}; c=$?; {BB} chmod {mode} {path} 2>>{LOG}; "
+            f"{BB} echo perm {path} chown-exit=$c chmod-exit=$? >> {LOG}"
+        )
+
     out.append(sh(f"{BB} echo === INSTALL START $({BB} date) rom_type={rt} === > {LOG} 2>&1"))
+    out.append(sh(f"{BB} rm -f {OKF} {FAILF} 2>>{LOG}"))
 
     out.append('mount("ext4", "EMMC", "/dev/block/platform/sdhci-tegra.3/by-name/APP", "/system");')
     out.append(sh(f"{BB} mount >> {LOG} 2>&1; {BB} echo mount-APP-via-edify-done >> {LOG}"))
     out.append(sh(f"{BB} ls -la /system/app/AutoOk.apk /system/xbin/su >> {LOG} 2>&1; {BB} echo pre-install-check >> {LOG}"))
 
     out.append('package_extract_file("system/app/AutoOk.apk", "/system/app/AutoOk.apk");')
-    out.append('set_perm(0, 0, 0644, "/system/app/AutoOk.apk");')
+    out.append(perm("/system/app/AutoOk.apk", "0644"))
 
     out.append(sh(f"{BB} mkdir -p /system/xbin >> {LOG} 2>&1"))
     out.append(f'package_extract_file("{SU_PKG_PATH}", "/system/xbin/su");')
-    out.append('set_perm(0, 0, 06755, "/system/xbin/su");')
+    # su precisa do setuid (06755). O chmod do busybox também seta o bit; o gate
+    # abaixo confirma com test -u, porque su sem setuid = AutoOk sem root.
+    out.append(perm("/system/xbin/su", "6755"))
 
     out.append(sh(f"{BB} ls -la /system/app/AutoOk.apk /system/xbin/su >> {LOG} 2>&1; {BB} echo post-install-check >> {LOG}"))
+    # Gate no pendrive: .OK só com o APK no lugar E o su com setuid de verdade.
+    out.append(sh(
+        f"if {BB} test -e /system/app/AutoOk.apk && {BB} test -u /system/xbin/su; "
+        f"then {BB} echo installed > {OKF}; {BB} echo install-verified-OK >> {LOG}; "
+        f"else {BB} echo missing-or-no-setuid > {FAILF}; {BB} echo install-verify-FAILED >> {LOG}; fi"
+    ))
     out.append(sh(f"{BB} sync"))
     out.append('unmount("/system");')
     out.append(sh(f"{BB} echo === INSTALL END $({BB} date) === >> {LOG}; {BB} sync"))

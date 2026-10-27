@@ -13,10 +13,6 @@ GERADORES = [
     "build-diagnostic.py",
 ]
 
-# build.py (AutoOk) ainda faz set_perm em /system/app/AutoOk.apk e /system/xbin/su.
-# É o pacote já aplicado no carro; fica de fora até ser regerado.
-GERADORES_SEM_SET_PERM_EM_SYSTEM = [g for g in GERADORES if g != "build.py"]
-
 LOOP_BREAK_MV = "SwUpdate2.txt /mnt/usbdrive1/SwUpdate2.txt.done"
 LOOP_BREAK_RM = "rm -f /cache/.copy_complete"
 
@@ -66,7 +62,7 @@ class NenhumGeradorPrendeORecoveryEmLoop(unittest.TestCase):
                 self.assertNotIn("abort(", script)
 
     def test_set_perm_so_em_tmp_porque_aborta_quando_o_arquivo_falta(self):
-        for filename in GERADORES_SEM_SET_PERM_EM_SYSTEM:
+        for filename in GERADORES:
             with self.subTest(gerador=filename):
                 alvos = re.findall(r'set_perm\(.*"([^"]+)"\);', _updater_script_de(filename))
                 self.assertTrue(alvos)
@@ -82,6 +78,24 @@ class OperacoesEspecificas(unittest.TestCase):
     def test_rollback_remove_autook_e_su(self):
         script = _updater_script_de("build-rollback.py")
         self.assertIn("rm -f /system/app/AutoOk.apk /system/xbin/su", script)
+
+    def test_build_da_perm_em_system_pelo_busybox_e_confirma_setuid_do_su(self):
+        script = _updater_script_de("build.py")
+        self.assertIn("chown 0:0 /system/app/AutoOk.apk", script)
+        self.assertIn("chmod 0644 /system/app/AutoOk.apk", script)
+        self.assertIn("chown 0:0 /system/xbin/su", script)
+        self.assertIn("chmod 6755 /system/xbin/su", script)
+        # su sem setuid = AutoOk sem root: o gate tem que conferir o bit.
+        self.assertIn("test -u /system/xbin/su", script)
+        self.assertIn("AUTOOK-INSTALLED.OK", script)
+        self.assertIn("AUTOOK-INSTALLED.FAIL", script)
+
+    def test_rollback_confirma_remocao_so_com_system_montado(self):
+        script = _updater_script_de("build-rollback.py")
+        # sem o teste do build.prop, /system não montado daria "removido" falso
+        self.assertIn("test -e /system/build.prop", script)
+        self.assertIn("AUTOOK-REMOVED.OK", script)
+        self.assertIn("AUTOOK-REMOVED.FAIL", script)
 
 
 if __name__ == "__main__":
