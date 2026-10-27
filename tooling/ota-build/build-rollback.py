@@ -57,6 +57,8 @@ def _updater_script(rom_type: str, meta, partitions) -> str:
     BB = "/tmp/busybox"
     USB = "/mnt/usbdrive1"
     LOG = f"{USB}/rollback-{rom_type}.log"
+    OKF = f"{USB}/AUTOOK-REMOVED.OK"
+    FAILF = f"{USB}/AUTOOK-REMOVED.FAIL"
 
     def sh(cmd: str) -> str:
         esc = cmd.replace("\\", "\\\\").replace('"', '\\"')
@@ -68,10 +70,19 @@ def _updater_script(rom_type: str, meta, partitions) -> str:
         'package_extract_file("busybox", "/tmp/busybox");',
         'set_perm(0, 0, 0755, "/tmp/busybox");',
         sh(f"{BB} echo === ROLLBACK START $({BB} date) === > {LOG} 2>&1"),
+        sh(f"{BB} rm -f {OKF} {FAILF} 2>>{LOG}"),
         'mount("ext4", "EMMC", "/dev/block/platform/sdhci-tegra.3/by-name/APP", "/system");',
         sh(f"{BB} ls -la /system/app/AutoOk.apk /system/xbin/su >> {LOG} 2>&1"),
         sh(f"{BB} rm -f /system/app/AutoOk.apk /system/xbin/su >> {LOG} 2>&1; {BB} echo rm-done >> {LOG}"),
-        sh(f"{BB} ls -la /system/app/AutoOk.apk /system/xbin/su >> {LOG} 2>&1 || {BB} echo removal-confirmed >> {LOG}"),
+        # Gate no pendrive, igual ao restore do DaLauncher: .OK só se o /system
+        # montou de verdade (build.prop presente) E os dois alvos sumiram. Sem o
+        # teste do build.prop, um /system não montado daria "removido" falso,
+        # porque os arquivos "não existem" num mount vazio.
+        sh(
+            f"if {BB} test -e /system/build.prop && {BB} test ! -e /system/app/AutoOk.apk && {BB} test ! -e /system/xbin/su; "
+            f"then {BB} echo removed > {OKF}; {BB} echo rollback-verified-OK >> {LOG}; "
+            f"else {BB} echo present-or-unmounted > {FAILF}; {BB} echo rollback-verify-FAILED >> {LOG}; fi"
+        ),
         sh(f"{BB} sync"),
         'unmount("/system");',
         sh(f"{BB} echo === ROLLBACK END $({BB} date) === >> {LOG}; {BB} sync"),

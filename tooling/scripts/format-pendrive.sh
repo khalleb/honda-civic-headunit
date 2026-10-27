@@ -32,6 +32,14 @@ fi
 TRAN=$(lsblk -no TRAN "$DEV" | head -1 | xargs)
 MODEL=$(lsblk -no MODEL "$DEV" | head -1 | xargs)
 SIZE=$(lsblk -no SIZE "$DEV" | head -1 | xargs)
+# Só o disco inteiro. Sem isso, /dev/sda1 passaria no teste de USB e o parted
+# escreveria uma tabela de partição dentro da partição (igual à guarda do
+# lib-pendrive.sh).
+TYPE=$(lsblk -dno TYPE "$DEV" | head -1 | xargs)
+if [ "$TYPE" != "disk" ]; then
+  echo "ERRO: $DEV é '$TYPE'; passar o disco inteiro (ex: /dev/sda, não /dev/sda1)."
+  exit 1
+fi
 if [ "$TRAN" != "usb" ]; then
   echo "ERRO: $DEV não é USB (tran=$TRAN). Abortando por segurança."
   echo "Confira com: lsblk"

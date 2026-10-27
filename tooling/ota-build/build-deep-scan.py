@@ -231,8 +231,10 @@ def _updater_script(rom_type: str, meta, partitions) -> str:
     out.extend(ts("BUILDING TARBALL"))
     out.extend([
         sh(f"{BB} du -sh {STAGE} >> {LOG} 2>&1"),
-        sh(f"{BB} tar cf - -C {STAGE} . 2>>{LOG} | {BB} gzip -c > {OUT_FINAL}/scan.tar.gz 2>>{LOG}"),
-        sh(f"{BB} echo tar-pipe-exit=$? >> {LOG}"),
+        # O echo tem que ficar no mesmo run_program do pipe: num run_program à
+        # parte o $? seria do shell novo (sempre 0). $? aqui é do gzip (fim do
+        # pipe); gzip falha se o pendrive encher no meio do tar.
+        sh(f"{BB} tar cf - -C {STAGE} . 2>>{LOG} | {BB} gzip -c > {OUT_FINAL}/scan.tar.gz 2>>{LOG}; {BB} echo gzip-pipe-exit=$? >> {LOG}"),
         sh(f"{BB} ls -la {OUT_FINAL}/scan.tar.gz >> {LOG} 2>&1"),
         sh(f"{BB} df -h {USB} >> {LOG} 2>&1"),
     ])

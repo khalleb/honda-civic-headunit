@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Wrapper em cima do ic1101/ota-builder.
 
-Diferenças do nosso build para o main.py do upstream:
+Instala o AutoOk.apk + su setuid em /system. Diferenças do nosso build para o
+main.py do upstream:
 
-1. Gera o pacote para múltiplos rom types numa só rodada: 1110, 1115, 1118,
-   1120 e 2250. O `daupdater` escolhe o diretório que bate com o `cur_rom`
-   do HU e ignora os demais, então cobrir várias pastas não cresce o risco.
+1. Gera só o rom_type da nossa safra (`0040`, em ROM_TYPES). O `daupdater`
+   escolhe o diretório que bate com o `cur_rom` do HU; gerar só o nosso basta.
 2. Remove o `assert(ro.product.device == "vcm30t30" || ro.build.product ==
    "vcm30t30")` do updater-script. Se a safra BR tiver sufixo (vcm30t30br,
    vcm30t30lat, ...), o assert falha depois do `daupdater` já ter estagado o
@@ -39,14 +39,11 @@ OUT_DIR = HERE / "output"
 
 sys.path.insert(0, str(OTA_BUILDER_SRC))
 import main as upstream
-from partition import owner, postorder, preorder
 
 ROM_TYPES = ["0040"]
 
 
 CURRENT_ROM_TYPE: str = ""
-
-CANDIDATE_PARTITIONS = ["SDA", "SDA2", "SDC", "MITSU", "LOG", "UDA", "CAC"]
 
 BUSYBOX_PKG_PATH = "busybox"
 BUSYBOX_SRC = HERE / "bin" / "busybox"
@@ -72,21 +69,14 @@ upstream.stage_tree = _patched_stage_tree
 
 
 def our_create_updater_script(overlay_paths, meta, partitions):
-    """Updater-script em MODO DIAGNÓSTICO.
+    """Updater-script de INSTALL do AutoOk. Monta /system (bloco APP), extrai
+    AutoOk.apk para /system/app e o su setuid (06755) para /system/xbin, loga
+    um ls antes/depois no pendrive, desmonta e quebra o loop do daupdater.
 
-    Não instala nada no HU — só:
-    1. Lista todas as partições by-name encontradas em /dev/block/platform/sdhci-tegra.3/by-name/
-    2. Dumpa `getprop` do recovery environment
-    3. Para cada partição candidata (SDA, SDA2, SDC, MITSU, LOG, UDA, CAC), tenta
-       montar em read-only, listar o root, e copiar build.prop + vendor/build.prop
-       pro pendrive se existirem.
-    4. Grava um arquivo MATCH-<rom_type>.txt no pendrive, confirmando qual rom_type
-       bateu com cur_rom do HU.
-    5. Dumpa raw de alguns primeiros bytes de cada partição candidata (pra
-       identificar tipo mesmo se não for ext4 montável).
-
-    Zero escrita nas partições do HU. Mesmo em recovery loop, só gera arquivos
-    de log no pendrive em cada ciclo.
+    Sem assert/abort (não prende o recovery em loop se falhar no meio). Este é o
+    único gerador que ainda usa set_perm em /system (no AutoOk.apk e no su): é o
+    pacote já aplicado no carro, exceção conhecida no MAPA §17.18, fora do teste
+    test_set_perm_so_em_tmp. A conferência real do install fica nos ls do pendrive.
     """
     _ = overlay_paths, meta, partitions
     rt = CURRENT_ROM_TYPE

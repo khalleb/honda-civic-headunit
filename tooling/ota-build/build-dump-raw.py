@@ -80,7 +80,10 @@ def _updater_script(rom_type: str, meta, partitions) -> str:
         return [
             sh(f"{BB} echo === dumping {by_name} === >> {LOG} 2>&1"),
             sh(f"{BB} echo pre-dump $({BB} date) >> {LOG}"),
-            sh(f"{BB} dd if={src} bs=4M 2>>{LOG} | {BB} gzip -c > {img} 2>>{LOG}; {BB} echo dd-exit=$? >> {LOG}"),
+            # $? depois do pipe é do gzip, não do dd (busybox ash não tem
+            # pipefail confiável). Para saber se o dd leu a partição inteira,
+            # conferir os "records in/out" e os bytes que o dd escreve no LOG.
+            sh(f"{BB} dd if={src} bs=4M 2>>{LOG} | {BB} gzip -c > {img} 2>>{LOG}; {BB} echo gzip-exit=$? >> {LOG}"),
             sh(f"{BB} ls -la {img} >> {LOG} 2>&1"),
             sh(f"{BB} echo post-dump $({BB} date) >> {LOG}"),
             sh(f"{BB} sync"),

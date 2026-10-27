@@ -53,7 +53,9 @@ def extract(source: Path) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
     print(f"Extraindo {source} em {out_dir}")
     with tarfile.open(source, "r:gz") as tf:
-        tf.extractall(out_dir)
+        # O tar vem do pendrive (gerado no recovery do carro): filter="data"
+        # barra path traversal e symlink/device que escapariam de out_dir.
+        tf.extractall(out_dir, filter="data")
     return out_dir
 
 
@@ -199,6 +201,7 @@ def main() -> None:
     body += f"Origem: `{source}`\n"
     body += f"Extraido em: `{scan_dir}`\n\n"
 
+    failed = False
     try:
         body += section("Hardware", report_hardware(scan_dir))
         body += section("Build.prop", report_build_prop(scan_dir))
@@ -210,8 +213,13 @@ def main() -> None:
         body += section("Nosso APK", report_autook(scan_dir))
     except Exception as exc:
         body += f"\n**ERRO durante geracao:** {exc}\n"
+        failed = True
 
     out_md.write_text(body, encoding="utf-8")
+    # Grava o relatorio parcial (ate util pra ver ate onde foi), mas sai !=0 pra
+    # nao mascarar a falha quando rodado em pipeline ou com &&.
+    if failed:
+        raise SystemExit(f"geracao incompleta; relatorio parcial em {out_md}")
     print(f"OK: {out_md}")
     print()
     print("Proximos passos (IA):")
