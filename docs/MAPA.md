@@ -573,15 +573,18 @@ ACTION_FORCE_RESTART = "com.khalleb.civichmi.autook.FORCE_RESTART"
 
 ### 10.2 `/system/xbin/su` 🔧
 
-Setuid root ARM. Vindo do `codeage/root-honda` (versão SuperSU-adjacent 2.78 simples).
+Setuid root ARM. Vindo do `codeage/root-honda`.
 
 | Campo | Valor |
 |---|---|
 | Caminho | `/system/xbin/su` |
 | Tamanho | 133472 bytes |
+| SHA-256 | `4f399ccd4c53bf1a12cbcc7f1b2bd23354491111358937c2da51d3355333fa84` |
 | Modo | `06755` (`-rwsr-sr-x`) |
 | Owner | root:root |
 | Comportamento | Sem prompt — qualquer app que chamar vira root direto |
+
+**⚠ O binário é KingoSU, não SuperSU** (descoberto em 2026-10-27 via auditoria externa [`joshfng/root-honda` AUDIT.md](https://github.com/joshfng/root-honda/blob/main/AUDIT.md)). Confirmado em `tooling/ota-build/bin/su`: strings `--- KingoSU notice ---`, `KingoSU v%d.%s%d Copyright (C) 2012-2015 - KingoSu`, paths em `/data/data/com.kingouser.com/`. A cada chamada de `su`, dispara `am broadcast -a com.kingouser.com.NativeAccess -n com.kingouser.com/.NativeAccessReceiver` com UID/comando. O manager `com.kingouser.com` **não** está instalado, então o broadcast é no-op público — mas aparece no `logcat.events`. Impacto operacional em prod é zero (o AutoOk v0.5.4 roda estável). Substituição pelo `su` Chainfire SR1 (SHA `67e4d251…`) pendente para o próximo rebuild do AutoOk. Detalhes em [`raio-x/08-github-landscape-2026-10-27.md §4`](raio-x/08-github-landscape-2026-10-27.md).
 
 ### 10.3 Deploy — EvilValet OTA
 
@@ -1366,6 +1369,7 @@ O `.done` evita re-match. O `rm /cache/.copy_complete` cobre um flag secundário
 | 2026-10-24 | Análise RE dos Diag APKs (Camada 2) | 5 apps (`DealerDiag`, `DeveloperDiag`, `PreShipmentDiag`, `LetDiag`) + backend AIDL `DiagApService`. **Sem PIN**: as 91 telas do DealerDiag são `exported=false` sem gate interno (sem checagem de permission/UID/senha). Acesso normal via ferramenta LET ou triggers de arquivo em `/data/data/inlinediag/rcv_{dealer,let}_launch`; nossa rota é `su -c "am start -n ...dealerdiag/.DealerDiagActivity"` (root bypassa exported, a validar no carro). 91 telas classificadas leitura/teste/escrita — escrita perigosa: `DisplayReprogram` (StartRepro), `BackupDataCleat` (DealerClearAll), `factoryResetSettings` (AIDL). O "unlock code" (`getUnLockCode`) é licenciamento de mapa Garmin (ESN + `GarminUnlock*.csv`), **não** senha de menu. Doc: [`raio-x/06-diag-apks.md`](raio-x/06-diag-apks.md). | pendente (validar am start no carro) |
 | 2026-10-26 | Revisão pré-deploy da Fase 10 | Assert de device removido de `build-dalauncher-fase10.py` e `build-dalauncher-restore.py` (nenhum pacote aplicado no carro tinha; falha dele no recovery vira recovery loop), e o `set_perm` em `/system` desses dois trocado por `chown`/`chmod` do busybox, porque também aborta (§17.18). Testes mantêm `assert(`/`abort(` fora dos 7 geradores e `set_perm` só em `/tmp` (menos no `build.py`, §17.18). `prepare-pendrive-install.sh`/`-rollback.sh` passam a aceitar o diretório do build e conferem o SHA-256 lido do pendrive. Pacotes regerados (`20261027T020208Z`/`20261027T020209Z`, horário UTC), assinatura whole-file conferida contra o testkey. Sequência dos 5 scripts de pendrive extraída para `lib-pendrive.sh`, com guardas de disco/MSDOS/vfat, `yes` antes de limpar, umount no fim e teste da sequência inteira; o CI ganhou o job `unit-tests`. Caminho Eco do DaLauncher patcheado mapeado, e o logcat do carro de 2026-10-20 confirma que `DISCLAIMER_COMPLETE` dispara com o tap do AutoOk (§11.1.1). (ver §16.4) | pendente |
 | 2026-10-27 | Revisão do projeto inteiro + fix do `set_perm` no `build.py` | Revisão de APK/geradores/scripts/CI/docs, tudo na `main` (CI com 4 jobs, verde: tooling + JUnit do AutoOk). Último `set_perm` em `/system` (install do AutoOk) trocado por `chown`/`chmod` do busybox com gate `AUTOOK-INSTALLED.OK`/`.FAIL` que confere o setuid do `su` (`test -u`) — §17.18 resolvido para os 5 geradores. Sincronização do MAPA/CLAUDE com a v0.5.4, correções de logs de exit, código morto e guardas de script. Deploy da Fase 10 adiado para 2026-10-28 (só disponibilidade do carro). RE Camada 2 das services (`StrgSW`, `SystemUpdate`, `VehicleInfoManager`, `SystemInfoService`) em [`raio-x/07-services-re.md`](raio-x/07-services-re.md): OTA oficial pelo `SystemUpdateApService` escreve o `/cache/.copy_complete` (§17.17); sinal de ré por B-CAN `CVT_SHFT_IN_REVERSE` no `VehicleInfoManager` (candidato pra Fase 9); API de eventos do volante no `StrgSwApService`; mute via `IAvApService.setMute`. RE nativa (daupdater/.so) bloqueada — não dumpados. | pendente |
+| 2026-10-27 | Varredura do GitHub (33 repos) + achado KingoSU no nosso `su` | [`raio-x/08-github-landscape-2026-10-27.md`](raio-x/08-github-landscape-2026-10-27.md). O `/system/xbin/su` instalado é **KingoSU**, não SuperSU — confirmado por `strings` e pelo SHA bater com o AUDIT do [`joshfng/root-honda`](https://github.com/joshfng/root-honda). Dispara broadcast `com.kingouser.com/.NativeAccessReceiver` a cada chamada (no-op, mas público). Troca pelo `su` Chainfire SR1 pendente para o próximo rebuild do AutoOk (§10.2). TX codes + IDs B-CAN do Mitsubishi resolvidos via [`alexpotv/Clusters`](https://github.com/alexpotv/Clusters) — fecha a lacuna da RE §3/§4. Issue #29 do ic1101 confirma CR-V China (`1.F198.60`) como mesma família. `commaai/opendbc` tem o Civic Touring 2016 / Hatchback EX 2017 como fonte canônica de CAN (mesma base que o Clusters usa). | pendente |
 
 ---
 
@@ -1392,6 +1396,7 @@ O `.done` evita re-match. O `rm /cache/.copy_complete` cobre um flag secundário
   - [05-trust-map.md](raio-x/05-trust-map.md) — 110 APKs com sharedUserId e perms
   - [06-diag-apks.md](raio-x/06-diag-apks.md) — RE dos Diag APKs (sem PIN)
   - [07-services-re.md](raio-x/07-services-re.md) — RE das services (volante, OTA oficial, veículo, áudio)
+  - [08-github-landscape-2026-10-27.md](raio-x/08-github-landscape-2026-10-27.md) — varredura do GitHub (33 repos; achado KingoSU no nosso `su`; TX codes do Mitsubishi via Clusters)
   - [README.md](raio-x/README.md) — índice + metodologia
 
 ### 19.2 Fase 7 (deploy final)

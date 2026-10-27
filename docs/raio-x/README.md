@@ -17,6 +17,7 @@ Este raio-x é o "schema" da plataforma: lista o que **existe**, não o que **ca
 | 5 | [`05-trust-map.md`](05-trust-map.md) | Mapa de confiança: `sharedUserId`, package, permissões por APK | **110 APKs, 11 com `android.uid.system`** |
 | 6 | [`06-diag-apks.md`](06-diag-apks.md) | RE dos Diag APKs (DealerDiag et al.) e do `DiagApService` | **91 telas do DealerDiag, sem PIN** |
 | 7 | [`07-services-re.md`](07-services-re.md) | RE das services: volante, OTA oficial, veículo, áudio | **StrgSW, SystemUpdate, VehicleInfoManager, SystemInfoService** |
+| 8 | [`08-github-landscape-2026-10-27.md`](08-github-landscape-2026-10-27.md) | Varredura do GitHub: 33 repos, achado KingoSU no nosso `su`, TX codes do Mitsubishi mapeados pelo Clusters | **KingoSU em `/system/xbin/su`**, Clusters, opendbc, CR-V China |
 
 ## Alto nível — o que o raio-x revela
 
