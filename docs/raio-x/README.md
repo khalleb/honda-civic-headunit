@@ -15,6 +15,8 @@ Este raio-x é o "schema" da plataforma: lista o que **existe**, não o que **ca
 | 3 | [`03-content-providers.md`](03-content-providers.md) | ContentProvider authorities e URIs | **27 authorities, 52 URIs** (9 vendor) |
 | 4 | [`04-system-properties.md`](04-system-properties.md) | SystemProperties lidas/escritas no shipping | **48 propriedades em 4 prefixos** |
 | 5 | [`05-trust-map.md`](05-trust-map.md) | Mapa de confiança: `sharedUserId`, package, permissões por APK | **110 APKs, 11 com `android.uid.system`** |
+| 6 | [`06-diag-apks.md`](06-diag-apks.md) | RE dos Diag APKs (DealerDiag et al.) e do `DiagApService` | **91 telas do DealerDiag, sem PIN** |
+| 7 | [`07-services-re.md`](07-services-re.md) | RE das services: volante, OTA oficial, veículo, áudio | **StrgSW, SystemUpdate, VehicleInfoManager, SystemInfoService** |
 
 ## Alto nível — o que o raio-x revela
 
