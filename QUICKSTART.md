@@ -46,8 +46,8 @@ $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2"
 ## 📥 1. Clonar o projeto e dependências
 
 ```bash
-git clone https://github.com/khalleb/honda-civic-g10-skip-disclaimer.git
-cd honda-civic-g10-skip-disclaimer
+git clone https://github.com/khalleb/honda-civic-headunit.git
+cd honda-civic-headunit
 
 # Clonar os projetos de referência (ic1101 provê o ota-builder)
 mkdir -p tooling/references

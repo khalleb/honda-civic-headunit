@@ -214,7 +214,7 @@ unzip -l tooling/ota-build/output/<timestamp>/0040/SwUpdate.mdt
 
 ## Script "tudo em um" (futuro)
 
-Pra automatizar os passos 1-5, dá pra criar um `tooling/scripts/full-build.sh`. Ainda não existe — ver [`PENDENCIAS.md`](../../PENDENCIAS.md). Por enquanto, cola os comandos manualmente:
+Pra automatizar os passos 1-5, dá pra criar um `tooling/scripts/full-build.sh`. Ainda não existe. Por enquanto, cola os comandos manualmente:
 
 ```bash
 #!/bin/bash

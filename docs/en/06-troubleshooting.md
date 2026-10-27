@@ -184,7 +184,7 @@ Tests:
 4. **Pull the radio fuse for 15-20 min**: forces full head unit shutdown. Replug the fuse, start the car → combo should work
 
 ### "Reboot?" shows but confirm does nothing
-Tap exactly on the OK button (not "Cancel"). Confirm visually that you hit the right one. If it persists, see [`07-rollback.md § Emergency rollback`](07-rollback.md#rollback-de-emergência).
+Tap exactly on the OK button (not "Cancel"). Confirm visually that you hit the right one. If it persists, see [`07-rollback.md § Emergency rollback`](07-rollback.md#emergency-rollback-hu-wont-boot).
 
 ---
 

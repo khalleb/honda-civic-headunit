@@ -184,7 +184,7 @@ Testes:
 4. **Puxar fusível do radio por 15-20 min**: força desligamento completo da central. Religa o fusível, carro liga → combo deve funcionar
 
 ### "Quer reiniciar?" aparece mas confirmar não faz nada
-Toque exatamente no botão OK (não "Cancelar"). Confirma visualmente que você acertou. Se persistir, veja [`07-rollback.md § Rollback de emergência`](07-rollback.md#rollback-de-emergência).
+Toque exatamente no botão OK (não "Cancelar"). Confirma visualmente que você acertou. Se persistir, veja [`07-rollback.md § Rollback de emergência`](07-rollback.md#rollback-de-emergência-central-não-boota).
 
 ---
 

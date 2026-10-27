@@ -56,7 +56,7 @@ Time: ~5 min on laptop + ~10 min in car.
 
 **Scenario:** HU in boot loop, won't boot normally, bigger problem.
 
-See [`07-rollback.md § Emergency rollback`](07-rollback.md#emergency-rollback).
+See [`07-rollback.md § Emergency rollback`](07-rollback.md#emergency-rollback-hu-wont-boot).
 
 Options (in order of nuclearity):
 1. OTA rollback deploy (if HU still reaches recovery)

@@ -57,7 +57,7 @@ Tempo: ~5 min no notebook + ~10 min no carro.
 
 **Cenário:** central em boot loop, não boota normal, problema maior.
 
-Veja [`07-rollback.md § Rollback de emergência`](07-rollback.md#rollback-de-emergência).
+Veja [`07-rollback.md § Rollback de emergência`](07-rollback.md#rollback-de-emergência-central-não-boota).
 
 Opções (ordem de nuclearidade):
 1. Deploy do rollback via OTA (se central ainda chega no recovery)
