@@ -77,7 +77,7 @@ Subkeys de `getVehicleInfo(int)`: `0=ILLUMINATION`, `1=SHIFT`, `6=PARKING_BRAKE`
 
 ## 4. Áudio / mute — `SystemInfoService`
 
-Service grande (440 classes). **O mute de áudio em si não mora aqui** — é feito via `IAvApService.setMute(boolean)` / `IAvApService.getMute()`, ou seja, no `AvApService` (ainda não deodexado). O `SystemInfoService` chama essa API e cuida da camada de cima:
+Service grande (440 classes). **O mute de áudio em si não mora aqui** — é feito via `IAvApService.setMute(boolean)` / `IAvApService.getMute()`, ou seja, no `AvApService` (deodexado e analisado em §5). O `SystemInfoService` chama essa API e cuida da camada de cima:
 - `VstMute` (+ `VstMuteListener`, `VstMuteTouchMonitorView`) — o mute "Vst" e seu toque na tela
 - `VolumeOperationController` (+ `VolumeBar*`) — operação de volume e long-push da tecla de volume
 - `EXCLUSIVE_STATUS_SOUND_BAR_DISPLAY_MUTE`
@@ -85,16 +85,9 @@ Service grande (440 classes). **O mute de áudio em si não mora aqui** — é f
 
 **Relação com o bug do mudo (v0.4.0):** o tap falso do AutoOk acertava um botão de mute cuja ação final é `IAvApService.setMute`. Para entender o ducking de verdade (abaixar vs. mutar, foco transiente) o próximo passo é deodexar o `AvApService` e seguir `setMute`/`getMute` + a lista de mix (`Can not get MixPlayList`). Com o v0.5.4 o bug já não acontece (o needle não casa mais o contexto errado), então isto é investigação de fundo, não correção pendente.
 
-**TX codes do `IAvApService`** resolvidos pelo Clusters (varredura 2026-10-27):
+**TX codes do `IAvApService`** — tabela completa (213/214 resolvidos, mapeados do `onTransact` em 2026-10-29). A §5 abaixo apresenta por grupo. Nota: o `getSource` que o Clusters nomeou corresponde ao método real `getCurrentSource` (TX 72).
 
-| TX | Método |
-|----|--------|
-| 22 | `getVolume(int type)` — type `MAIN = 0` |
-| 24 | `getMute()` |
-| 72 | `getSource()` |
-| 160 | `getVolumeMax()` |
-
-**Para um AutoOk v0.6.0:** `getMute` + `getSource` + um dedup por fonte de áudio removeria o restante do risco do bug do mudo que o v0.5.4 ainda carrega como "ausência comprovada no v0.5.4" em vez de "impossível por construção".
+**Para um AutoOk v0.6.0:** `getMute` + `getCurrentSource` + um dedup por fonte de áudio removeria o restante do risco do bug do mudo que o v0.5.4 ainda carrega como "ausência comprovada no v0.5.4" em vez de "impossível por construção".
 
 ---
 
@@ -104,25 +97,52 @@ Service `AV.apk` (`com.mitsubishielectric.ada.appservice.avapservice`), 719 clas
 
 Lê de: `AudioFocusManager` interno, controla todo o áudio do carro.
 
-### 5.1 Grupo mute / volume / source
+### 5.1 Grupo mute / volume / source — TX codes
 
-```
-setMute(I)Z              getMute(I)Z
-setVolume(II)Z           getVolume(I)I       getVolumeMax(I)I
-setVolumeRange(III)Z     getVolumeAdjustParameter(I)...
-setVolumeAdjustParameter(...)Z            getVolumeDefault(I)I
-setMuteExtInfo(...)Z     getVolumeType(I)I
-```
+Em 2026-10-29 mapeei os 214 TX codes do `IAvApService` extraindo o `sparse-switch` do `IAvApService$Stub.onTransact` (213/214 métodos resolvidos — o restante é `0x5f4e5446` = `INTERFACE_TRANSACTION` padrão do IAIDL do Android, descartado).
 
-Isso bate com o que o Clusters mapeou via TX (`22 getVolume`, `24 getMute`, `72 getSource`, `160 getVolumeMax`) — confirma a listagem.
+| TX | 0x | Método |
+|----|-----|--------|
+| 22 | 0x16 | `getVolume(int type)` |
+| 23 | 0x17 | `setVolume(int type, int value)` |
+| 24 | 0x18 | **`getMute(int type)`** |
+| 25 | 0x19 | **`setMute(int type)`** |
+| 26 | 0x1a | `setMuteExtInfo(...)` |
+| 72 | 0x48 | **`getCurrentSource()`** ← o Clusters tinha chamado de `getSource` |
+| 160 | 0xa0 | `getVolumeMax(int type)` |
+| 161 | 0xa1 | `getVolumeType(int)` |
+| 162 | 0xa2 | `setVolumeRange(int, int, int)` |
+| 113 | 0x71 | `getVolumeAdjustParameter(int)` |
+| 114 | 0x72 | `setVolumeAdjustParameter(...)` |
+| 183 | 0xb7 | `getVolumeDefault(int)` |
+| 11 | 0x0b | `getAudioSetting(int)` |
+| 12 | 0x0c | `setAudioSetting(...)` |
+| 13 | 0x0d | `getAudioPowerStatus()` |
+| 81 | 0x51 | `setAudioPowerStatus(...)` |
+| 106 | 0x6a | `getAudioList(int, int, Map)` |
+| 135 | 0x87 | `getAudioListNum(int, int)` |
+| 136 | 0x88 | `getAudioListNumPlusFilter(int, int, Map)` |
+| 181 | 0xb5 | `getAudioInterruptEnableStatus(int)` |
+| 5 | 0x05 | `getLastSource()` |
+| 6 | 0x06 | `setLastSource(...)` |
+| 180 | 0xb4 | `getLastSourceIndex()` |
+| 196 | 0xc4 | `getVideoSourceType()` |
 
-### 5.2 Grupo audio focus / interrupt / ducking
+**Confirma o que o Clusters tinha mapeado** (22, 24, 72, 160) com uma única correção de nome: TX 72 é `getCurrentSource`, não `getSource`.
 
-```
-abandonAudioFocus(I)Z         cancelInterrupt(I)Z
-getAudioInterruptEnableStatus(I)Z
-registerCallbackForAppMode(...)...
-```
+### 5.2 Grupo audio focus / interrupt / ducking — TX codes
+
+| TX | 0x | Método |
+|----|-----|--------|
+| 132 | 0x84 | `cancelInterrupt(int)` |
+| 206 | 0xce | `abandonAudioFocus(int)` |
+
+Apenas 2 métodos TX diretos — o resto do fluxo de focus/duck é via **callbacks registrados** (ver §5.4 "Register callbacks"), e a lógica concreta mora no `AudioFocusManager` interno do service. Strings reveladoras:
+- `check transient or duck :` — faz a decisão transiente (duck) vs. interrupt
+- `AA-MediaTransient command in AA-VR` — tratamento especial para Android Auto + voice recognition
+- `AA-MediaTransient command in RingTone, dual source path` — dual source path para ringtone
+- `change AppMode interrupt.`, `clear interrupt parameter`
+- `AudioFocusManager create failed`, `already abandon audio focus`, `focusChange =`
 
 Strings reveladoras no bytecode:
 - `check transient or duck :` — faz a decisão transiente (duck) vs. interrupt
@@ -133,29 +153,85 @@ Strings reveladoras no bytecode:
 
 É o `AudioFocusManager` tradicional do Android, mas com camadas adicionais para `AppMode`/`CarPlay`/`Rasp` (muitas APIs `registerCallbackForXxx`).
 
-### 5.3 Grupo video path / display
+### 5.3 Grupo video path / display — TX codes
 
-Surpresa: o `AvApService` também controla **video path**, não só áudio:
+Surpresa: o `AvApService` também controla **video path**, não só áudio (`AvApService` = "**A**udio+**V**ideo **Ap**plication Service").
 
-```
-openVideoPath(I)Z        closeVideoPath(I)Z
-getBlendMode(I)I         getDisplayMode()I
-getDisplayPosition()...  getDisplayParameter(I)...
-getDisplayData(I)...     notifyDisplayData(...)Z
-getDisplayAdjustParameter(IIIII)I
-```
+| TX | 0x | Método |
+|----|-----|--------|
+| 40 | 0x28 | `openVideoPath(int)` |
+| 41 | 0x29 | `closeVideoPath(int)` |
+| 44 | 0x2c | `getDisplayParameter(int)` |
+| 45 | 0x2d | `setDisplayParameter(...)` |
+| 46 | 0x2e | `getDisplayMode()` |
+| 70 | 0x46 | `setDisplayMode(...)` |
+| 90 | 0x5a | `getBlendMode(int)` |
+| 91 | 0x5b | `setBlendMode(...)` |
+| 102 | 0x66 | `getDisplayAdjustParameter(int, int, int, int, int)` |
+| 103 | 0x67 | `setDisplayAdjustParameter(...)` |
+| 125 | 0x7d | `getDisplayPosition()` |
+| 126 | 0x7e | `setDisplayPosition(...)` |
+| 186 | 0xba | `notifyDisplayData(...)` |
 
-Faz sentido: `AvApService` = "Audio+Video Application Service", não só áudio. Isso é um sinal de que o `IVideoManagerApService` da §6 **não** gere exibição de vídeo em si — gere câmera e surfaces (ver §6).
+### 5.4 Grupos adicionais — TX codes das principais operações
 
-### 5.4 Grupos adicionais confirmados
+**Microfones / alto-falantes:**
 
-- **Rádio**: `createPandoraStation`, `getXmTunerInfo`, `getXmTunerStatus`, `requestXMDiagCommand`, `registerXmCallback`, `getDiagRtDabDetail`, `deleteItunesTag`, `sendItunesTag` (iTunes Tagging). HD Radio implícito via Xm.
-- **Bluetooth/HFT**: `changeHftBandSpeech`, `changeVrBandSpeech`, `getDeviceConnectionList`
-- **Microfones/alto-falantes**: `execSpeakerCheck(IIIII)`, `getArrayMicMode()`
-- **CarPlay**: `e911GuidanceCarPlayStatus(I)`, `registerCallbackForCarPlay`
-- **Day/night**: `getDayNightStatus()`
-- **Backlight**: `getBacklightBrightness()`
-- **Cover art**: `getCoverArt()`, `getArtWork(I, Map)` para o metadados do que está tocando
+| TX | 0x | Método |
+|----|-----|--------|
+| 59 | 0x3b | `getMicMute()` |
+| 60 | 0x3c | `setMicMute(...)` |
+| 76 | 0x4c | `startMicDiagnosis(...)` |
+| 77 | 0x4d | `stopMicDiagnosis(...)` |
+| 123 | 0x7b | `execSpeakerCheck(int, int, int, int, int)` |
+| 172 | 0xac | `getArrayMicMode()` |
+| 173 | 0xad | `setArrayMicMode(...)` |
+
+**Rádio** (XM/DAB/HD/Pandora, 23 TX — destaques):
+
+| TX | 0x | Método |
+|----|-----|--------|
+| 30 | 0x1e | `tune(...)` |
+| 100 | 0x64 | `setPandora(...)` |
+| 101 | 0x65 | `getPandora()` |
+| 120 | 0x78 | `createPandoraStation(int, String)` |
+| 121 | 0x79 | `getXmTunerInfo(...)` |
+| 131 | 0x83 | `sendItunesTag(...)` |
+| 182 | 0xb6 | `deleteItunesTag()` |
+
+**Cover art / metadata:**
+
+| TX | 0x | Método |
+|----|-----|--------|
+| 36 | 0x24 | `getCurrentPlayTime()` |
+| 37 | 0x25 | `getPlayStatus()` |
+| 63 | 0x3f | `getCoverArtSettings(int)` |
+| 69 | 0x45 | `getCoverArt()` |
+| 122 | 0x7a | `getRadioArtwork(...)` |
+| 130 | 0x82 | `getArtWork(int, Map)` |
+| 188 | 0xbc | `notifyCurrentPlayTime(...)` |
+
+**Ambiente / sistema:**
+
+| TX | 0x | Método |
+|----|-----|--------|
+| 42 | 0x2a | `getBacklightBrightness()` |
+| 43 | 0x2b | `setBacklightBrightness(...)` |
+| 189 | 0xbd | `getDayNightStatus()` |
+| 202 | 0xca | `e911GuidanceCarPlayStatus(int)` |
+
+**Register callbacks** (padrão para receber eventos push do service — 26 TX, aqui destaques):
+
+| TX | 0x | Método |
+|----|-----|--------|
+| 1 | 0x01 | `registerCallback(IAvApServiceCallback)` |
+| 2 | 0x02 | `unregisterCallback(IAvApServiceCallback)` |
+| 3 | 0x03 | `registerCallbackForExternalDisplay(...)` |
+| 124 | 0x7c | `changeHftBandSpeech(int)` |
+| 127 | 0x7f | `registerDeviceManagerCallback(...)` |
+| 133 | 0x85 | `registerXmCallback(...)` |
+
+**Tabela completa dos 213 TX** gerada por `scratchpad/extract_tx.py` sobre `IAvApService$Stub.onTransact`. Não cabe inteira aqui — se um dia precisar de todos, rodar o script contra o `.smali` deodexado.
 
 ### 5.5 Impacto para o nosso projeto
 
@@ -219,8 +295,9 @@ A issue #6 do `librick/ic1101` relatava que o `HondaHack` comercial faz bind no 
 
 ## 7. Próximos passos de RE (ainda sem carro)
 
-- Mapear os TX codes do `IAvApService` (o `$Stub` perdeu as constantes `TRANSACTION_*` no deodex, mas estão no `onTransact` como literais inteiros no `switch(code)` — ~1h de análise manual).
 - Resolver os valores numéricos das teclas do volante (classe `Const` do `cpucomservice`) e montar a tabela código→tecla.
-- Comparar as 3 rotas de Fase 9 (polling logcat atual × `CAMERA_START`/`CAMERA_FINISH` do VideoManager × `MICU_BCM` do VehicleInfoManager × `ICameraAPServiceReverseSignalListener` do CameraAPService) e decidir qual implementar.
+- Decidir qual rota implementar na Fase 9 (polling logcat atual × `CAMERA_START`/`CAMERA_FINISH` do VideoManager × `MICU_BCM` do VehicleInfoManager × `ICameraAPServiceReverseSignalListener` do CameraAPService) — minha recomendação é a 2ª (BroadcastReceiver, mais simples).
 
 Para a RE nativa (`daupdater`, `.so`): precisa primeiro dumpar o ramdisk do recovery e as libs de `/system/lib` + `/system/vendor/lib` (um OTA de `cp -L`/`dd` novo). Só então Ghidra.
+
+**Resolvido em 2026-10-29:** TX codes do `IAvApService` (213/214) mapeados do `onTransact` com `scratchpad/extract_tx.py`.
