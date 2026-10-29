@@ -23,10 +23,46 @@ Service `StrgSW` (`com.mitsubishielectric.ada.appservice.strgsw`). 12 classes. R
 - `sendStrgSwStatus` — status do volante
 - `sendStrgKeyEventLog` — log de eventos
 
-**Teclas (nomes simbólicos, valor numérico a resolver no `Const` do cpucomservice):**
-`C_TALK` (voz), `C_PICKUP` (atender), `C_HANGUP_BACK` (desligar/voltar), `C_VOLUME` / `C_VOLUME_TOUCH`, e o controlador 4-way `C_FOURWAY_ENTER/LEFT/RIGHT/UPPER/LOWER`, rotação `C_FOURWAY_CLOCKWISE_ROTATE`/`ANTICLOCKWISE`, e swipes (`C_FOURWAY_SWIPE_LTOR` etc.). Grupos `SW_GEN` e `SW_PAD`.
+**Payload** (`KeyCommandData`, 17 fields privados, mais relevantes):
+- `mStrgKeyCode:I` — **código raw da tecla** (1..17 no B-CAN do Civic 2017 EXL)
+- `mStrgKeyDetail:I` / `mStrgKeyDetail2:I` — detalhes (short/long press, timing)
+- `mKeyType:I` — tipo bruto do evento
+- `mVol:I`, `mVolXcoordinate:I`, `mVolYcoordinate:I` — valores do controlador rotativo
+- `mAudio:I`, `mBack:I`, `mHome:I`, `mMenu:I`, `mNavi:I`, `mPhone:I`, `mPower:I`, `mTilt:I`, `mDayNight:I` — flags das teclas específicas
 
-**Como um app nosso usaria:** registrar um callback no Binder `IStrgSwApService` (bind no service `StrgSW`) implementando a interface de evento de tecla. Precisa da permissão do service (a confirmar — provável GID vehicle, como o resto). Isso dá os botões do volante sem polling de logcat — útil para substituir o AutoOk por um listener de verdade, ou para a Fase 9.
+**Mapeamento `code raw → tipo lógico`** (extraído de `StrgSwApService.convertKeyType(I)` via `scratchpad/extract_keys.py`, 17 cases):
+
+| Raw | 0x | Tipo lógico | Observação |
+|---|---|---|---|
+| 1 | 0x01 | 1 | |
+| 2 | 0x02 | 2 | |
+| 3 | 0x03 | -100 (default/erro) | não usado nessa safra |
+| 4 | 0x04 | 4 | |
+| 5 | 0x05 | 5 | **press** (press/release do mesmo botão agrupam par) |
+| 6 | 0x06 | 6 | **press** |
+| 7 | 0x07 | 7 | **press** |
+| 8 | 0x08 | 8 | **press** |
+| 9 | 0x09 | 5 | **release** (par com raw 5) |
+| 10 | 0x0a | 6 | **release** (par com raw 6) |
+| 11 | 0x0b | 7 | **release** (par com raw 7) |
+| 12 | 0x0c | 8 | **release** (par com raw 8) |
+| 13-14 | — | -100 | não usado |
+| 15 | 0x0f | 10 (0xa) | |
+| 16 | 0x10 | 11 (0xb) | |
+| 17 | 0x11 | 12 (0xc) | |
+
+**Nome simbólico ↔ tipo lógico ainda não resolvido** sem carro. O que achamos (`C_TALK`, `C_PICKUP`, `C_FOURWAY_ENTER` etc.) na verdade são **chaves de `Bundle` do BCAN status** (`mBcanStSwPadInfo.putInt("C_VOLUME_TOUCH", -1)`), não constantes de tipo de tecla. A correlação `tipo lógico 1=TALK`, `2=PICKUP`, etc. precisa de 1 teste no carro — pressionar cada tecla com um listener registrado e ler o `getKeyType()`. Baixo custo, alto valor pra qualquer app futuro.
+
+**Fluxos de evento expostos** (cada um tem seu `RemoteCallbackList` de registro):
+- `sendStrgKeyEvent` / `sendPriorityStrgKeyEvent` — teclas normais e por prioridade
+- `sendRotaryKeyEvent` — o controlador rotativo (4-way)
+- `sendMotionMenuEvent` — menu por movimento
+- `sendRaspKeyEvent` — eventos "RASP"
+- `sendStrgSwBcanInformation` — informação bruta do B-CAN (os `C_*` do Bundle)
+- `sendStrgSwStatus` — status do volante
+- `sendStrgKeyEventLog` — log de eventos
+
+**Como um app nosso usaria:** registrar um callback no Binder `IStrgSwApService` (bind no service `StrgSW`) implementando a interface `IStrgSwApServiceListener.onKeyEvent(KeyCommandData)`. Precisa da permissão do service (a confirmar — provável GID vehicle, como o resto). Isso dá os botões do volante sem polling de logcat — útil para substituir o AutoOk por um listener de verdade, ou para a Fase 9.
 
 ---
 
@@ -295,9 +331,11 @@ A issue #6 do `librick/ic1101` relatava que o `HondaHack` comercial faz bind no 
 
 ## 7. Próximos passos de RE (ainda sem carro)
 
-- Resolver os valores numéricos das teclas do volante (classe `Const` do `cpucomservice`) e montar a tabela código→tecla.
 - Decidir qual rota implementar na Fase 9 (polling logcat atual × `CAMERA_START`/`CAMERA_FINISH` do VideoManager × `MICU_BCM` do VehicleInfoManager × `ICameraAPServiceReverseSignalListener` do CameraAPService) — minha recomendação é a 2ª (BroadcastReceiver, mais simples).
 
 Para a RE nativa (`daupdater`, `.so`): precisa primeiro dumpar o ramdisk do recovery e as libs de `/system/lib` + `/system/vendor/lib` (um OTA de `cp -L`/`dd` novo). Só então Ghidra.
 
-**Resolvido em 2026-10-29:** TX codes do `IAvApService` (213/214) mapeados do `onTransact` com `scratchpad/extract_tx.py`.
+**Resolvidos em 2026-10-29:**
+- TX codes do `IAvApService` (213/214) mapeados do `onTransact` com `scratchpad/extract_tx.py`
+- Estrutura do `KeyCommandData` + tabela parcial de `convertKeyType` (raw → tipo lógico). Falta só a correlação `tipo lógico ↔ nome simbólico`, que é 1 teste no carro
+- Deodex do `AvApService` e `VideoManagerApService` (fechou §§5-6)
