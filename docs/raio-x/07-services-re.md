@@ -98,10 +98,129 @@ Service grande (440 classes). **O mute de áudio em si não mora aqui** — é f
 
 ---
 
-## 5. Próximos passos de RE (ainda sem carro)
+## 5. Áudio — `AvApService` (deodex de 2026-10-29)
 
-- Deodexar `AvApService` e mapear `setMute`/`getMute` + o mix de áudio (fecha o item 4).
+Service `AV.apk` (`com.mitsubishielectric.ada.appservice.avapservice`), 719 classes. **Roda como `android.uid.phone`** (mesmo UID do rádio/telefone — super privilegiado). Interface `IAvApService` tem **213 métodos públicos abstract** (um dos maiores services da plataforma). O `SystemInfoService` da §4 fala com ele por bind + binder.
+
+Lê de: `AudioFocusManager` interno, controla todo o áudio do carro.
+
+### 5.1 Grupo mute / volume / source
+
+```
+setMute(I)Z              getMute(I)Z
+setVolume(II)Z           getVolume(I)I       getVolumeMax(I)I
+setVolumeRange(III)Z     getVolumeAdjustParameter(I)...
+setVolumeAdjustParameter(...)Z            getVolumeDefault(I)I
+setMuteExtInfo(...)Z     getVolumeType(I)I
+```
+
+Isso bate com o que o Clusters mapeou via TX (`22 getVolume`, `24 getMute`, `72 getSource`, `160 getVolumeMax`) — confirma a listagem.
+
+### 5.2 Grupo audio focus / interrupt / ducking
+
+```
+abandonAudioFocus(I)Z         cancelInterrupt(I)Z
+getAudioInterruptEnableStatus(I)Z
+registerCallbackForAppMode(...)...
+```
+
+Strings reveladoras no bytecode:
+- `check transient or duck :` — faz a decisão transiente (duck) vs. interrupt
+- `AA-MediaTransient command in AA-VR` — tratamento especial para Android Auto + voice recognition
+- `AA-MediaTransient command in RingTone, dual source path` — dual source path para ringtone
+- `change AppMode interrupt.`, `clear interrupt parameter`
+- `AudioFocusManager create failed`, `already abandon audio focus`, `focusChange =`
+
+É o `AudioFocusManager` tradicional do Android, mas com camadas adicionais para `AppMode`/`CarPlay`/`Rasp` (muitas APIs `registerCallbackForXxx`).
+
+### 5.3 Grupo video path / display
+
+Surpresa: o `AvApService` também controla **video path**, não só áudio:
+
+```
+openVideoPath(I)Z        closeVideoPath(I)Z
+getBlendMode(I)I         getDisplayMode()I
+getDisplayPosition()...  getDisplayParameter(I)...
+getDisplayData(I)...     notifyDisplayData(...)Z
+getDisplayAdjustParameter(IIIII)I
+```
+
+Faz sentido: `AvApService` = "Audio+Video Application Service", não só áudio. Isso é um sinal de que o `IVideoManagerApService` da §6 **não** gere exibição de vídeo em si — gere câmera e surfaces (ver §6).
+
+### 5.4 Grupos adicionais confirmados
+
+- **Rádio**: `createPandoraStation`, `getXmTunerInfo`, `getXmTunerStatus`, `requestXMDiagCommand`, `registerXmCallback`, `getDiagRtDabDetail`, `deleteItunesTag`, `sendItunesTag` (iTunes Tagging). HD Radio implícito via Xm.
+- **Bluetooth/HFT**: `changeHftBandSpeech`, `changeVrBandSpeech`, `getDeviceConnectionList`
+- **Microfones/alto-falantes**: `execSpeakerCheck(IIIII)`, `getArrayMicMode()`
+- **CarPlay**: `e911GuidanceCarPlayStatus(I)`, `registerCallbackForCarPlay`
+- **Day/night**: `getDayNightStatus()`
+- **Backlight**: `getBacklightBrightness()`
+- **Cover art**: `getCoverArt()`, `getArtWork(I, Map)` para o metadados do que está tocando
+
+### 5.5 Impacto para o nosso projeto
+
+- **AutoOk v0.6.0 (hipotético)**: `setMute(false)` para desfazer um mute falso é possível, mas melhor é fazer **gate antes do tap**: ler `getMute(MAIN)` + `getCurrentSource()` + se `source == CARPLAY && mute == true` → **não tapar**. Elimina a classe de bug "tap em (400,350) acerta o botão de mute em contexto errado" (v0.4.0 §17.15).
+- **Para apps nossos no futuro**: dá para ler `getCurrentSource`/`getCoverArt` para desenhar um cluster de música em cima do cluster secundário (estilo `alexpotv/Clusters`).
+- **Risco baixo** porque é só leitura — os métodos `set*` precisam de permissão específica (a confirmar; provável que `android.uid.phone` seja requerido, ou seja, só app privilegiado).
+
+---
+
+## 6. Vídeo e câmera — `VideoManagerApService` (deodex de 2026-10-29)
+
+Service `VideoManagerApService.apk` (`com.mitsubishielectric.ada.appservice.videomanager`), 30 classes. Interface `IVideoManagerApService` tem **12 métodos abstract** (service pequeno e focado). Permissões: `android.permission.CAMERA`, `android.permission.SYSTEM_ALERT_WINDOW`, `android.permission.INTERNAL_SYSTEM_WINDOW`, `android.permission.STATUS_BAR_SERVICE`, `com.mitsubishielectric.ada.permission.VEHICLE_RW`.
+
+### 6.1 API
+
+```
+openVideoPath(...)          closeVideoPath(...)
+showVideoAuto(...)          hideVideoAuto(...)
+showVideoManual(...)        hideVideoManual(...)
+updateVideo(...)            isVideoOn(...)
+changeVideoPathToDefault(...)
+notifyAppStarted(...)
+registVideoStatusListener(IVideoStatusListener)
+unregistVideoStatusListener(IVideoStatusListener)
+```
+
+Padrão `register*Listener`/`unregister*Listener` + os `show*/hide*` em duas variantes (`Auto` e `Manual`) sugerem que a diferença é se o status change veio de uma trigger de hardware (câmera engatou, usuário no botão) ou de app controlando programaticamente.
+
+### 6.2 🎯 Broadcasts dedicados pra câmera — rota NOVA pra Fase 9
+
+**Achado principal:** o `VideoManagerApService` emite dois broadcasts dedicados para abertura/fechamento de câmera:
+
+```
+com.mitsubishielectric.ada.appservice.videomanager.CAMERA_START
+com.mitsubishielectric.ada.appservice.videomanager.CAMERA_FINISH
+```
+
+(linha 531 do `VideoManagerApService.smali`; `sendBroadcast(Intent)` na linha 479 do mesmo arquivo).
+
+**Isso abre uma rota muito mais simples que a Fase 9 originalmente planejada:**
+
+| Rota | Mecanismo | Complexidade |
+|---|---|---|
+| Hoje (AutoOk v0.5.4) | Logcat polling procurando `am_create_activity` da câmera | Médio (polling, parsing de linha) |
+| Fase 9 original | `bindService` + `transact` em `ICameraAPServiceReverseSignalListener` | Alto (Binder cru, descoberta de TX code) |
+| **Fase 9 alternativa (via VideoManager)** | `BroadcastReceiver` com filter `CAMERA_START`/`CAMERA_FINISH` | **Mínimo (padrão Android, 15 linhas de código)** |
+| Fase 9 alternativa 2 (via VehicleInfoManager) | `BcanListener` + `notifyBcanReceiveSetting(MICU_BCM/ICU)` | Médio (RE Camada 2 §3) |
+
+A rota via `BroadcastReceiver` é a mais limpa. Também funciona para câmeras laterais e frontais (as outras Activities que apareceram no bytecode: `CornerCameraDisplayActivity`, `FrontCameraDisplayActivity`), não só a de ré.
+
+### 6.3 Confirmação do issue #6 do ic1101
+
+A issue #6 do `librick/ic1101` relatava que o `HondaHack` comercial faz bind no `IVideoManagerApService` (um dos 4 services que ele usa, junto com `IAvApService`, `IVehicleInfoManagerApService`, `ICameraAPService`). Agora sabemos **o que o HondaHack faz com esse bind**: provavelmente pergunta `isVideoOn()` + registra listener via `registVideoStatusListener` para saber quando a tela da câmera abre, pra sobrepor seu HUD por cima.
+
+### 6.4 Impacto para o nosso projeto
+
+- **Fase 9 fica fácil**: `AndroidManifest.xml` do nosso AutoOk ganha um `<receiver>` com `<intent-filter>` para as duas actions acima; o receiver dispara o mesmo caminho que o `am_create_activity` da câmera dispara hoje. O logcat polling do AutoOk pode permanecer como fallback.
+- **App "cluster" nosso no futuro** (estilo `alexpotv/Clusters`) poderia usar `registVideoStatusListener` para saber quando pausar o overlay se a câmera abriu.
+
+---
+
+## 7. Próximos passos de RE (ainda sem carro)
+
+- Mapear os TX codes do `IAvApService` (o `$Stub` perdeu as constantes `TRANSACTION_*` no deodex, mas estão no `onTransact` como literais inteiros no `switch(code)` — ~1h de análise manual).
 - Resolver os valores numéricos das teclas do volante (classe `Const` do `cpucomservice`) e montar a tabela código→tecla.
-- Comparar o sinal de ré por `VehicleInfoManager` (`CVT_SHFT_IN_REVERSE`) com o `ICameraAPServiceReverseSignalListener` para decidir a Fase 9.
+- Comparar as 3 rotas de Fase 9 (polling logcat atual × `CAMERA_START`/`CAMERA_FINISH` do VideoManager × `MICU_BCM` do VehicleInfoManager × `ICameraAPServiceReverseSignalListener` do CameraAPService) e decidir qual implementar.
 
 Para a RE nativa (`daupdater`, `.so`): precisa primeiro dumpar o ramdisk do recovery e as libs de `/system/lib` + `/system/vendor/lib` (um OTA de `cp -L`/`dd` novo). Só então Ghidra.
