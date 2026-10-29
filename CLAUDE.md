@@ -10,9 +10,12 @@ Honda Civic 2017 EXL brasileiro. Objetivo primário: eliminar a tela de "Aviso"
 que aparece na partida do carro, construindo um APK auto-OK próprio
 (sem usar o Honda Hack pago).
 
-## 🎉 Projeto concluído — 2026-10-16
+## 🎉 Projeto concluído — 2026-10-16 (Fase 7) e 2026-10-29 (Fase 10)
 
-O objetivo foi atingido. Aviso é suprimido automaticamente em cada boot.
+- **Fase 7 (2026-10-16):** aviso suprimido via APK auto-OK (AutoOk v0.5.4 em prod).
+- **Fase 10 (2026-10-29):** aviso **removido do fluxo de boot** via patch smali de 1 instrução no `DaLauncher.apk` (`OpeningDivideActivity.smali:671`). O caminho Eco intermediário é reduzido a ~1 s via Fase 10.1 (segundo patch, `EcoFragment.smali:3094`). CarPlay projeta, navegação funciona, zero crash. Detalhes em [`docs/fase10-deploy-2026-10-29/README.md`](docs/fase10-deploy-2026-10-29/README.md).
+
+AutoOk mantido como safety net.
 
 **Antes de responder qualquer pergunta sobre o projeto, LEIA EM ORDEM:**
 

@@ -1,12 +1,13 @@
 # Fase 10 — Checklist de execução (deploy day)
 
-> Prep concluída em 2026-10-23. Alvo de deploy: **2026-10-27** (quando fecha a
-> janela de "v0.5.4 estável por 1 semana"). Este doc é o roteiro minuto a
-> minuto pro dia de ir no carro.
+> **✅ DEPLOY EXECUTADO EM 2026-10-29.** Resultado final em
+> [`fase10-deploy-2026-10-29/README.md`](fase10-deploy-2026-10-29/README.md). Este
+> doc fica preservado como o roteiro que foi seguido na íntegra.
 >
-> Revisado em 2026-10-26: pacotes regerados sem `assert` de device e sem
-> `set_perm` em `/system`, e scripts de pendrive recebendo o diretório do build
-> (ver MAPA §16.4).
+> Prep concluída em 2026-10-23. Alvo original: 2026-10-27, adiado para 29 por
+> disponibilidade do carro. Nada técnico mudou. Revisado em 2026-10-26: pacotes
+> regerados sem `assert` de device e sem `set_perm` em `/system`, e scripts de
+> pendrive recebendo o diretório do build (ver MAPA §16.4).
 
 ## 0. Precondições antes de sair de casa
 

@@ -2,15 +2,16 @@
 
 > O que já funciona, o que está em discussão para próximas fases, e o que foi descartado com motivo. Para o que **já descobrimos** (plataforma, protocolos, formato de dados), ver [`DISCOVERIES.md`](DISCOVERIES.md).
 
-## Estado atual (2026-10-20)
+## Estado atual (2026-10-29)
 
-- APK **AutoOk v0.5.4** em produção no veículo testado (Civic 2017 EXL BR `1.F187.16`). Suprime automaticamente a tela de Aviso tanto em cold boot (AUDIO 5s) quanto em LP0 resume (keyoff/keyon normal). Zero taps falsos, zero conflito com ligação CarPlay via BT.
-- v0.5.4 fecha 4 iterações num mesmo dia (v0.5.0 → v0.5.4) resolvendo: bug do mudo em CarPlay (AlarmManager + needle frouxo do v0.4.0); regressão do EPERM (fix 17.9); duas Activities disparadas em LP0 resume (`PRECEDING_STARTUP` da tela de logo vs `NORMAL_STARTUP` do aviso real); formato errado do `-v brief`; bug do Android 4.2.2 que não combina `-b A -b B`.
-- `su` setuid permanente em `/system/xbin/`
+- 🎯 **Fase 10 concluída (2026-10-29)** — aviso de abertura removido do fluxo de boot via patch smali no `DaLauncher.apk` (1 instrução). Tela intermediária Eco reduzida a ~1 s via segundo patch (Fase 10.1, mesma data). CarPlay projeta, navegação funciona, zero crash. Detalhes em [`docs/fase10-deploy-2026-10-29/README.md`](docs/fase10-deploy-2026-10-29/README.md). Pacote de rollback do DaLauncher validado no mesmo deploy.
+- APK **AutoOk v0.5.4** mantido em `/system/app/` como safety net (recomendação: manter 1 semana estável pós-Fase 10.1 antes de remover). Suprime o aviso tanto em cold boot (AUDIO 5s) quanto em LP0 resume. Zero taps falsos, zero conflito com ligação CarPlay via BT.
+- v0.5.4 fechou 4 iterações num mesmo dia (v0.5.0 → v0.5.4) resolvendo: bug do mudo em CarPlay (AlarmManager + needle frouxo do v0.4.0); regressão do EPERM (fix 17.9); duas Activities disparadas em LP0 resume (`PRECEDING_STARTUP` da tela de logo vs `NORMAL_STARTUP` do aviso real); formato errado do `-v brief`; bug do Android 4.2.2 que não combina `-b A -b B`.
+- `su` setuid permanente em `/system/xbin/` — identificado como KingoSU (não SuperSU), broadcast no-op; troca pelo Chainfire SR1 pendente ([`docs/raio-x/08-github-landscape-2026-10-27.md §4`](docs/raio-x/08-github-landscape-2026-10-27.md))
 - Deploy via pacote OTA EvilValet validado, com fix do loop infinito no `build.py` (renomeia `SwUpdate2.txt → .done`)
-- Pacote de rollback construído e pronto
+- Pacotes de rollback (AutoOk + DaLauncher) construídos e, no caso do DaLauncher, validados no carro em 2026-10-29
 
-Nada do roadmap abaixo compromete a estabilidade do v0.5.4. Tudo listado é opcional / exploratório.
+**O objetivo original do projeto está cumprido.** Nada do roadmap abaixo compromete a estabilidade do deploy atual. Tudo listado é opcional / exploratório.
 
 ## Em curto prazo (candidatos a próxima fase)
 
@@ -48,19 +49,16 @@ O APK portador do XML da whitelist deveria estar em `/system/vendor/etc/honda/co
 
 → [`docs/whitelist-mitsubishi-2026-10-19.md § 2.3`](docs/whitelist-mitsubishi-2026-10-19.md)
 
-### Fase 10 — Remover o aviso de vez (patch smali no DaLauncher)
+### ~~Fase 10 — Remover o aviso de vez (patch smali no DaLauncher)~~ ✅ **CONCLUÍDA 2026-10-29**
 
-**Gate descoberto em 2026-10-20:** o `DaLauncher.OpeningDivideActivity.sDisclamerFlg` é `static boolean` em memória (não persistido em SharedPrefs, databases ou property). Reseta `false` a cada boot da classe, por isso o aviso aparece sempre. Patch mínimo em `OpeningDivideActivity.smali:671` (`if-nez v0, :cond_9` → `goto :cond_9`) força o fluxo direto pra `createEcoIntent()`, ignorando o flag. Aviso **nunca aparece**.
+Rota B escolhida (resign AOSP). Patches versionados em `tooling/fase10/*.patch`. Deploy §2.1 + §2.2 passaram todos os gates no carro, com md5 pós-deploy = `fc8e87f6…` confirmando o APK patcheado no lugar. Observação do deploy: a tela `EcoFragment` (caminho morto antes do patch, §17.19 do MAPA) acordou pela primeira vez e aparece por ~6 s. **Fase 10.1** preparada no mesmo dia reduz essa tela para ~1 s via segundo patch smali (`EcoFragment.smali:3094`, timer 5000 ms → 500 ms), mantendo as 4 chamadas pós-aviso (`DISCLAIMER_COMPLETE`, `setDisplayPermission`, `disclaimerDisappeared`, `setDisclaimerPassed`).
 
-**Complicação do deploy:** DaLauncher é assinado com chave corporativa Mitsubishi (`Melco Honda16MY`, SHA-256 `93:14:CE:...:05:AD`), não AOSP testkey. Outros vendor-apps usam chave Mitsubishi distinta (`A2:09:0F:...:EF:65`), então DaLauncher é singular — substituir só ele não quebra outros apps por mismatch, mas o PackageManager pode tratar como "new install" perdendo permissões `/system/*`.
+Pacotes finais:
+- Install (v1 aplicada): `tooling/ota-build/output-dalauncher-fase10/20261027T020208Z/` SHA `4c31cb4d…`
+- Install (Fase 10.1 pronta): `tooling/ota-build/output-dalauncher-fase10/20261029T134614Z/` SHA `f571af75…` md5 do APK `655c01a3…`
+- Rollback: `tooling/ota-build/output-dalauncher-restore/20261027T020209Z/` SHA `6445ec80…`
 
-**Rotas:**
-- **A (recomendada):** Odex-level patch — modificar só o `.odex`, APK fica intocado com assinatura Mitsubishi original. Risco baixo mas requer tooling pra re-odex.
-- **B (fallback):** Resign com testkey AOSP + aceitar "new install" + rede de segurança total.
-
-**Pré-requisito:** v0.5.0 estável por 1 semana + rollback OTA específico do DaLauncher construído e testado antes.
-
-→ [`docs/fase10-pre-planejamento-2026-10-20.md`](docs/fase10-pre-planejamento-2026-10-20.md) (briefing técnico completo)
+Docs: [`docs/fase10-deploy-2026-10-29/README.md`](docs/fase10-deploy-2026-10-29/README.md), [`docs/MAPA.md`](docs/MAPA.md) §16.4, §17.19.
 
 ### Experimentar `persist.sys.keyoff_reboot=1`
 
