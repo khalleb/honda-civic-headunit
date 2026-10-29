@@ -619,6 +619,10 @@ Pacotes OTA do repositório:
 - `tooling/ota-build/build-rollback.py` — remove AutoOk.apk + su (volta ao estado inicial)
 - `tooling/ota-build/build-dump-raw.py` — dump raw bootable de APP, CAP, MITSU
 - `tooling/ota-build/build-deep-scan.py` — scan textual de todas as partições + /proc/*
+- `tooling/ota-build/build-diagnostic.py` — coleta direcionada (autook.log, SharedPrefs/dbs do DaLauncher, persist props)
+- `tooling/ota-build/build-dalauncher-fase10.py` — install do APK patcheado da Fase 10 (§16.4, §10.3)
+- `tooling/ota-build/build-dalauncher-restore.py` — restore do DaLauncher original (rede de segurança da Fase 10)
+- `tooling/ota-build/build-enable-adb.py` — grava `persist.sys.usb1_mode=device` em `/data/property/` pra habilitar ADB via USB sem combo físico (§17.20 e `scripts/prepare-pendrive-enable-adb.sh`)
 
 ---
 
@@ -1378,6 +1382,30 @@ O `.done` evita re-match. O `rm /cache/.copy_complete` cobre um flag secundário
 **Mitigação — Fase 10.1 (2026-10-29):** segundo patch smali em `EcoFragment.startNoOperationTimer`, de uma instrução: `const/16 v1, 0x1388` → `const/16 v1, 0x1f4` (5000 ms → 500 ms). Mantém intacto o `onServiceListComplete` + o callback que dispara `startEndAnimeAndNextActivity → startNextActivity → DISCLAIMER_COMPLETE + setDisplayPermission + disclaimerDisappeared + setDisclaimerPassed` (as 4 chamadas pós-aviso que CarPlay/Navegação precisam). Resultado esperado: ~1 s de tela Eco (500 ms de timer + animação). Patch versionado: `tooling/fase10/eco-fragment-reduce-timer.patch`. Detalhes em §16.4 e [`fase10-deploy-2026-10-29/README.md`](fase10-deploy-2026-10-29/README.md).
 
 **Por que não 0 ms:** o AutoOk v0.5.4 continua no sistema como safety net (§4.1 do checklist) e tapa `(400,350)` ~1 s depois do `am_create_activity` da `OpeningDivideActivity`. Com 500 ms o tap ainda cai no fundo do `EcoFragment` (ambos layouts `mm_07_04_06`/`_ziba` têm só `ImageView` em `(400,350)`, nada clicável). Com 0 ms o tap cairia no `CarPlayMainActivity` ou no `Launcher` → risco de clicar em algo real.
+
+### 17.20 ✓ Habilitar ADB sem combo físico via `persist.sys.usb1_mode` (2026-10-29) 🆕
+
+**Problema:** o HU vem com USB em modo **Host** (porta USB enumera periféricos — pendrive, celular). Pra ADB funcionar precisa trocar pra **Device**, e o único caminho documentado é o combo físico do menu secreto (ic1101 issue #20): segurar `Brightness + Phone + Volume/Power` → "Detail Information and Settings" → segurar `Phone` → `Home` (três beeps, depois um) → UI de role switch → `Role: Device`. Chato e lento em cada investigação.
+
+**Mecanismo descoberto na issue #20 do ic1101:** `UsbCertJni.changeDeviceMode()` chama `property_set("persist.sys.usb1_mode", "device")`. O daemon `usbdetectd` observa a prop e, no boot, grava em `/sys/devices/platform/tegra-otg/enable_device` + `/sys/devices/platform/tegra-udc.0/.../soft_connect`.
+
+**Solução (pacote OTA, 2026-10-29):** `tooling/ota-build/build-enable-adb.py` grava no recovery o arquivo `/data/property/persist.sys.usb1_mode` com conteúdo `device`. É o formato padrão do Android para `persist.*` sysprops (`/data/property/<nome>` como arquivo texto). No próximo boot normal, o init lê e carrega a prop, `usbdetectd` observa e configura o `tegra-otg`. Resultado: cabo USB-A → USB-A entre central e PC enumera como ADB (precisa autorizar no diálogo que aparece na tela do carro na primeira vez).
+
+**Como aplicar:**
+```bash
+# Build + pendrive
+python3 tooling/ota-build/build-enable-adb.py
+sudo tooling/scripts/prepare-pendrive-enable-adb.sh /dev/sda tooling/ota-build/output-enable-adb
+
+# No carro: porta frontal + AUDIO 5s + confirmar reiniciar
+# Depois no PC
+adb kill-server && adb start-server
+adb devices    # autoriza na tela do carro na primeira vez
+```
+
+**Pré-requisito:** AutoOk + su já instalados (Fase 7). **Reversível:** mudar `USB1_MODE = "host"` no builder, rebuildar e redeployar — ou simplesmente apagar o arquivo `/data/property/persist.sys.usb1_mode` via ADB.
+
+**Gate `ENABLE-ADB.OK/.FAIL`** gravado no pendrive confirma que o arquivo foi gravado e lido de volta com o valor certo. Sem `assert`/`abort` no updater-script (§17.17/§17.18), passa pelos invariantes de todos os geradores. Deploy pendente da semana estável pós-Fase 10.
 
 ---
 

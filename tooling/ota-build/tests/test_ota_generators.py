@@ -11,6 +11,7 @@ GERADORES = [
     "build-dump-raw.py",
     "build-deep-scan.py",
     "build-diagnostic.py",
+    "build-enable-adb.py",
 ]
 
 LOOP_BREAK_MV = "SwUpdate2.txt /mnt/usbdrive1/SwUpdate2.txt.done"
@@ -30,7 +31,7 @@ def _updater_script_de(filename):
     if filename == "build.py":
         mod.CURRENT_ROM_TYPE = "0040"
         return mod.our_create_updater_script([], {}, mod.upstream.PARTITIONS)
-    if filename == "build-diagnostic.py":
+    if filename in ("build-diagnostic.py", "build-enable-adb.py"):
         return mod._updater_script("0040")
     return mod._updater_script("0040", {}, mod.upstream.PARTITIONS)
 

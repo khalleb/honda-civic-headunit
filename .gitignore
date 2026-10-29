@@ -83,3 +83,4 @@ docs/fase7-deploy-2026-10-16/artefatos-deploy/
 # ---- Pessoal ----
 # Lista de pendências do dono, não vai pro público.
 PENDENCIAS.md
+tooling/ota-build/output-enable-adb/
