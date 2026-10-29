@@ -207,6 +207,7 @@ Original goal achieved on 2026-10-29. Everything below is exploratory; details i
 | [`docs/en/06-troubleshooting.md`](docs/en/06-troubleshooting.md) | Decision tree when something fails |
 | [`docs/en/07-rollback.md`](docs/en/07-rollback.md) | Revert everything |
 | [`docs/en/08-backups.md`](docs/en/08-backups.md) | Full backup catalog |
+| [`docs/en/09-fase10-remove-warning.md`](docs/en/09-fase10-remove-warning.md) | 🎯 Phase 10 — remove the warning for good via DaLauncher patch |
 
 ### 🇧🇷 In Portuguese (original)
 

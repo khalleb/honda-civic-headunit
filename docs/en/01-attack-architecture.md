@@ -176,10 +176,51 @@ An extra thread checks every 30s if the LogcatWatcher is still alive. If it died
 
 ---
 
+## Layer 2: smali patch in DaLauncher (Phase 10, 2026-10-29)
+
+Everything above describes **Layer 1** — AutoOk as an automatic safety net that dismisses the warning. On 2026-10-29 we added **Layer 2**: a bytecode patch in `DaLauncher.apk` itself that makes the warning **no longer exist** in the boot flow.
+
+The attack architecture is the **same** as Layer 1 (EvilValet OTA package signed with AOSP testkey), only the payload changes: instead of installing `AutoOk.apk` + `su` in `/system/app/` and `/system/xbin/`, it replaces `/system/vendor/app/DaLauncher.apk` with our version carrying a 1-instruction smali patch, and removes the old `.odex` (which would prevent Dalvik from loading the new `classes.dex`).
+
+### The patched instruction
+
+Inside `OpeningDivideActivity.createDisclaimerOrEcoIntent()`:
+
+```diff
+     sget-boolean v0, Lcom/mitsubishielectric/ada/app/dalauncher/OpeningDivideActivity;->sDisclamerFlg:Z
+
+-    if-nez v0, :cond_9
++    goto :cond_9
+
+     invoke-direct {p0}, ...->createDisclaimerOnHomeIntent()Landroid/content/Intent;
+```
+
+Forces the flow to always go to `createEcoIntent()`, which was in the code but was never reached in real use (`sDisclamerFlg` is a `static boolean` in memory, always starts `false`).
+
+### Why this branch and not "skip everything"
+
+The `EcoFragment` the patch wakes up triggers in `startNextActivity()` the 4 calls CarPlay/Navigation expect: `NavigationApService.disclaimerDisappeared`, `AppManagerService.setDisclaimerPassed(true)`, `CarPlayApService.setDisplayPermission(status=true)` and the `DISCLAIMER_COMPLETE` broadcast. Skipping straight to the main Launcher would break CarPlay/Navigation. Preserving the Eco path keeps the sequence intact.
+
+A second patch (Phase 10.1, same day) reduces the Eco screen timer from 5000 ms to 500 ms, making the screen imperceptible (~1 s total with animation) but still enough time for the AutoOk tap to land on the fragment's safe background.
+
+### Self-contained rebuild
+
+`tooling/fase10/rebuild-dalauncher.sh` deodexes the original `.odex`, applies both versioned patches in `tooling/fase10/*.patch`, **proves** the orig→patch DEX diff is exactly `EcoFragment.smali` + `OpeningDivideActivity.smali` (fails otherwise), repackages, zipaligns and signs with the AOSP testkey. `build-dalauncher-fase10.py` refuses to package an APK not signed with the testkey.
+
+### Safety net
+
+Before applying the install, we apply the DaLauncher **restore** package (byte-identical to what's in `/system/vendor/app/` of the car = intentional no-op). This validates the rollback path **before** risking the real install. If anything goes wrong with the install, the same restore package is the way out.
+
+Step-by-step reapply guide: [`09-fase10-remove-warning.md`](09-fase10-remove-warning.md). Full deploy timeline: [`../fase10-deploy-2026-10-29/README.md`](../fase10-deploy-2026-10-29/README.md) (Portuguese).
+
+---
+
 ## Deep technical paths
 
 - **OTA package recipe**: [`../fase7-deploy-2026-10-16/03-build-ota-receita.md`](../fase7-deploy-2026-10-16/03-build-ota-receita.md) (Portuguese)
 - **APK architecture (code line by line)**: [`../fase7-deploy-2026-10-16/04-apk-autook-detalhes.md`](../fase7-deploy-2026-10-16/04-apk-autook-detalhes.md) (Portuguese)
+- **Phase 10 — deploy timeline and SHA/md5 tables**: [`../fase10-deploy-2026-10-29/README.md`](../fase10-deploy-2026-10-29/README.md) (Portuguese)
+- **Phase 10 route decision (resign AOSP vs. odex-level patch)**: [`../fase10-decisao-rotas-2026-10-23.md`](../fase10-decisao-rotas-2026-10-23.md) (Portuguese)
 - **Firmware-specific findings (Brazilian)**: [`../fase7-deploy-2026-10-16/02-descobertas-tecnicas.md`](../fase7-deploy-2026-10-16/02-descobertas-tecnicas.md) (Portuguese)
 - **Filesystem map of the head unit**: [`../MAPA.md`](../MAPA.md)
 

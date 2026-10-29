@@ -15,6 +15,7 @@ Practical documentation to use/adapt the project. For those who just want to dep
 | [`06-troubleshooting.md`](06-troubleshooting.md) | Decision tree when something fails |
 | [`07-rollback.md`](07-rollback.md) | Reverting everything |
 | [`08-backups.md`](08-backups.md) | Complete backup catalog |
+| [`09-fase10-remove-warning.md`](09-fase10-remove-warning.md) | 🎯 Phase 10 — remove the warning for good via DaLauncher patch |
 
 ## Recommended path
 

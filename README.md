@@ -197,6 +197,7 @@ Objetivo original cumprido em 2026-10-29. O que fica abaixo é exploratório; de
 | [`docs/pt-BR/06-troubleshooting.md`](docs/pt-BR/06-troubleshooting.md) | Debug quando algo não funciona |
 | [`docs/pt-BR/07-rollback.md`](docs/pt-BR/07-rollback.md) | Reverter tudo |
 | [`docs/pt-BR/08-backups-e-rollback.md`](docs/pt-BR/08-backups-e-rollback.md) | Catálogo de backups |
+| [`docs/pt-BR/09-fase10-remover-aviso.md`](docs/pt-BR/09-fase10-remover-aviso.md) | 🎯 Fase 10 — remover o aviso de vez via patch no DaLauncher |
 
 ### 🇺🇸 In English
 
@@ -212,6 +213,7 @@ Objetivo original cumprido em 2026-10-29. O que fica abaixo é exploratório; de
 | [`docs/en/06-troubleshooting.md`](docs/en/06-troubleshooting.md) | Decision tree when something fails |
 | [`docs/en/07-rollback.md`](docs/en/07-rollback.md) | Revert everything |
 | [`docs/en/08-backups.md`](docs/en/08-backups.md) | Full backup catalog |
+| [`docs/en/09-fase10-remove-warning.md`](docs/en/09-fase10-remove-warning.md) | 🎯 Phase 10 — remove the warning for good via DaLauncher patch |
 
 ### 🔬 Deep technical dive
 

@@ -173,10 +173,51 @@ Thread extra que a cada 30s verifica se o LogcatWatcher ainda está vivo. Se mor
 
 ---
 
+## Camada 2: patch smali no DaLauncher (Fase 10, 2026-10-29)
+
+Tudo acima descreve a **Camada 1** — o AutoOk como safety net automático que vai dispensando o aviso. Em 2026-10-29 adicionamos a **Camada 2**: um patch de bytecode no próprio `DaLauncher.apk` que faz o aviso **não existir mais** no fluxo de boot.
+
+A arquitetura do ataque é a **mesma** da Camada 1 (pacote OTA EvilValet assinado com testkey AOSP), só muda o payload: em vez de instalar `AutoOk.apk` + `su` em `/system/app/` e `/system/xbin/`, substitui o `/system/vendor/app/DaLauncher.apk` por uma versão nossa com um patch smali de 1 instrução e remove o `.odex` velho (que impediria o Dalvik de carregar o `classes.dex` novo).
+
+### A instrução patcheada
+
+Dentro de `OpeningDivideActivity.createDisclaimerOrEcoIntent()`:
+
+```diff
+     sget-boolean v0, Lcom/mitsubishielectric/ada/app/dalauncher/OpeningDivideActivity;->sDisclamerFlg:Z
+
+-    if-nez v0, :cond_9
++    goto :cond_9
+
+     invoke-direct {p0}, ...->createDisclaimerOnHomeIntent()Landroid/content/Intent;
+```
+
+Faz o fluxo ir sempre pro `createEcoIntent()`, que já estava no código mas nunca era alcançado em uso real (o `sDisclamerFlg` é `static boolean` em memória, sempre começa `false`).
+
+### Por que esse caminho e não "pular tudo"
+
+O `EcoFragment` que o patch acorda dispara em `startNextActivity()` as 4 chamadas que CarPlay/Navegação esperam: `NavigationApService.disclaimerDisappeared`, `AppManagerService.setDisclaimerPassed(true)`, `CarPlayApService.setDisplayPermission(status=true)` e o broadcast `DISCLAIMER_COMPLETE`. Pular direto pro Launcher principal quebraria CarPlay/Navegação. Preservar o Eco mantém a sequência intacta.
+
+Um segundo patch (Fase 10.1, mesmo dia) reduz o timer da tela Eco de 5000 ms para 500 ms, deixando a tela imperceptível (~1 s total com animação) mas ainda tempo suficiente pro tap do AutoOk cair no fundo seguro dela.
+
+### Rebuild auto-contido
+
+O `tooling/fase10/rebuild-dalauncher.sh` deodexa o `.odex` original, aplica os dois patches versionados em `tooling/fase10/*.patch`, **prova** que a diferença orig→patch no DEX é exatamente `EcoFragment.smali` + `OpeningDivideActivity.smali` (falha senão), reempacota, zipaligna e assina com a testkey AOSP. O `build-dalauncher-fase10.py` recusa empacotar um APK não assinado com o testkey.
+
+### Rede de segurança
+
+Antes de aplicar o install, aplicamos o pacote de **restore** do DaLauncher original (bytes idênticos aos que estão no `/system/vendor/app/` do carro = no-op intencional). Isso valida o caminho de rollback **antes** de arriscar o install real. Se qualquer coisa der errado com o install, o mesmo pacote de restore é a saída.
+
+Guia passo a passo para reaplicar: [`09-fase10-remover-aviso.md`](09-fase10-remover-aviso.md). Timeline do deploy real: [`../fase10-deploy-2026-10-29/README.md`](../fase10-deploy-2026-10-29/README.md).
+
+---
+
 ## Caminhos técnicos profundos
 
 - **Receita do pacote OTA**: [`fase7-deploy-2026-10-16/03-build-ota-receita.md`](../fase7-deploy-2026-10-16/03-build-ota-receita.md)
 - **Arquitetura do APK (código linha a linha)**: [`fase7-deploy-2026-10-16/04-apk-autook-detalhes.md`](../fase7-deploy-2026-10-16/04-apk-autook-detalhes.md)
+- **Fase 10 — timeline do deploy e tabelas de SHA/md5**: [`../fase10-deploy-2026-10-29/README.md`](../fase10-deploy-2026-10-29/README.md)
+- **Decisão de rota da Fase 10 (resign AOSP vs. odex-level patch)**: [`../fase10-decisao-rotas-2026-10-23.md`](../fase10-decisao-rotas-2026-10-23.md)
 - **Descobertas específicas da safra BR**: [`fase7-deploy-2026-10-16/02-descobertas-tecnicas.md`](../fase7-deploy-2026-10-16/02-descobertas-tecnicas.md)
 - **Mapa do filesystem da central**: [`../MAPA.md`](../MAPA.md)
 

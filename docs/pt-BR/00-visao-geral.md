@@ -18,20 +18,30 @@ A Honda **nunca** liberou configuração para desabilitar essa tela — é trata
 | Modificar o launcher | — | Risco de brick alto, requer root prévio, muito complexo |
 | Nenhum | — | Clicar OK todo dia |
 
-## O que fizemos
+## O que fizemos — duas camadas
 
-Deployamos um APK próprio em `/system/app/AutoOk.apk` + `su` setuid em `/system/xbin/`:
+Tudo é entregue via **EvilValet** (vulnerabilidade descoberta e documentada por librick / Eric McDonald): pacotes OTA assinados com a testkey AOSP pública, aceitos pelo `daupdater` do carro como se fossem atualização oficial da Honda.
 
-1. **Instalação:** via pacote OTA (atualização de firmware falsa) assinado com testkey AOSP pública — usando a vulnerabilidade **EvilValet** descoberta e documentada por librick / Eric McDonald.
-2. **Operação:** nosso APK monitora logcat; quando a Activity do Aviso é iniciada, dispara `su -c "input tap 400 350"` — simula um toque invisível no botão OK.
-3. **Persistência:** APK é um Service que fica vivo pra sempre; a cada ligar do carro, intercepta o Aviso.
+### Camada 1 — AutoOk (safety net automático, Fase 7, 2026-10-16)
+
+APK próprio em `/system/app/AutoOk.apk` + `su` setuid em `/system/xbin/`. O APK monitora o logcat, detecta a Activity do Aviso ser iniciada e dispara `su -c "input tap 400 350"` — simula um toque no botão OK. **Resultado:** aviso aparecia e sumia sozinho em ~3 s, sem interação manual.
+
+### Camada 2 — Fase 10 (patch smali no DaLauncher, 2026-10-29)
+
+Patch de **uma instrução no bytecode** do `DaLauncher.apk` (`OpeningDivideActivity.smali:671`): `if-nez v0, :cond_9` → `goto :cond_9`. Força o fluxo de boot a pular o `DisclaimerFragment` (a tela do Aviso) e cair direto no caminho que já carregava CarPlay, navegação e tudo mais. **O aviso simplesmente não existe mais no fluxo**, para sempre.
+
+Um segundo patch (Fase 10.1, mesmo dia) troca `const/16 v1, 0x1388` por `const/16 v1, 0x1f4` em `EcoFragment.startNoOperationTimer` — reduz uma tela intermediária de ecoscore de ~6 s para ~1 s mantendo todas as 4 chamadas que CarPlay/Navegação esperam (`DISCLAIMER_COMPLETE`, `setDisplayPermission`, `disclaimerDisappeared`, `setDisclaimerPassed`).
+
+**Resultado observado no carro em 2026-10-29:** aviso removido completamente, CarPlay projeta, navegação funciona, câmera de ré funciona, zero crash. Guia passo a passo pra reaplicar: [`09-fase10-remover-aviso.md`](09-fase10-remover-aviso.md). Timeline completa do deploy real: [`../fase10-deploy-2026-10-29/README.md`](../fase10-deploy-2026-10-29/README.md).
 
 ## Resultado
 
-- Aviso aparece e some sozinho em ~10 segundos
-- Zero interação manual
-- CarPlay, Bluetooth, áudio, navegação continuam funcionando
-- Rollback disponível a qualquer momento via pacote OTA de remoção
+| Com | Experiência visual | Pré-requisito |
+|---|---|---|
+| **Só Camada 1 (AutoOk)** | Aviso aparece e some sozinho em ~3 s | Pacote OTA do AutoOk |
+| **Camadas 1 + 2 (recomendado)** | **Aviso não aparece.** Tela de ecoscore por ~1 s no lugar | Pacote OTA do AutoOk + pacote da Fase 10 |
+
+CarPlay, Bluetooth, áudio, navegação, câmera de ré **continuam funcionando** nas duas rotas. Rollback disponível a qualquer momento via pacotes OTA correspondentes.
 
 ## Para quem é
 
@@ -75,6 +85,7 @@ Os docs nesta pasta (`docs/pt-BR/`) são **versão mais acessível** para pessoa
 
 ## Próximos passos
 
-- Para deployar na sua safra `1.F187.16` BR: → [`QUICKSTART.md`](../../QUICKSTART.md)
+- Para deployar na sua safra `1.F187.16` BR: → [`QUICKSTART.md`](../../QUICKSTART.md) (Camada 1 — AutoOk)
+- Para a solução definitiva (Camada 2 — Fase 10): → [`09-fase10-remover-aviso.md`](09-fase10-remover-aviso.md)
 - Para outras safras: → [`03-descobrindo-sua-safra.md`](03-descobrindo-sua-safra.md)
 - Para contexto de risco: → [`DISCLAIMER.md`](../../DISCLAIMER.md)

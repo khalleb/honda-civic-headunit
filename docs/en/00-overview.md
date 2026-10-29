@@ -35,20 +35,30 @@ The implication for anyone adapting this project: `OpeningDivideActivity` is the
 | Modify the launcher | — | High brick risk, requires existing root, very complex |
 | Nothing | — | Tap OK every single day |
 
-## What we did
+## What we did — in two layers
 
-Deployed our own APK to `/system/app/AutoOk.apk` + `su` setuid in `/system/xbin/`:
+Everything is delivered via **EvilValet** (vulnerability discovered and documented by librick / Eric McDonald): OTA packages signed with the public AOSP testkey, which the car's `daupdater` accepts as if it were an official Honda firmware update.
 
-1. **Installation:** via OTA package (fake firmware update) signed with public AOSP testkey — using the **EvilValet** vulnerability discovered and documented by librick / Eric McDonald.
-2. **Operation:** our APK monitors logcat; when the warning Activity starts, it fires `su -c "input tap 400 350"` — simulates an invisible tap on the OK button.
-3. **Persistence:** APK runs as a Service that stays alive forever; every time the car turns on, it intercepts the warning.
+### Layer 1 — AutoOk (automatic safety net, Phase 7, 2026-10-16)
+
+Our own APK deployed to `/system/app/AutoOk.apk` + `su` setuid in `/system/xbin/`. The APK monitors logcat, detects the Warning Activity being started and fires `su -c "input tap 400 350"` — simulates an invisible tap on the OK button. **Result:** warning appeared and disappeared on its own in ~3 s, zero manual interaction.
+
+### Layer 2 — Phase 10 (smali patch in DaLauncher, 2026-10-29)
+
+A **one-instruction bytecode patch** in `DaLauncher.apk` (`OpeningDivideActivity.smali:671`): `if-nez v0, :cond_9` → `goto :cond_9`. Forces the boot flow to skip the `DisclaimerFragment` (the Warning screen) and land directly on the branch that already loaded CarPlay, navigation and everything else. **The warning simply no longer exists in the flow**, forever.
+
+A second patch (Phase 10.1, same day) swaps `const/16 v1, 0x1388` for `const/16 v1, 0x1f4` in `EcoFragment.startNoOperationTimer` — reduces an intermediate ecoscore screen from ~6 s to ~1 s while keeping all 4 calls CarPlay/Navigation expect (`DISCLAIMER_COMPLETE`, `setDisplayPermission`, `disclaimerDisappeared`, `setDisclaimerPassed`).
+
+**Observed in the car on 2026-10-29:** warning completely removed, CarPlay projects, navigation works, backup camera works, zero crashes. Step-by-step guide to reapply: [`09-fase10-remove-warning.md`](09-fase10-remove-warning.md). Full timeline of the real deploy: [`../fase10-deploy-2026-10-29/README.md`](../fase10-deploy-2026-10-29/README.md) (Portuguese).
 
 ## Result
 
-- Warning appears and disappears on its own in ~5 seconds
-- Zero manual interaction required
-- CarPlay, Bluetooth, audio, navigation keep working
-- Rollback available anytime via removal OTA package
+| With | Visual experience | Prerequisite |
+|---|---|---|
+| **Layer 1 only (AutoOk)** | Warning appears and disappears on its own in ~3 s | AutoOk OTA package |
+| **Layers 1 + 2 (recommended)** | **Warning never appears.** Ecoscore screen for ~1 s instead | AutoOk OTA package + Phase 10 package |
+
+CarPlay, Bluetooth, audio, navigation, backup camera **keep working** in both routes. Rollback available anytime via the matching OTA packages.
 
 ## Who this is for
 
@@ -103,6 +113,7 @@ The docs in this folder (`docs/en/`) are the **accessible version** for people w
 
 ## Next steps
 
-- To deploy on firmware `1.F187.16` BR: → [`QUICKSTART.md`](../../QUICKSTART.md) (currently Portuguese — commands are universal)
+- To deploy on firmware `1.F187.16` BR: → [`QUICKSTART.md`](../../QUICKSTART.md) (Layer 1 — AutoOk; Portuguese, commands are universal)
+- For the definitive fix (Layer 2 — Phase 10): → [`09-fase10-remove-warning.md`](09-fase10-remove-warning.md)
 - For other firmware: → [`03-finding-your-firmware.md`](03-finding-your-firmware.md)
 - For risk context: → [`../../DISCLAIMER.md`](../../DISCLAIMER.md)

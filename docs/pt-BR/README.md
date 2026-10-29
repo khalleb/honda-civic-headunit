@@ -15,6 +15,7 @@ Documentação prática para usar/adaptar o projeto. Para quem só quer deployar
 | [`06-troubleshooting.md`](06-troubleshooting.md) | Decision tree pra quando algo falha |
 | [`07-rollback.md`](07-rollback.md) | Reverter tudo |
 | [`08-backups-e-rollback.md`](08-backups-e-rollback.md) | Catálogo completo de backups |
+| [`09-fase10-remover-aviso.md`](09-fase10-remover-aviso.md) | 🎯 Fase 10 — remover o aviso de vez via patch no DaLauncher |
 
 ## Caminho recomendado
 
