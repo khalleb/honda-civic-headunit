@@ -1,0 +1,11 @@
+--- a/com/mitsubishielectric/ada/app/dalauncher/EcoFragment.smali
++++ b/com/mitsubishielectric/ada/app/dalauncher/EcoFragment.smali
+@@ -3091,7 +3091,7 @@
+     .line 609
+     iget-object v0, p0, Lcom/mitsubishielectric/ada/app/dalauncher/EcoFragment;->mNoOperationTimer:Lcom/mitsubishielectric/ada/app/dalauncher/CommonTimer;
+
+-    const/16 v1, 0x1388
++    const/16 v1, 0x1f4
+
+     iget-object v2, p0, Lcom/mitsubishielectric/ada/app/dalauncher/EcoFragment;->mNoOperationTimerCallBack:Lcom/mitsubishielectric/ada/app/dalauncher/CommonTimer$TimerCallBack;
+
