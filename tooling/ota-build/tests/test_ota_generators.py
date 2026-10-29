@@ -98,6 +98,27 @@ class OperacoesEspecificas(unittest.TestCase):
         self.assertIn("AUTOOK-REMOVED.OK", script)
         self.assertIn("AUTOOK-REMOVED.FAIL", script)
 
+    def test_enable_adb_modo_host_tem_mesmas_invariantes_e_gate_proprio(self):
+        # Modo host é a reversão da ADB. Precisa passar os mesmos invariantes
+        # (loop break, sem assert/abort, set_perm só em /tmp) e trocar o gate.
+        mod = _load("build-enable-adb.py")
+        script = mod._updater_script("0040", "host")
+        self.assertIn(LOOP_BREAK_MV, script)
+        self.assertIn(LOOP_BREAK_RM, script)
+        self.assertNotIn("assert(", script)
+        self.assertNotIn("abort(", script)
+        alvos = re.findall(r'set_perm\(.*"([^"]+)"\);', script)
+        self.assertTrue(all(alvo.startswith("/tmp/") for alvo in alvos), alvos)
+        self.assertIn("DISABLE-ADB.OK", script)
+        self.assertIn("DISABLE-ADB.FAIL", script)
+        self.assertNotIn("ENABLE-ADB.OK", script)
+        self.assertIn("'host'", script)
+
+    def test_enable_adb_rejeita_modo_invalido(self):
+        mod = _load("build-enable-adb.py")
+        with self.assertRaises(ValueError):
+            mod._updater_script("0040", "nao-existe")
+
 
 if __name__ == "__main__":
     unittest.main()

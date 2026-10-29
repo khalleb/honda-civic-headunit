@@ -15,16 +15,19 @@ O que o pacote faz:
    prop e configura `tegra-otg` para enable_device + soft_connect.
 3. Também mexe direto no sysfs durante o recovery (vale pra sessão atual
    se o recovery mantivesse a configuração — não vai manter, mas registra).
-4. Gate ENABLE-ADB.OK/.FAIL no pendrive. Sem assert nem set_perm em /system.
+4. Gate ENABLE-ADB.OK/.FAIL (ou DISABLE-ADB.OK/.FAIL no modo host) no
+   pendrive. Sem assert nem set_perm em /system.
 
 Depois do deploy e primeiro boot, o cabo USB-A → USB-A entre central e PC
 já enumera como ADB (precisa `adb kill-server && adb start-server` no PC).
 
-Reversível: para voltar ao modo Host, rodar o mesmo pacote mudando
-"device" por "host" em USB1_MODE, ou apagar o arquivo `/data/property/persist.sys.usb1_mode`.
+Reversível: `python3 build-enable-adb.py --mode host` gera o pacote inverso,
+que grava "host" na mesma prop. Depois é só deployar como se fosse o pacote
+normal. O gate muda pra DISABLE-ADB.OK/.FAIL pra ficar explícito no pendrive.
 """
 from __future__ import annotations
 
+import argparse
 import logging
 import shutil
 import sys
@@ -43,42 +46,62 @@ import main as upstream
 BUSYBOX_SRC = HERE / "bin" / "busybox"
 ROM_TYPE = "0040"
 
-# Valor da propriedade — "device" ativa ADB sobre USB. Alternativa seria "host"
-# para voltar ao modo original.
-USB1_MODE = "device"
+VALID_MODES = ("device", "host")
+# Rótulos do gate no pendrive — ficam explícitos pro operador.
+GATE_LABEL = {"device": "ENABLE-ADB", "host": "DISABLE-ADB"}
 
 
-def _patched_stage_tree(staging, overlay_paths, meta, rom_type, overlay_dir, update_binary, sleep_binary, partitions):
-    _ = overlay_paths, overlay_dir
-    (staging / "system" / "vendor").mkdir(parents=True, exist_ok=True)
-    upstream.write_lf(
-        staging / "system" / "build.prop",
-        f"ro.build.id={upstream.NEW_DA_VERSION}\nro.build.tags={upstream.NEW_DA_BUILD_TAGS}\n",
-    )
-    upstream.write_lf(staging / "system" / "vendor" / "build.prop", f"custom_rom.type={rom_type}\n")
+def _patched_stage_tree_for(usb1_mode: str):
+    def _patched_stage_tree(staging, overlay_paths, meta, rom_type, overlay_dir, update_binary, sleep_binary, partitions):
+        _ = overlay_paths, overlay_dir
+        (staging / "system" / "vendor").mkdir(parents=True, exist_ok=True)
+        upstream.write_lf(
+            staging / "system" / "build.prop",
+            f"ro.build.id={upstream.NEW_DA_VERSION}\nro.build.tags={upstream.NEW_DA_BUILD_TAGS}\n",
+        )
+        upstream.write_lf(staging / "system" / "vendor" / "build.prop", f"custom_rom.type={rom_type}\n")
 
-    sleep_dst = staging / upstream.SLEEP_PKG_PATH
-    sleep_dst.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(sleep_binary, sleep_dst)
-    shutil.copy2(BUSYBOX_SRC, staging / "busybox")
+        sleep_dst = staging / upstream.SLEEP_PKG_PATH
+        sleep_dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(sleep_binary, sleep_dst)
+        shutil.copy2(BUSYBOX_SRC, staging / "busybox")
 
-    meta_dir = staging / "META-INF" / "com" / "google" / "android"
-    meta_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(update_binary, meta_dir / "update-binary")
-    (meta_dir / "updater-script").write_text(_updater_script(rom_type))
+        meta_dir = staging / "META-INF" / "com" / "google" / "android"
+        meta_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(update_binary, meta_dir / "update-binary")
+        (meta_dir / "updater-script").write_text(_updater_script(rom_type, usb1_mode))
+    return _patched_stage_tree
 
 
-def _updater_script(rom_type: str) -> str:
+def _updater_script(rom_type: str, usb1_mode: str = "device") -> str:
+    if usb1_mode not in VALID_MODES:
+        raise ValueError(f"usb1_mode deve ser um de {VALID_MODES}, veio {usb1_mode!r}")
+    label = GATE_LABEL[usb1_mode]
     BB = "/tmp/busybox"
     USB = "/mnt/usbdrive1"
-    LOG = f"{USB}/enable-adb-{rom_type}.log"
-    OKF = f"{USB}/ENABLE-ADB.OK"
-    FAILF = f"{USB}/ENABLE-ADB.FAIL"
+    LOG = f"{USB}/{label.lower()}-{rom_type}.log"
+    OKF = f"{USB}/{label}.OK"
+    FAILF = f"{USB}/{label}.FAIL"
     PROP_FILE = "/data/property/persist.sys.usb1_mode"
 
     def sh(cmd: str) -> str:
         esc = cmd.replace("\\", "\\\\").replace('"', '\\"')
         return f'run_program("{BB}", "sh", "-c", "{esc}");'
+
+    # No modo host, inverte os sysfs: desliga device, liga host, desconecta UDC.
+    # Não persiste pelo recovery, mas registra no log pra confirmar o caminho.
+    if usb1_mode == "device":
+        sysfs_steps = [
+            sh(f"{BB} echo 0 > /sys/devices/platform/tegra-otg/enable_host 2>>{LOG}; {BB} echo sysfs-enable_host-exit=$? >> {LOG}"),
+            sh(f"{BB} echo 1 > /sys/devices/platform/tegra-otg/enable_device 2>>{LOG}; {BB} echo sysfs-enable_device-exit=$? >> {LOG}"),
+            sh(f"{BB} echo connect > /sys/devices/platform/tegra-udc.0/udc/tegra-udc.0/soft_connect 2>>{LOG}; {BB} echo sysfs-soft_connect-exit=$? >> {LOG}"),
+        ]
+    else:
+        sysfs_steps = [
+            sh(f"{BB} echo 0 > /sys/devices/platform/tegra-otg/enable_device 2>>{LOG}; {BB} echo sysfs-enable_device-exit=$? >> {LOG}"),
+            sh(f"{BB} echo 1 > /sys/devices/platform/tegra-otg/enable_host 2>>{LOG}; {BB} echo sysfs-enable_host-exit=$? >> {LOG}"),
+            sh(f"{BB} echo disconnect > /sys/devices/platform/tegra-udc.0/udc/tegra-udc.0/soft_connect 2>>{LOG}; {BB} echo sysfs-soft_disconnect-exit=$? >> {LOG}"),
+        ]
 
     # Nada aqui pode abortar o updater-script: sem assert() nem abort(), e
     # set_perm só em /tmp. Se o recovery falha no meio, o comando estagiado em
@@ -90,30 +113,27 @@ def _updater_script(rom_type: str) -> str:
         "set_progress(0.000000);",
         'package_extract_file("busybox", "/tmp/busybox");',
         'set_perm(0, 0, 0755, "/tmp/busybox");',
-        sh(f"{BB} echo === ENABLE-ADB START $({BB} date) rom_type={rom_type} === > {LOG} 2>&1"),
+        sh(f"{BB} echo === {label} START $({BB} date) rom_type={rom_type} mode={usb1_mode} === > {LOG} 2>&1"),
         sh(f"{BB} rm -f {OKF} {FAILF} 2>>{LOG}"),
         sh(f"{BB} mount >> {LOG} 2>&1; {BB} echo mount-done >> {LOG}"),
         # Garante /data/property/ existe. UDA já é montada pelo recovery (§13.3).
         sh(f"{BB} mkdir -p /data/property 2>>{LOG}; {BB} echo mkdir-prop-exit=$? >> {LOG}"),
         # Grava a propriedade persistente. 0:0 = root:root durante recovery; no
         # boot normal o init corrige para system:system ao reler.
-        sh(f"{BB} echo -n '{USB1_MODE}' > {PROP_FILE} 2>>{LOG}; {BB} echo write-prop-exit=$? >> {LOG}"),
+        sh(f"{BB} echo -n '{usb1_mode}' > {PROP_FILE} 2>>{LOG}; {BB} echo write-prop-exit=$? >> {LOG}"),
         sh(f"{BB} chmod 0600 {PROP_FILE} 2>>{LOG}; {BB} echo chmod-prop-exit=$? >> {LOG}"),
         sh(f"{BB} ls -la {PROP_FILE} >> {LOG} 2>&1"),
         sh(f"{BB} cat {PROP_FILE} >> {LOG} 2>&1; {BB} echo >> {LOG}"),
-        # Tenta sysfs direto (não persiste, mas registra no log se funciona).
-        sh(f"{BB} echo 0 > /sys/devices/platform/tegra-otg/enable_host 2>>{LOG}; {BB} echo sysfs-enable_host-exit=$? >> {LOG}"),
-        sh(f"{BB} echo 1 > /sys/devices/platform/tegra-otg/enable_device 2>>{LOG}; {BB} echo sysfs-enable_device-exit=$? >> {LOG}"),
-        sh(f"{BB} echo connect > /sys/devices/platform/tegra-udc.0/udc/tegra-udc.0/soft_connect 2>>{LOG}; {BB} echo sysfs-soft_connect-exit=$? >> {LOG}"),
+        *sysfs_steps,
         # Gate: .OK só se o arquivo da prop está presente e tem o valor certo.
         # No boot subsequente, usbdetectd vai ler a prop e configurar o USB.
         sh(
-            f"if {BB} test -e {PROP_FILE} && {BB} grep -q '^{USB1_MODE}$' {PROP_FILE}; "
-            f"then {BB} echo enabled > {OKF}; {BB} echo enable-adb-verified-OK >> {LOG}; "
-            f"else {BB} echo missing-or-wrong-value > {FAILF}; {BB} echo enable-adb-verify-FAILED >> {LOG}; fi"
+            f"if {BB} test -e {PROP_FILE} && {BB} grep -q '^{usb1_mode}$' {PROP_FILE}; "
+            f"then {BB} echo {usb1_mode} > {OKF}; {BB} echo {label.lower()}-verified-OK >> {LOG}; "
+            f"else {BB} echo missing-or-wrong-value > {FAILF}; {BB} echo {label.lower()}-verify-FAILED >> {LOG}; fi"
         ),
         sh(f"{BB} sync"),
-        sh(f"{BB} echo === ENABLE-ADB END $({BB} date) === >> {LOG}; {BB} sync"),
+        sh(f"{BB} echo === {label} END $({BB} date) === >> {LOG}; {BB} sync"),
         # Quebra o loop do daupdater: sem renomear o gatilho e apagar o
         # .copy_complete, ele reaplica o pacote a cada boot (MAPA §17.17).
         sh(f"{BB} mv {USB}/SwUpdate2.txt {USB}/SwUpdate2.txt.done 2>>{LOG}; {BB} echo mv-trigger-exit=$? >> {LOG}"),
@@ -127,14 +147,21 @@ def _updater_script(rom_type: str) -> str:
     return "\n".join(out) + "\n"
 
 
-upstream.stage_tree = _patched_stage_tree
-
-
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Pacote OTA ENABLE-ADB / DISABLE-ADB")
+    parser.add_argument(
+        "--mode", choices=VALID_MODES, default="device",
+        help="valor gravado em persist.sys.usb1_mode (default: device = habilita ADB)",
+    )
+    args = parser.parse_args()
+
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     logger = logging.getLogger("civichmi-ota-enable-adb")
 
-    build_dir = OUT_DIR / datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    upstream.stage_tree = _patched_stage_tree_for(args.mode)
+
+    label = GATE_LABEL[args.mode].lower()
+    build_dir = OUT_DIR / f"{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}-{label}"
     build_dir.mkdir(parents=True, exist_ok=False)
     upstream.write_lf(build_dir / "SwUpdate2.txt", f"Ver:{upstream.NEW_COMMAND_VERSION}\n")
 
@@ -148,7 +175,7 @@ def main() -> None:
         sign_key=INPUT_DIR / "keys" / "testkey.pk8",
         partitions=upstream.PARTITIONS,
     )
-    logger.info("enable-adb mdt: %s", signed)
+    logger.info("%s mdt: %s", label, signed)
     print(f"OK: {build_dir}")
 
 

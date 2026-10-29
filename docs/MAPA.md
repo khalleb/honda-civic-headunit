@@ -622,7 +622,7 @@ Pacotes OTA do repositório:
 - `tooling/ota-build/build-diagnostic.py` — coleta direcionada (autook.log, SharedPrefs/dbs do DaLauncher, persist props)
 - `tooling/ota-build/build-dalauncher-fase10.py` — install do APK patcheado da Fase 10 (§16.4, §10.3)
 - `tooling/ota-build/build-dalauncher-restore.py` — restore do DaLauncher original (rede de segurança da Fase 10)
-- `tooling/ota-build/build-enable-adb.py` — grava `persist.sys.usb1_mode=device` em `/data/property/` pra habilitar ADB via USB sem combo físico (§17.20 e `scripts/prepare-pendrive-enable-adb.sh`)
+- `tooling/ota-build/build-enable-adb.py` — grava `persist.sys.usb1_mode=device` em `/data/property/` pra habilitar ADB via USB sem combo físico (§17.20 e `scripts/prepare-pendrive-enable-adb.sh`). Com `--mode host` gera o pacote de reversão (`scripts/prepare-pendrive-disable-adb.sh`)
 
 ---
 
@@ -1403,9 +1403,15 @@ adb kill-server && adb start-server
 adb devices    # autoriza na tela do carro na primeira vez
 ```
 
-**Pré-requisito:** AutoOk + su já instalados (Fase 7). **Reversível:** mudar `USB1_MODE = "host"` no builder, rebuildar e redeployar — ou simplesmente apagar o arquivo `/data/property/persist.sys.usb1_mode` via ADB.
+**Pré-requisito:** AutoOk + su já instalados (Fase 7).
 
-**Gate `ENABLE-ADB.OK/.FAIL`** gravado no pendrive confirma que o arquivo foi gravado e lido de volta com o valor certo. Sem `assert`/`abort` no updater-script (§17.17/§17.18), passa pelos invariantes de todos os geradores. Deploy pendente da semana estável pós-Fase 10.
+**Reversão (modo host) — pacote OTA simétrico:**
+```bash
+sudo tooling/scripts/prepare-pendrive-disable-adb.sh /dev/sda
+```
+O mesmo builder (`build-enable-adb.py --mode host`) grava `persist.sys.usb1_mode=host`, com gate `DISABLE-ADB.OK/.FAIL`. Mantém os mesmos invariantes do updater-script (loop break, sem assert/abort, set_perm só em /tmp). Alternativa manual: apagar `/data/property/persist.sys.usb1_mode` via ADB.
+
+**Gate `ENABLE-ADB.OK/.FAIL`** (ou `DISABLE-ADB.OK/.FAIL` no modo host) gravado no pendrive confirma que o arquivo foi gravado e lido de volta com o valor certo. Sem `assert`/`abort` no updater-script (§17.17/§17.18), passa pelos invariantes de todos os geradores. Deploy pendente da semana estável pós-Fase 10.
 
 ---
 
