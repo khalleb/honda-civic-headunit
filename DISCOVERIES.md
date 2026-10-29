@@ -53,6 +53,47 @@ O aviso que o projeto suprime é lançado por `com.mitsubishielectric.ada.app.da
 
 → [`docs/MAPA.md` §11.1.1](docs/MAPA.md)
 
+## Gate do disclaimer — `sDisclamerFlg` é static boolean em memória 🎯
+
+Descoberta de 2026-10-20 que viabilizou a Fase 10. Dentro de `OpeningDivideActivity`:
+
+- Field: `public static sDisclamerFlg:Z` (static boolean, inicializado `false` no `<clinit>`)
+- **Não é persistido** em SharedPrefs, SQLite database nem system property — vive só em memória da classe
+- Reseta `false` a cada boot da classe (todo cold boot cria uma JVM nova) → por isso o aviso aparece sempre
+- Em `createDisclaimerOrEcoIntent()` (linha 869 do smali deodexado): testa o flag e decide entre `createDisclaimerOnHomeIntent()` (= `DisclaimerFragment`, o aviso) ou `createEcoIntent()` (= `EcoFragment`, caminho morto em uso real)
+- Como o flag sempre começa `false`, o caminho Eco **nunca** era alcançado neste carro
+
+**O patch da Fase 10:** uma instrução em `OpeningDivideActivity.smali:671`:
+
+```diff
+     sget-boolean v0, Lcom/mitsubishielectric/ada/app/dalauncher/OpeningDivideActivity;->sDisclamerFlg:Z
+
+-    if-nez v0, :cond_9
++    goto :cond_9
+
+     invoke-direct {p0}, Lcom/mitsubishielectric/ada/app/dalauncher/OpeningDivideActivity;->createDisclaimerOnHomeIntent()Landroid/content/Intent;
+```
+
+Ignora o flag completamente, força o fluxo direto pro `createEcoIntent()`. Resultado observado no carro em 2026-10-29: o aviso nunca mais aparece, e a tela Eco (que ninguém tinha visto antes) acorda por ~6 s em cada boot.
+
+Um segundo patch (Fase 10.1, mesmo dia) em `EcoFragment.smali:3094` troca `const/16 v1, 0x1388` (5000 ms) por `const/16 v1, 0x1f4` (500 ms) no `startNoOperationTimer`, reduzindo a tela Eco para ~1 s mantendo as 4 chamadas pós-aviso (`DISCLAIMER_COMPLETE`, `setDisplayPermission`, `disclaimerDisappeared`, `setDisclaimerPassed`) intactas.
+
+→ [`docs/MAPA.md` §16.4, §17.19](docs/MAPA.md) · [`docs/fase10-deploy-2026-10-29/`](docs/fase10-deploy-2026-10-29/)
+
+## Caminho Eco (`createEcoIntent`) — fluxo que existia mas nunca rodava
+
+Confirmado nos logs do carro em 2026-10-29 (primeiro `OpeningDivideActivity.createEcoIntent():EcoStart!` da história deste HU, depois do patch). O `EcoFragment` é um fragment "irmão" do `DisclaimerFragment` dentro do mesmo caminho de boot:
+
+- Layout: `R.layout.opening_eco` (dois variantes: `mm_07_04_06.xml` e `mm_07_04_06_ziba.xml`, por tema de UI)
+- 3 barras de folhinhas (`LeafRatingBar`) mostrando o "ecoscore" da viagem
+- Inner classes `EcoFragment$1..$4` cuidam de timers e animações
+- Em `startNextActivity()` dispara as 4 chamadas que o DisclaimerFragment faria depois do tap do OK: `NavigationApService.disclaimerDisappeared`, `AppManagerService.setDisclaimerPassed(true)`, `CarPlayApService.setDisplayPermission(status=true)`, broadcast `DISCLAIMER_COMPLETE`
+- 4 receivers de `DISCLAIMER_COMPLETE` em `.odex` de outros apps vendor: `CameraAPService`, `SystemInfoService`, `VehicleCoordination`, `AcuraLinkApService`
+
+É por isso que a Fase 10 foi feita por `goto :cond_9` (destino Eco) e não por "pular tudo e ir pro Launcher principal": o Eco mantém o resto do sistema recebendo os sinais que esperam.
+
+→ [`docs/raio-x/07-services-re.md`](docs/raio-x/07-services-re.md), [`docs/MAPA.md` §11.1.1](docs/MAPA.md)
+
 ## Hall of fame de bugs resolvidos
 
 14 bugs com causa raiz identificada e fix documentado — valioso pra quem está começando em RE Mitsubishi ou pra outros projetos adjacentes.
@@ -77,7 +118,7 @@ Rotas investigadas, descartadas e preservadas pra não re-descobrir:
 | **Entrar na whitelist Mitsubishi** pra remover workaround v0.4.0 | Whitelist é UX-only. Não afeta LP0. V0.4.0 já é o padrão oficial da plataforma. |
 | **SuperSU como mediator** | Nosso `su` é setuid simples. SuperSU substitui por um com prompt Activity → bloqueia nosso `Runtime.exec("su")` esperando toque humano = quebra o AutoOk. |
 | **Xposed Framework** | Patch de `/system/bin/app_process` é destrutivo. Zero precedente público em Mitsubishi Andromeda. Alto risco de bootloop recuperável só via OTA de rollback. |
-| **Modificar `DaLauncher.apk` via smali** | Benefício: aviso sumir de vez. Risco: brick do launcher = tela preta no boot = sem câmera de ré. Custo-benefício não compensa dado que v0.4.0 funciona. |
+| ~~**Modificar `DaLauncher.apk` via smali**~~ | **Reaberta e concluída como Fase 10 em 2026-10-29** depois da descoberta do gate `sDisclamerFlg`. Patch de 1 instrução, resign com testkey AOSP, deploy OTA, rede de segurança testada em cima do mesmo pendrive. Risco mitigado com rollback no-op validado antes do install real. |
 
 → [`docs/MAPA.md` §16](docs/MAPA.md)
 
@@ -99,7 +140,7 @@ Resumo dos achados que apontam pra próximas melhorias concretas — detalhes e 
 
 - **`ICameraAPServiceReverseSignalListener`** (AIDL do Camera service) permite detectar entrada/saída da ré via callback direto, sem o logcat polling atual
 - **`com.mitsubishielectric.ada.appservice.powermanager.ACTION_RESUME_CAMERA`** é broadcast dedicado à retomada da câmera
-- **`com.mitsubishielectric.ada.app.dalauncher.action.DISCLAIMER_COMPLETE`** pode ser o sinal canônico de "aviso dispensado" — vale validar se dispara em tap programático
+- **`com.mitsubishielectric.ada.app.dalauncher.action.DISCLAIMER_COMPLETE`** confirmado como sinal canônico de "aviso dispensado" (2026-10-20, logs do carro com o v0.5.4; novamente em 2026-10-29 pelo caminho Eco pós-Fase 10). 4 receivers vendor conhecidos
 - **`persist.sys.keyoff_reboot=1`** teoricamente força cold boot a cada keyoff — resolveria a complexidade LP0 toda (teste pendente)
 - **Vehicle info completa** — `IVehicleInfoManagerApService` tem 37 listeners cobrindo marcha, velocidade, voltagem IG, ângulo do volante, VIN, FOB key atual. Abre caminho pra features reais ligadas ao estado do carro.
 

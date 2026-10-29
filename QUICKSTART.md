@@ -1,11 +1,25 @@
 # 🚀 Quick Start — Deploy em 20 minutos
 
-Guia resumido para deployar o auto-OK na sua central Honda Civic G10 (safra `1.F187.16` BR confirmada).
+Guia resumido para deployar na sua central Honda Civic G10 (safra `1.F187.16` BR confirmada).
 
 **Para outras safras**, antes deste quickstart, siga [`docs/pt-BR/03-descobrindo-sua-safra.md`](docs/pt-BR/03-descobrindo-sua-safra.md).
 
 > ⚠️ **ANTES DE COMEÇAR, LEIA O [DISCLAIMER.md](DISCLAIMER.md).**
 > Risco de brick permanente. Troca de central: R$ 1.000-2.000. Você é 100% responsável.
+
+## 🧭 Duas rotas de deploy
+
+O projeto hoje oferece duas camadas de solução para o aviso. Você escolhe uma ou aplica as duas em sequência.
+
+| | 🔹 **Camada 1 — AutoOk** (safety net) | 🎯 **Camada 2 — Fase 10** (solução definitiva) |
+|---|---|---|
+| O que faz | APK + `su` em `/system/`. Monitora logcat, dispara `input tap` no OK | Patch smali de 1 instrução no `DaLauncher.apk`. Força pular o `DisclaimerFragment` |
+| Experiência visual | Aviso aparece e some sozinho em ~3 s | **Aviso não aparece.** Tela "ecoscore" por ~1 s (Fase 10.1) |
+| Risco | Baixo (APK side-car, zero toque em app Mitsubishi existente) | Médio (modifica o DaLauncher — launcher principal; rede de segurança = pacote rollback) |
+| Esforço | ~20 min total | ~30 min (precisa Camada 1 primeiro, ou outra forma de root pra validar o pipeline) |
+| Reversível | Sim, via `prepare-pendrive-rollback.sh` sem argumento | Sim, via `prepare-pendrive-rollback.sh tooling/ota-build/output-dalauncher-restore` |
+
+**Recomendação:** Camada 1 primeiro, testar 1 semana. Depois Camada 2 em cima. Este QUICKSTART detalha a Camada 1 passo a passo — a Camada 2 segue o mesmo esquema de pendrive OTA, roteiro completo em [`docs/fase10-execucao-2026-10-27.md`](docs/fase10-execucao-2026-10-27.md).
 
 ---
 
@@ -183,4 +197,8 @@ Depois no carro: mesmo protocolo (porta frontal + AUDIO 5s + confirma reiniciar)
 
 ---
 
-**Próximo nível:** [`docs/fase7-deploy-2026-10-16/`](docs/fase7-deploy-2026-10-16/) tem toda a documentação técnica (fluxo EvilValet, análise do APK, descobertas da safra BR, roadmap de melhorias).
+**Próximo nível:**
+- [`docs/fase7-deploy-2026-10-16/`](docs/fase7-deploy-2026-10-16/) — Camada 1 completa (fluxo EvilValet, análise do APK, descobertas da safra BR)
+- [`docs/fase10-deploy-2026-10-29/README.md`](docs/fase10-deploy-2026-10-29/README.md) — **Camada 2 (Fase 10)**: patch smali no DaLauncher, timeline do deploy real, SHAs/md5 dos artefatos
+- [`docs/fase10-execucao-2026-10-27.md`](docs/fase10-execucao-2026-10-27.md) — checklist passo a passo da Fase 10 no carro
+- [`docs/MAPA.md`](docs/MAPA.md) — atlas navegável da central

@@ -7,10 +7,11 @@
 **Elimine automaticamente a tela de "Aviso" que aparece sempre que você liga seu Honda Civic**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-funcionando-brightgreen)]()
+[![Status](https://img.shields.io/badge/status-conclu%C3%ADdo-brightgreen)](docs/fase10-deploy-2026-10-29/README.md)
 [![Platform](https://img.shields.io/badge/platform-Android_4.2.2_%7C_Tegra_3-blue)]()
 [![Safra](https://img.shields.io/badge/safra_testada-1.F187.16_BR-orange)]()
-[![APK](https://img.shields.io/badge/APK-v0.5.4-informational)]()
+[![Fase 10](https://img.shields.io/badge/Fase_10-aviso_removido_2026--10--29-success)](docs/fase10-deploy-2026-10-29/README.md)
+[![AutoOk](https://img.shields.io/badge/AutoOk-v0.5.4_safety_net-informational)]()
 [![CI](https://github.com/khalleb/honda-civic-headunit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/khalleb/honda-civic-headunit/actions/workflows/ci.yml)
 
 🇧🇷 **Português** · [🇺🇸 English](README.en.md)
@@ -23,9 +24,9 @@
 
 <div align="center">
 
-<img src="docs/images/antes-depois.gif" alt="Antes: aviso aparece. Depois: aviso some sozinho em ~3s" width="640"/>
+<img src="docs/images/antes-depois.gif" alt="Antes: aviso aparece. Depois: aviso nao aparece mais" width="640"/>
 
-**Toda vez que você liga o carro, a central mostra o Aviso.** Antes era clicar manualmente. Agora o aviso aparece e some sozinho em ~3 segundos — você nem precisa tocar na tela.
+**Toda vez que você liga o carro, a central mostrava o Aviso.** Antes era clicar manualmente. Hoje **o aviso nem aparece mais** — o fluxo pula direto para o launcher (Fase 10, 29/10/2026).
 
 </div>
 
@@ -45,18 +46,23 @@ E você tem que clicar **OK**. Toda. Vez. Até o CarPlay subir. Toda ligada do c
 
 A Honda **nunca** liberou uma configuração pra desabilitar isso.
 
-## ✨ A solução
+## ✨ A solução — em duas camadas
 
-Instalamos um APK + `su` setuid no `/system/` da central via a vulnerabilidade **EvilValet** (descoberta por [juniperspring.org](https://juniperspring.org/posts/honda-evil-valet/)) — um pacote OTA "falso" assinado com testkey AOSP pública.
+Tudo é entregue via **EvilValet** (descoberta por [juniperspring.org](https://juniperspring.org/posts/honda-evil-valet/)) — um pacote OTA "falso" assinado com a testkey AOSP pública, que o `daupdater` do carro aceita como se fosse update oficial.
 
-Depois de instalado, o APK:
+### Camada 1 — AutoOk (safety net automático)
 
-1. **Monitora o logcat** procurando a Activity do Aviso aparecer
-2. **Espera ~2 segundos** (deixa a UI renderizar completa)
-3. **Dispara um tap simulado** via `su -c "input tap 400 350"` nas coordenadas do botão OK
-4. **Aviso some**. Você nem percebeu.
+APK + `su` setuid instalados em `/system/`. O APK monitora o logcat, detecta a Activity do aviso aparecer e dispara um `input tap` simulado em (400, 350). Aviso aparecia por ~3 s e sumia sozinho. Rede de segurança: se o patch da Camada 2 falhar por qualquer motivo, essa rota continua tapando.
 
-Zero toque humano. Funciona em todas as ligadas do carro, pra sempre.
+### Camada 2 — Fase 10 (patch smali no DaLauncher — a solução definitiva)
+
+Patch de **uma instrução no bytecode** do `DaLauncher.apk` (`OpeningDivideActivity.smali:671`): `if-nez v0, :cond_9` → `goto :cond_9`. Força o fluxo de boot a pular o `DisclaimerFragment` e cair direto no caminho que já carregava CarPlay, navegação e tudo mais. **Aviso simplesmente não existe mais no fluxo**, para sempre.
+
+Um segundo patch (Fase 10.1) reduz uma tela intermediária de ecoscore de ~6 s para ~1 s.
+
+**Resultado observado no carro (29/10/2026):** aviso removido, CarPlay projeta, navegação funciona, câmera de ré funciona, zero crash. Detalhes em [`docs/fase10-deploy-2026-10-29/README.md`](docs/fase10-deploy-2026-10-29/README.md).
+
+**Rede de segurança preservada:** o AutoOk (Camada 1) permanece em `/system/app/` como fallback automático na primeira semana. Pode ser removido depois da janela estável via `tooling/ota-build/output-rollback/` sem afetar o patch.
 
 ---
 
@@ -67,19 +73,20 @@ Zero toque humano. Funciona em todas as ligadas do carro, pra sempre.
 </div>
 
 **No PC** (uma vez, ~15 min):
-1. Compila o APK (`gradlew assembleRelease`)
-2. Assina com debug keystore (`apksigner`)
-3. Monta pacote OTA assinado com testkey AOSP (`python3 build.py`)
+1. Compila o APK AutoOk (`gradlew assembleRelease`) **ou** rebuilda o `DaLauncher.apk` patcheado (`bash tooling/fase10/rebuild-dalauncher.sh`)
+2. Assina com testkey AOSP (`apksigner`)
+3. Monta pacote OTA assinado com testkey AOSP (`python3 build.py` para AutoOk; `python3 build-dalauncher-fase10.py` para Fase 10)
 4. Grava num pendrive FAT32 (`prepare-pendrive-install.sh`)
 
-**No carro** (uma vez, ~10 min):
+**No carro** (uma vez por deploy, ~10 min):
 1. Pendrive na porta USB-A frontal
 2. Segura `AUDIO` por 5s → confirma "Quer reiniciar?"
 3. Central reinicia, recovery aplica o pacote
-4. APK + `su` em `/system/` — permanente
+4. APK em `/system/` — permanente
 
 **Em operação** (automático, pra sempre):
-- A cada boot do carro, o APK vê o aviso aparecer e dispensa em ~3s
+- Com só a Camada 1 (AutoOk): a cada boot, APK dispensa o aviso em ~3 s
+- Com a Camada 2 (Fase 10): o aviso **nem chega a aparecer**
 - Zero manutenção. Zero interação.
 
 ---
@@ -90,7 +97,7 @@ Zero toque humano. Funciona em todas as ligadas do carro, pra sempre.
 
 | Carro | DA Version | Mercado | Rom type | Status |
 |---|---|---|---|---|
-| Honda Civic 2017 EXL | `1.F187.16` | 🇧🇷 Brasil | `0040` | ✅ Deployado 2026-10-16 |
+| Honda Civic 2017 EXL | `1.F187.16` | 🇧🇷 Brasil | `0040` | ✅ AutoOk deployado 2026-10-16 · Fase 10 deployada 2026-10-29 |
 
 ### 🤷 Potencialmente compatível (não testado)
 
@@ -165,12 +172,12 @@ Infraestrutura que vive junto do projeto e serve pra outros HUs com mesmo stack:
 
 ## 🗺️ Para onde isso vai
 
-Nenhum destes está em execução hoje — todos aguardam decisão de abrir fase nova. Lista curta, detalhes em [`ROADMAP.md`](ROADMAP.md).
+Objetivo original cumprido em 2026-10-29. O que fica abaixo é exploratório; detalhes em [`ROADMAP.md`](ROADMAP.md).
 
-- **Fase 9 — câmera de ré via API oficial.** Trocar o logcat polling atual por bind no `ICameraAPServiceReverseSignalListener`, com `ACTION_RESUME_CAMERA` como fallback.
-- Validar `DISCLAIMER_COMPLETE` como sinal canônico de aviso dispensado — 1 teste no carro, zero código.
+- **Fase 9 — câmera de ré via API oficial.** Trocar o logcat polling atual por bind no `ICameraAPServiceReverseSignalListener`, com `ACTION_RESUME_CAMERA` como fallback. Hoje já temos TX codes do `IVehicleInfoManagerApService` mapeados (via `alexpotv/Clusters`), inclusive o sinal `MICU_BCM`/`MICU_ICU` que carrega a luz de ré.
 - Dumpar `com.honda.displayaudio.whitelist.apk` real pra confirmar formato do XML (hoje é inferido do parser).
 - Testar `persist.sys.keyoff_reboot=1` — teoricamente força cold boot a cada keyoff e elimina a complexidade LP0.
+- Trocar o `/system/xbin/su` por SuperSU oficial — o atual é KingoSU (achado da varredura do GitHub de 2026-10-27).
 
 ---
 
@@ -210,10 +217,11 @@ Nenhum destes está em execução hoje — todos aguardam decisão de abrir fase
 
 - [`DISCOVERIES.md`](DISCOVERIES.md) — Índice navegável dos achados técnicos
 - [`ROADMAP.md`](ROADMAP.md) — Próximos passos, descartados com motivo
-- [`docs/raio-x/`](docs/raio-x/) — Scan estático da plataforma: 364 AIDLs, 445 broadcasts, 27 providers, 48 sysprops, trust map de 110 APKs
-- [`docs/whitelist-mitsubishi-2026-10-19.md`](docs/whitelist-mitsubishi-2026-10-19.md) — Fluxo completo da whitelist Mitsubishi + mapeamento do recovery pós-LP0
 - [`docs/MAPA.md`](docs/MAPA.md) — **Atlas navegável da central** (partições, APKs, services, pipeline)
-- [`docs/fase7-deploy-2026-10-16/`](docs/fase7-deploy-2026-10-16/) — 7 docs com jornada, descobertas, receitas, dumps, arquitetura do APK, manutenção
+- [`docs/fase7-deploy-2026-10-16/`](docs/fase7-deploy-2026-10-16/) — Camada 1 (AutoOk): jornada, descobertas, receitas, dumps, arquitetura
+- [`docs/fase10-deploy-2026-10-29/`](docs/fase10-deploy-2026-10-29/) — **Camada 2 (patch smali)**: timeline do deploy, Fase 10.1, logs do carro
+- [`docs/raio-x/`](docs/raio-x/) — Scan estático da plataforma: 364 AIDLs, 445 broadcasts, 27 providers, 48 sysprops, trust map de 110 APKs + RE Camada 2 das services (volante, OTA oficial, veículo, áudio) + varredura de 33 projetos adjacentes no GitHub
+- [`docs/whitelist-mitsubishi-2026-10-19.md`](docs/whitelist-mitsubishi-2026-10-19.md) — Fluxo completo da whitelist Mitsubishi + mapeamento do recovery pós-LP0
 
 ---
 
@@ -225,7 +233,7 @@ Este projeto não existiria sem o trabalho de:
 - **[@codeage](https://github.com/codeage/root-honda)** — ferramenta de root com `su` ARM estático, SuperSU, análise da whitelist Mitsubishi
 - **[@jersacct](https://github.com/jersacct/2016PilotOneClick)** — projeto-mãe para rooting de Honda via DirtyCOW
 
-**Nossa contribuição** é a adaptação para a safra brasileira `1.F187.16` (rom type `0040`, combo `AUDIO 5s` para cold boot, descoberta de que o recovery BR não tem `/sbin/sh` e precisa de busybox embarcado, APK persistente que re-arma após cada tap, pipeline de deep-scan pra sincronizar o atlas da central).
+**Nossa contribuição** é a adaptação para a safra brasileira `1.F187.16` (rom type `0040`, combo `AUDIO 5s` para cold boot, descoberta de que o recovery BR não tem `/sbin/sh` e precisa de busybox embarcado, APK persistente que re-arma após cada tap, pipeline de deep-scan pra sincronizar o atlas da central) **e a Fase 10** (descoberta do gate `OpeningDivideActivity.sDisclamerFlg` como static boolean em memória, dois patches smali de uma instrução cada, pipeline de rebuild auto-contido com prova de bytecode `orig → patch`).
 
 Detalhes técnicos: [`docs/fase7-deploy-2026-10-16/02-descobertas-tecnicas.md § 0`](docs/fase7-deploy-2026-10-16/02-descobertas-tecnicas.md#0-contribuições-novas-deste-projeto).
 

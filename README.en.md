@@ -7,10 +7,11 @@
 **Automatically dismiss the "Warning" disclaimer screen that appears every time you turn on your Honda Civic**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-working-brightgreen)]()
+[![Status](https://img.shields.io/badge/status-complete-brightgreen)](docs/fase10-deploy-2026-10-29/README.md)
 [![Platform](https://img.shields.io/badge/platform-Android_4.2.2_%7C_Tegra_3-blue)]()
 [![Firmware](https://img.shields.io/badge/tested_firmware-1.F187.16_BR-orange)]()
-[![APK](https://img.shields.io/badge/APK-v0.5.4-informational)]()
+[![Phase 10](https://img.shields.io/badge/Phase_10-warning_removed_2026--10--29-success)](docs/fase10-deploy-2026-10-29/README.md)
+[![AutoOk](https://img.shields.io/badge/AutoOk-v0.5.4_safety_net-informational)]()
 [![CI](https://github.com/khalleb/honda-civic-headunit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/khalleb/honda-civic-headunit/actions/workflows/ci.yml)
 
 [🇧🇷 Português](README.md) · 🇺🇸 **English**
@@ -25,7 +26,7 @@
 
 <img src="docs/images/hero-en.svg" alt="Before: Warning screen. After: Main launcher. Auto-dismissed in ~3s." width="100%"/>
 
-**Every time you turn the car on, the head unit shows the Warning.** Before, you had to tap it manually. Now the warning appears and disappears on its own in ~3 seconds — you don't even touch the screen.
+**Every time you turn the car on, the head unit showed the Warning.** Before, you had to tap it manually. Today **the warning does not appear at all** — the boot flow jumps straight to the launcher (Phase 10, deployed 2026-10-29).
 
 </div>
 
@@ -47,25 +48,30 @@ And you have to tap **OK**. Every. Single. Time. Before CarPlay starts. Every ig
 
 Honda has **never** released a configuration to disable this.
 
-## ✨ The solution
+## ✨ The solution — in two layers
 
-We install an APK + `su` setuid binary into `/system/` of the head unit via the **EvilValet** vulnerability (discovered by [juniperspring.org](https://juniperspring.org/posts/honda-evil-valet/)) — a "fake" OTA package signed with the public AOSP testkey.
+Everything is delivered via **EvilValet** (discovered by [juniperspring.org](https://juniperspring.org/posts/honda-evil-valet/)) — a "fake" OTA package signed with the public AOSP testkey, which the head unit's `daupdater` accepts as if it were an official update.
 
-Once installed, the APK:
+### Layer 1 — AutoOk (automatic safety net)
 
-1. **Monitors logcat** looking for the warning Activity to appear
-2. **Waits ~2 seconds** (lets the UI render fully)
-3. **Fires a simulated tap** via `su -c "input tap 400 350"` on the OK button coordinates
-4. **Warning disappears**. You barely noticed.
+APK + `su` setuid installed into `/system/`. The APK monitors logcat, detects the warning Activity, and fires a simulated `input tap` at (400, 350). Warning used to appear for ~3 s and vanish on its own. Kept as a fallback: if the Layer 2 patch ever fails, this still dismisses the warning.
 
-Zero human touch. Works on every car start, forever.
+### Layer 2 — Phase 10 (smali patch in DaLauncher — the definitive fix)
+
+A **one-instruction bytecode patch** in `DaLauncher.apk` (`OpeningDivideActivity.smali:671`): `if-nez v0, :cond_9` → `goto :cond_9`. Forces the boot flow to skip the `DisclaimerFragment` and go straight to the branch that already loaded CarPlay, navigation and everything else. **The warning simply no longer exists in the flow**, forever.
+
+A second patch (Phase 10.1) reduces an intermediate ecoscore screen from ~6 s to ~1 s.
+
+**Observed in the car (2026-10-29):** warning removed, CarPlay projects, navigation works, backup camera works, zero crashes. Details in [`docs/fase10-deploy-2026-10-29/README.md`](docs/fase10-deploy-2026-10-29/README.md).
+
+**Safety net preserved:** AutoOk (Layer 1) stays in `/system/app/` as an automatic fallback for the first week. Can be removed afterwards via `tooling/ota-build/output-rollback/` without affecting the patch.
 
 ### 📹 Proof: real deploy in the owner's car
 
 <div align="center">
 <img src="docs/images/antes-depois.gif" alt="Real footage of warning appearing and auto-dismissing on the Brazilian 2017 Civic EXL" width="560"/>
 
-<sub>Real footage from the Brazilian 2017 Civic EXL (firmware `1.F187.16`). The warning in the video is in Portuguese because that's the owner's car. International variants show the same flow with the warning translated to your local language.</sub>
+<sub>Real footage from the Brazilian 2017 Civic EXL (firmware `1.F187.16`), recorded before Phase 10 was deployed. The warning in the video is in Portuguese because that's the owner's car. International variants show the same flow with the warning translated to your local language. After Phase 10 (2026-10-29) the warning does not appear at all.</sub>
 </div>
 
 ---
@@ -77,19 +83,20 @@ Zero human touch. Works on every car start, forever.
 </div>
 
 **On the PC** (one time, ~15 min):
-1. Compile the APK (`gradlew assembleRelease`)
-2. Sign with debug keystore (`apksigner`)
-3. Build OTA package signed with AOSP testkey (`python3 build.py`)
+1. Compile the AutoOk APK (`gradlew assembleRelease`) **or** rebuild the patched `DaLauncher.apk` (`bash tooling/fase10/rebuild-dalauncher.sh`)
+2. Sign with AOSP testkey (`apksigner`)
+3. Build OTA package signed with AOSP testkey (`python3 build.py` for AutoOk; `python3 build-dalauncher-fase10.py` for Phase 10)
 4. Write to a FAT32 USB stick (`prepare-pendrive-install.sh`)
 
-**In the car** (one time, ~10 min):
+**In the car** (one time per deploy, ~10 min):
 1. USB stick into the front USB-A port
 2. Hold `AUDIO` button for 5s → confirm "Reboot?"
 3. Head unit reboots, recovery applies the package
-4. APK + `su` land in `/system/` — permanent
+4. APK lands in `/system/` — permanent
 
 **In operation** (automatic, forever):
-- On every car boot, the APK sees the warning appear and dismisses it in ~3s
+- With Layer 1 only (AutoOk): on every boot, the APK dismisses the warning in ~3 s
+- With Layer 2 (Phase 10): the warning **never appears at all**
 - Zero maintenance. Zero interaction.
 
 ---
@@ -100,7 +107,7 @@ Zero human touch. Works on every car start, forever.
 
 | Car | DA Version | Market | Rom type | Status |
 |---|---|---|---|---|
-| Honda Civic 2017 EXL | `1.F187.16` | 🇧🇷 Brazil | `0040` | ✅ Deployed 2026-10-16 |
+| Honda Civic 2017 EXL | `1.F187.16` | 🇧🇷 Brazil | `0040` | ✅ AutoOk deployed 2026-10-16 · Phase 10 deployed 2026-10-29 |
 
 ### 🤷 Likely compatible (not tested)
 
@@ -175,12 +182,12 @@ Infrastructure that lives alongside the project and works for other HUs with the
 
 ## 🗺️ Where this is heading
 
-None of the below is in progress today — all await a decision to open a new phase. Short list, details in [`ROADMAP.md`](ROADMAP.md).
+Original goal achieved on 2026-10-29. Everything below is exploratory; details in [`ROADMAP.md`](ROADMAP.md).
 
-- **Phase 9 — backup camera via official API.** Replace the current logcat polling with a bind on `ICameraAPServiceReverseSignalListener`, with `ACTION_RESUME_CAMERA` as fallback.
-- Validate `DISCLAIMER_COMPLETE` as the canonical "warning dismissed" signal — 1 test in the car, zero code.
+- **Phase 9 — backup camera via official API.** Replace the current logcat polling with a bind on `ICameraAPServiceReverseSignalListener`, with `ACTION_RESUME_CAMERA` as fallback. TX codes for `IVehicleInfoManagerApService` are already mapped (via `alexpotv/Clusters`), including the `MICU_BCM`/`MICU_ICU` signal that carries the reverse light.
 - Dump the real `com.honda.displayaudio.whitelist.apk` to confirm the XML format (today it's inferred from the parser).
 - Try `persist.sys.keyoff_reboot=1` — theoretically forces a cold boot on every keyoff and eliminates the whole LP0 complexity.
+- Swap `/system/xbin/su` for the official SuperSU — the current one turned out to be KingoSU (finding from the GitHub landscape scan on 2026-10-27).
 
 ---
 
@@ -209,10 +216,11 @@ Same docs under [`docs/pt-BR/`](docs/pt-BR/). The deep technical dive and the de
 
 - [`DISCOVERIES.md`](DISCOVERIES.md) — Navigable index of technical findings (Portuguese, link labels mostly English)
 - [`ROADMAP.md`](ROADMAP.md) — Next steps, discarded routes with reason
-- [`docs/raio-x/`](docs/raio-x/) — Static platform scan: 364 AIDLs, 445 broadcasts, 27 providers, 48 sysprops, trust map of 110 APKs
-- [`docs/whitelist-mitsubishi-2026-10-19.md`](docs/whitelist-mitsubishi-2026-10-19.md) — Full Mitsubishi whitelist flow + mapping of recovery after LP0
 - [`docs/MAPA.md`](docs/MAPA.md) — **Navigable atlas of the HU** (partitions, APKs, services, pipeline) — mostly Portuguese labels but structure is clear
-- [`docs/fase7-deploy-2026-10-16/`](docs/fase7-deploy-2026-10-16/) — 7 docs with journey, discoveries, recipes, dumps, APK architecture, maintenance (Portuguese)
+- [`docs/fase7-deploy-2026-10-16/`](docs/fase7-deploy-2026-10-16/) — Layer 1 (AutoOk): journey, discoveries, recipes, dumps, APK architecture, maintenance (Portuguese)
+- [`docs/fase10-deploy-2026-10-29/`](docs/fase10-deploy-2026-10-29/) — **Layer 2 (smali patch)**: deploy timeline, Phase 10.1, car logs (Portuguese)
+- [`docs/raio-x/`](docs/raio-x/) — Static platform scan: 364 AIDLs, 445 broadcasts, 27 providers, 48 sysprops, trust map of 110 APKs + RE Layer 2 of the services (steering wheel, official OTA, vehicle, audio) + landscape scan of 33 adjacent GitHub projects
+- [`docs/whitelist-mitsubishi-2026-10-19.md`](docs/whitelist-mitsubishi-2026-10-19.md) — Full Mitsubishi whitelist flow + mapping of recovery after LP0
 
 ---
 
@@ -224,7 +232,7 @@ This project wouldn't exist without:
 - **[@codeage](https://github.com/codeage/root-honda)** — root tool with static ARM `su`, SuperSU, Mitsubishi whitelist analysis
 - **[@jersacct](https://github.com/jersacct/2016PilotOneClick)** — mother project for Honda rooting via DirtyCOW
 
-**Our contribution** is the adaptation to the Brazilian firmware `1.F187.16` (rom type `0040`, `AUDIO 5s` combo for cold boot, discovery that BR recovery doesn't ship `/sbin/sh` and needs embedded busybox, persistent APK that re-arms after each tap, deep-scan pipeline to sync the HU atlas).
+**Our contribution** is the adaptation to the Brazilian firmware `1.F187.16` (rom type `0040`, `AUDIO 5s` combo for cold boot, discovery that BR recovery doesn't ship `/sbin/sh` and needs embedded busybox, persistent APK that re-arms after each tap, deep-scan pipeline to sync the HU atlas) **and Phase 10** (discovery of the `OpeningDivideActivity.sDisclamerFlg` gate as a static boolean in memory, two one-instruction smali patches, self-contained rebuild pipeline with `orig → patch` bytecode proof).
 
 Technical details: [`docs/fase7-deploy-2026-10-16/02-descobertas-tecnicas.md § 0`](docs/fase7-deploy-2026-10-16/02-descobertas-tecnicas.md#0-contribuições-novas-deste-projeto) (Portuguese).
 
