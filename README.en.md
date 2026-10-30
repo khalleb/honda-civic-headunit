@@ -7,10 +7,10 @@
 **Automatically dismiss the "Warning" disclaimer screen that appears every time you turn on your Honda Civic**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-complete-brightgreen)](docs/fase10-deploy-2026-10-29/README.md)
+[![Status](https://img.shields.io/badge/status-complete-brightgreen)](docs/en/fase10-deploy-2026-10-29/README.md)
 [![Platform](https://img.shields.io/badge/platform-Android_4.2.2_%7C_Tegra_3-blue)]()
 [![Firmware](https://img.shields.io/badge/tested_firmware-1.F187.16_BR-orange)]()
-[![Phase 10](https://img.shields.io/badge/Phase_10-warning_removed_2026--10--29-success)](docs/fase10-deploy-2026-10-29/README.md)
+[![Phase 10](https://img.shields.io/badge/Phase_10-warning_removed_2026--10--29-success)](docs/en/fase10-deploy-2026-10-29/README.md)
 [![AutoOk](https://img.shields.io/badge/AutoOk-v0.5.4_safety_net-informational)]()
 [![CI](https://github.com/khalleb/honda-civic-headunit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/khalleb/honda-civic-headunit/actions/workflows/ci.yml)
 
@@ -62,7 +62,7 @@ A **one-instruction bytecode patch** in `DaLauncher.apk` (`OpeningDivideActivity
 
 A second patch (Phase 10.1) reduces an intermediate ecoscore screen from ~6 s to ~1 s.
 
-**Observed in the car (2026-10-29):** warning removed, CarPlay projects, navigation works, backup camera works, zero crashes. Details in [`docs/fase10-deploy-2026-10-29/README.md`](docs/fase10-deploy-2026-10-29/README.md).
+**Observed in the car (2026-10-29):** warning removed, CarPlay projects, navigation works, backup camera works, zero crashes. Details in [`docs/en/fase10-deploy-2026-10-29/README.md`](docs/en/fase10-deploy-2026-10-29/README.md).
 
 **Safety net preserved:** AutoOk (Layer 1) stays in `/system/app/` as an automatic fallback for the first week. Can be removed afterwards via `tooling/ota-build/output-rollback/` without affecting the patch.
 
@@ -219,7 +219,7 @@ Same docs under [`docs/pt-BR/`](docs/pt-BR/). The deep technical dive and the de
 - [`ROADMAP.md`](ROADMAP.md) — Next steps, discarded routes with reason
 - [`docs/MAPA.md`](docs/MAPA.md) — **Navigable atlas of the HU** (partitions, APKs, services, pipeline) — mostly Portuguese labels but structure is clear
 - [`docs/fase7-deploy-2026-10-16/`](docs/fase7-deploy-2026-10-16/) — Layer 1 (AutoOk): journey, discoveries, recipes, dumps, APK architecture, maintenance (Portuguese)
-- [`docs/fase10-deploy-2026-10-29/`](docs/fase10-deploy-2026-10-29/) — **Layer 2 (smali patch)**: deploy timeline, Phase 10.1, car logs (Portuguese)
+- [`docs/en/fase10-deploy-2026-10-29/`](docs/en/fase10-deploy-2026-10-29/) — **Layer 2 (smali patch)**: deploy timeline, Phase 10.1, car logs
 - [`docs/raio-x/`](docs/raio-x/) — Static platform scan: 364 AIDLs, 445 broadcasts, 27 providers, 48 sysprops, trust map of 110 APKs + RE Layer 2 of the services (steering wheel, official OTA, vehicle, audio) + landscape scan of 33 adjacent GitHub projects
 - [`docs/whitelist-mitsubishi-2026-10-19.md`](docs/whitelist-mitsubishi-2026-10-19.md) — Full Mitsubishi whitelist flow + mapping of recovery after LP0
 

@@ -16,6 +16,7 @@ Practical documentation to use/adapt the project. For those who just want to dep
 | [`07-rollback.md`](07-rollback.md) | Reverting everything |
 | [`08-backups.md`](08-backups.md) | Complete backup catalog |
 | [`09-fase10-remove-warning.md`](09-fase10-remove-warning.md) | 🎯 Phase 10 — remove the warning for good via DaLauncher patch |
+| [`fase10-deploy-2026-10-29/README.md`](fase10-deploy-2026-10-29/README.md) | 📋 Phase 10 deep-dive — timeline of the real deploy, gate logs, bytecode proof, Phase 10.1 |
 
 ## Recommended path
 

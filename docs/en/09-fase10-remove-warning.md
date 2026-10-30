@@ -1,6 +1,6 @@
 # 09 — Phase 10: remove the warning for good (patch DaLauncher)
 
-This guide is for applying **Layer 2** of the solution — the smali patch in `DaLauncher.apk` that makes the warning **never appear** in the boot flow. Successfully applied on the Brazilian 2017 Civic EXL on 2026-10-29 (see [`../fase10-deploy-2026-10-29/README.md`](../fase10-deploy-2026-10-29/README.md), Portuguese).
+This guide is for applying **Layer 2** of the solution — the smali patch in `DaLauncher.apk` that makes the warning **never appear** in the boot flow. Successfully applied on the Brazilian 2017 Civic EXL on 2026-10-29 (see [`fase10-deploy-2026-10-29/README.md`](fase10-deploy-2026-10-29/README.md)).
 
 **Mandatory prerequisite:** Layer 1 (AutoOk) already deployed and stable for at least one week. Phase 10 **replaces** the warning with a short ecoscore screen (~1 s) and depends on the 4 post-warning calls that AutoOk also triggered, so having both active is the safest configuration during the transition.
 
@@ -187,6 +187,6 @@ See [`DISCOVERIES.md`](../../DISCOVERIES.md) for the technical details:
 - Why the Eco path (`createEcoIntent()`) existed but never ran before the patch
 - Which 4 calls the `EcoFragment` triggers that keep the rest of the system working
 
-Full timeline of the real deploy in [`../fase10-deploy-2026-10-29/README.md`](../fase10-deploy-2026-10-29/README.md) (Portuguese).
+Full timeline of the real deploy in [`fase10-deploy-2026-10-29/README.md`](fase10-deploy-2026-10-29/README.md).
 
 Route decision discussion (resign with AOSP testkey vs. odex-level patch): [`../fase10-decisao-rotas-2026-10-23.md`](../fase10-decisao-rotas-2026-10-23.md) (Portuguese).
