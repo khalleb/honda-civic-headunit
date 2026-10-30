@@ -10,14 +10,14 @@ This x-ray is the platform's "schema": lists what **exists**, not what **each th
 
 | # | File | What it maps | Count |
 |---|---|---|---|
-| 1 | [`01-apis-aidl.md`](../../raio-x/01-apis-aidl.md) (Portuguese) | Internal binder interfaces (IPC contracts) | **364 unique interfaces** |
-| 2 | [`02-broadcasts.md`](../../raio-x/02-broadcasts.md) (Portuguese) | Actions with `com.mitsubishielectric.*` / `com.honda.*` prefix referenced in bytecode | **445 distinct actions across 48 prefixes** |
-| 3 | [`03-content-providers.md`](../../raio-x/03-content-providers.md) (Portuguese) | ContentProvider authorities and URIs | **27 authorities, 52 URIs** (9 vendor) |
-| 4 | [`04-system-properties.md`](../../raio-x/04-system-properties.md) (Portuguese) | SystemProperties read/written in the shipping build | **48 properties across 4 prefixes** |
-| 5 | [`05-trust-map.md`](../../raio-x/05-trust-map.md) (Portuguese) | Trust map: `sharedUserId`, package, permissions by APK | **110 APKs, 11 with `android.uid.system`** |
+| 1 | [`01-apis-aidl.md`](01-apis-aidl.md) | Internal binder interfaces (IPC contracts) | **364 unique interfaces** |
+| 2 | [`02-broadcasts.md`](02-broadcasts.md) | Actions with `com.mitsubishielectric.*` / `com.honda.*` prefix referenced in bytecode | **445 distinct actions across 48 prefixes** |
+| 3 | [`03-content-providers.md`](03-content-providers.md) | ContentProvider authorities and URIs | **27 authorities, 52 URIs** (9 vendor) |
+| 4 | [`04-system-properties.md`](04-system-properties.md) | SystemProperties read/written in the shipping build | **48 properties across 4 prefixes** |
+| 5 | [`05-trust-map.md`](05-trust-map.md) | Trust map: `sharedUserId`, package, permissions by APK | **110 APKs, 11 with `android.uid.system`** |
 | 6 | [`06-diag-apks.md`](06-diag-apks.md) | RE of the Diag APKs (DealerDiag et al.) and `DiagApService` | **91 DealerDiag screens, no PIN** |
-| 7 | [`07-services-re.md`](../../raio-x/07-services-re.md) (Portuguese) | RE of services: steering wheel, official OTA, vehicle, audio | **StrgSW, SystemUpdate, VehicleInfoManager, SystemInfoService** |
-| 8 | [`08-github-landscape-2026-10-27.md`](../../raio-x/08-github-landscape-2026-10-27.md) (Portuguese) | GitHub landscape: 33 repos, KingoSU found in our `su`, Mitsubishi TX codes mapped by Clusters | **KingoSU in `/system/xbin/su`**, Clusters, opendbc, CR-V China |
+| 7 | [`07-services-re.md`](07-services-re.md) | RE of services: steering wheel, official OTA, vehicle, audio | **StrgSW, SystemUpdate, VehicleInfoManager, SystemInfoService** |
+| 8 | [`08-github-landscape-2026-10-27.md`](08-github-landscape-2026-10-27.md) | GitHub landscape: 33 repos, KingoSU found in our `su`, Mitsubishi TX codes mapped by Clusters | **KingoSU in `/system/xbin/su`**, Clusters, opendbc, CR-V China |
 
 ## High level — what the x-ray reveals
 

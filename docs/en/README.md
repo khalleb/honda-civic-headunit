@@ -19,7 +19,14 @@ Practical documentation to use/adapt the project. For those who just want to dep
 | [`fase10-deploy-2026-10-29/README.md`](fase10-deploy-2026-10-29/README.md) | 📋 Phase 10 deep-dive — timeline of the real deploy, gate logs, bytecode proof, Phase 10.1 |
 | [`whitelist-mitsubishi-2026-10-19.md`](whitelist-mitsubishi-2026-10-19.md) | 🔬 Full static analysis of the Mitsubishi whitelist (not a gate for LP0) |
 | [`raio-x/README.md`](raio-x/README.md) | 🗺️ X-ray Layer 1 — overview of the platform scan (364 AIDLs, 445 broadcasts, trust map) |
+| [`raio-x/01-apis-aidl.md`](raio-x/01-apis-aidl.md) | AIDL interfaces (364 unique) |
+| [`raio-x/02-broadcasts.md`](raio-x/02-broadcasts.md) | Broadcast actions (445 across 48 prefixes) |
+| [`raio-x/03-content-providers.md`](raio-x/03-content-providers.md) | ContentProvider authorities and URIs (27/52) |
+| [`raio-x/04-system-properties.md`](raio-x/04-system-properties.md) | System properties referenced in bytecode (48) |
+| [`raio-x/05-trust-map.md`](raio-x/05-trust-map.md) | Trust map — sharedUserId / permissions per APK (110) |
 | [`raio-x/06-diag-apks.md`](raio-x/06-diag-apks.md) | 🔧 Diag APKs — 91 DealerDiag screens classified read/write, no PIN |
+| [`raio-x/07-services-re.md`](raio-x/07-services-re.md) | RE of core services: steering wheel, official OTA, vehicle, audio |
+| [`raio-x/08-github-landscape-2026-10-27.md`](raio-x/08-github-landscape-2026-10-27.md) | GitHub landscape of 33 adjacent repos — KingoSU finding, Mitsubishi TX codes |
 
 ## Recommended path
 
@@ -67,7 +74,6 @@ The main user-facing docs (00-08) are translated. Still Portuguese-only:
 
 - All of `../fase7-deploy-2026-10-16/` — technical journey, APK architecture, deploy recipe (narrative)
 - `../MAPA.md` → `docs/en/MAP.md` — navigable atlas of the head unit
-- `../raio-x/` — platform scan (364 AIDLs, 445 broadcasts, trust map). Partially translated: `README.md` and `06-diag-apks.md`. Pending: `01-apis-aidl.md`, `02-broadcasts.md`, `03-content-providers.md`, `04-system-properties.md`, `05-trust-map.md`, `07-services-re.md`, `08-github-landscape-2026-10-27.md`.
 
 Fork + PR welcome. See [`../../CONTRIBUTING.md`](../../CONTRIBUTING.md).
 

@@ -67,6 +67,6 @@ Every screen fires a diagnostic function in `doRequest()` via `getRequestKind()`
 
 ## Cross-references
 
-- [`01-apis-aidl.md`](../../raio-x/01-apis-aidl.md) (Portuguese) — AIDL contracts (includes `appservice.diag`)
-- [`05-trust-map.md`](../../raio-x/05-trust-map.md) (Portuguese) — diagnostic apps permissions
+- [`01-apis-aidl.md`](01-apis-aidl.md) — AIDL contracts (includes `appservice.diag`)
+- [`05-trust-map.md`](05-trust-map.md) — diagnostic apps permissions
 - `tooling/apks-decoded/DealerDiag-deodexed.apk` (+ other `*-deodexed.apk`) — local smali
