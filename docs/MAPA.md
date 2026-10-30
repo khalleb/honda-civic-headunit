@@ -129,8 +129,8 @@ Virar a chave do carro **NÃO** faz cold boot (sai do suspend). Para cold boot:
 | APP | mmcblk0p3 | 512 MB | ext4 | `/system` | `/system` | ✓ raw+scan+KB |
 | LOG | mmcblk0p4 | 128 MB | ext4 | `/log` | — | 🔍 scan |
 | MITSU | mmcblk0p5 | 1024 MB | ext4 | `/data/MitsubishiElectric` | — | ✓ raw+scan |
-| **SDA** | mmcblk0p6 | 128 MB | ext4 | **`/mnt/data1`** 🎯 | `/mnt/data1` | 🔍 scan — APKs pendente raw |
-| SDA2 | mmcblk0p7 | 128 MB | ext4 | `/mnt/data2` | `/mnt/data2` | 🔍 scan (duplicata SDA) |
+| **SDA** | mmcblk0p6 | 128 MB | ext4 | **`/mnt/data1`** 🎯 | `/mnt/data1` | 🔍 scan — raw incluído no `build-dump-raw.py` (deploy pendente) |
+| SDA2 | mmcblk0p7 | 128 MB | ext4 | `/mnt/data2` | `/mnt/data2` | 🔍 scan — raw incluído no `build-dump-raw.py` (deploy pendente) |
 | SDC | mmcblk0p8 | 1024 MB | ext4 | `/mnt/media` | `/mnt/media` | 🔍 scan |
 | UDA | mmcblk0p9 | 2432 MB | ext4 | `/data` | `/data` | 🔍 scan — contém packages.xml, autook.log |
 
@@ -617,7 +617,7 @@ Caminho pra qualquer modificação adicional: pacote OTA assinado com testkey AO
 Pacotes OTA do repositório:
 - `tooling/ota-build/build.py` — install AutoOk.apk + su
 - `tooling/ota-build/build-rollback.py` — remove AutoOk.apk + su (volta ao estado inicial)
-- `tooling/ota-build/build-dump-raw.py` — dump raw bootable de APP, CAP, MITSU
+- `tooling/ota-build/build-dump-raw.py` — dump raw bootable de APP, CAP, MITSU, SDA, SDA2 (SDA + SDA2 adicionados 2026-10-29 pra capturar `/mnt/data1` com os APKs e libs reais do navi — ver §5.4)
 - `tooling/ota-build/build-deep-scan.py` — scan textual de todas as partições + /proc/*
 - `tooling/ota-build/build-diagnostic.py` — coleta direcionada (autook.log, SharedPrefs/dbs do DaLauncher, persist props)
 - `tooling/ota-build/build-dalauncher-fase10.py` — install do APK patcheado da Fase 10 (§16.4, §10.3)

@@ -2,21 +2,23 @@
 """Pacote OTA de BACKUP RAW das partições críticas.
 
 Diferente do `build.py` (instala APK + su) e do `build-rollback.py` (remove
-AutoOk + su), este faz **dump raw** das partições APP + CAP + MITSU para
-imagens bootáveis gzipadas no pendrive.
+AutoOk + su), este faz **dump raw** das partições APP + CAP + MITSU + SDA +
+SDA2 para imagens bootáveis gzipadas no pendrive.
 
 Uso: construir e deployar APENAS quando quiser ter backup "bootable" real
 (único recurso que permite restaurar firmware em caso de brick total).
-Deploy demora ~10-15 min no carro por causa do dd + gzip de ~1-2GB.
+Deploy demora ~12-18 min no carro por causa do dd + gzip de ~1.5-2.5 GB.
 
-Pendrive precisa de pelo menos 2GB livres.
+Pendrive precisa de pelo menos 2.5 GB livres.
 
 Pacote NÃO instala nada em /system — zero risco. Só lê e exporta.
 
 Saída no pendrive após deploy:
-- /dump-raw-0040/app.img.gz        (~500MB-1GB gzipado)
-- /dump-raw-0040/cap.img.gz        (~50-100MB)
-- /dump-raw-0040/mitsu.img.gz      (~tamanho desconhecido)
+- /dump-raw-0040/app.img.gz        (~100-120 MB gzipado — 512 MB raw)
+- /dump-raw-0040/cap.img.gz        (~130 MB gzipado — 768 MB raw)
+- /dump-raw-0040/mitsu.img.gz      (~40 MB gzipado — 1 GB raw)
+- /dump-raw-0040/sda.img.gz        (~50-70 MB gzipado — 128 MB raw, /mnt/data1 com APKs do navi + libNaviApk.so)
+- /dump-raw-0040/sda2.img.gz       (~50-70 MB gzipado — 128 MB raw, slot B do SDA)
 - /dump-raw-0040/dump-raw.log      (log do processo)
 
 Restaurar depois é via outro pacote OTA (não implementado — construir sob
@@ -101,9 +103,14 @@ def _updater_script(rom_type: str, meta, partitions) -> str:
         sh(f"{BB} df -h {USB} >> {LOG} 2>&1"),
     ]
 
-    out.extend(dump_partition("app", "APP", 0.60))
-    out.extend(dump_partition("cap", "CAP", 0.80))
-    out.extend(dump_partition("mitsu", "MITSU", 0.90))
+    # SDA e SDA2 (128 MB cada) são rápidas comparado a APP/CAP/MITSU, por isso
+    # ficam no fim. SDA (/mnt/data1) tem o APK e as libs do navi reais; SDA2 é
+    # o slot B equivalente — dumpar o par A/B deixa o backup bootable completo.
+    out.extend(dump_partition("app", "APP", 0.50))
+    out.extend(dump_partition("cap", "CAP", 0.70))
+    out.extend(dump_partition("mitsu", "MITSU", 0.85))
+    out.extend(dump_partition("sda", "SDA", 0.92))
+    out.extend(dump_partition("sda2", "SDA2", 0.95))
 
     out.extend([
         sh(f"{BB} df -h {USB} >> {LOG} 2>&1"),
