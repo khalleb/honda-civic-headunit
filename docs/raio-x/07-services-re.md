@@ -82,6 +82,18 @@ Também processa `modelinfo_setting.txt`, `syscomver.txt` e `SystemInf.bin` no p
 
 **Por que importa:** confirma por que o `build.py` mantém `NEW_DA_VERSION="IC1101"` — é pra **evitar** cair nesse fluxo app-based do SystemUpdate e usar o `daupdater` direto. E dá um Plano B de deploy que não depende do EvilValet: entregar um `.mdt` pelo caminho que o `SystemUpdateApService` já aceita. Fica como rota alternativa a investigar se o `daupdater` algum dia recusar nossos pacotes.
 
+### 2.1 Validações concretas do SystemUpdateUtility (deodex de 2026-10-30)
+
+Deodex do `SystemUpdate.apk` (139 smali) + `SystemUpdateLib.odex` (10 smali, só IAIDL + consts) revelou que a implementação real do fluxo está em `SystemUpdateUtility.smali` (34.138 linhas). As portas pelas quais o `.mdt` tem que passar antes do reboot:
+
+1. **`checkVersion(int)`** — lê `Build:ID` do `/system/build.prop` do pendrive, confere com regex de família `"1.F"`, faz `Integer.parseInt` do que vem depois do `1.F` e `Double.parseDouble` nas sub-partes. Loga `"New::"` vs `"Cur::"`. Nossos pacotes carregam `ro.build.id=IC1101` justamente pra esta checagem **falhar** e o fluxo app-based ser pulado — forçando o uso do `daupdater` direto via EvilValet.
+2. **`compareCustomRomInfo(int, String, String)`** — lê `system/vendor/build.prop` do pendrive, procura linha `key=value`, compara `"Current string :: ..."` com `"New string :: ..."`. É o filtro de `custom_rom.type` — garante que a safra do pacote bate com a do carro. Nossos pacotes carregam `custom_rom.type=0040`, idêntico ao carro, então quando queremos usar a rota B isto passa.
+3. **`copyFileToCache(String)`** — copia o `.mdt` do pendrive pra `/cache/recovery/SwUpdate.mdt`. **Não há verificação de assinatura própria aqui** — a validação da testkey AOSP acontece dentro do `daupdater` nativo, não neste fluxo app-based.
+4. **`createCopyCompleteFile(String)`** — escreve `/cache/.copy_complete` com conteúdo `"version :: ..."`. É o flag que todos os nossos `build-*.py` apagam antes do sleep final pra não reaplicar em loop (§17.17).
+5. **`bootCommand(IPowerManagerApService, String)`** — escreve `/cache/recovery/command` (log `"Cache command file write success"`), depois chama `IPowerManagerApService.rebootRequest()` com motivo `"recovery"`. Loga `"Go to recovery mode"` e `"IPowerManagerApService.rebootRequest()"`.
+
+**Implicação pra rota B:** entregar um `.mdt` pelo caminho oficial requer trocar `NEW_DA_VERSION` por algo que o `checkVersion` aceite como update legítimo (ex.: `1.F187.17`, maior que `1.F187.16` da safra) e manter `custom_rom.type=0040` em `vendor/build.prop`. Nenhuma assinatura adicional: o `SystemUpdateApService` só vigia versão e rom_type, deixa a verificação criptográfica pro `daupdater` do recovery.
+
 ---
 
 ## 3. Veículo — `VehicleInfoManagerApService`
@@ -188,6 +200,34 @@ Strings reveladoras no bytecode:
 - `AudioFocusManager create failed`, `already abandon audio focus`, `focusChange =`
 
 É o `AudioFocusManager` tradicional do Android, mas com camadas adicionais para `AppMode`/`CarPlay`/`Rasp` (muitas APIs `registerCallbackForXxx`).
+
+#### 5.2.1 AudioFocusManager interno (deodex de 2026-10-30)
+
+`com.mitsubishielectric.ada.appservice.avapservice.audiostatemachine.AudioFocusManager` é um singleton (`getInstance(Context)`) de 1448 linhas de smali que embrulha o `AudioManager.requestAudioFocus(..., streamType, durationHint)` do Android padrão. Três métodos públicos:
+
+- `requestAudioFocus(int source)` → `boolean` — pede focus pro Android com `(stream, duration)` derivados do source.
+- `abandonAudioFocus(int source)` → `boolean` — libera o focus daquele source.
+- `abandonAudioFocus()` → `boolean` — libera o focus atual.
+
+O "ducking vs. interrupt" é decidido por `changeDurationFromSourceType(int source)`:
+
+| Sources (hex) | Duração usada | Comportamento |
+|---|---|---|
+| `0x0c, 0x1f, 0x22, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x37, 0x39` | **`0x3` = `AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK`** | áudio da outra fonte abaixa (duck) |
+| **restante** (default) | `0x2` = `AUDIOFOCUS_GAIN_TRANSIENT` | áudio da outra fonte interrompe (pause) |
+
+E o stream type por `changeStreamTypeFromSourceType(int source)` que indexa `AudioStateMachineDefine.PRIORITYTYPE[source]`. Os streams de saída são **customizados Mitsubishi** (`0x100`–`0x10a`), não os `STREAM_MUSIC=3`/`VOICE_CALL=0` padrão do Android — ou seja, o pipeline interno roda com stream types privados que o `audio_policy.conf` da plataforma mapeia pra PCM.
+
+**Ducks dedicados** (`com.mitsubishielectric.ada.appservice.avapservice.audio`):
+
+- `CarPlayDuck` (74 linhas): `start(AvPlayParameter)` / `stop()`. Chamado quando a fonte ativa é CarPlay.
+- `AndroidAutoDuck` (74 linhas): `start(AvPlayParameter)` / `stop()`. Chamado quando a fonte ativa é Android Auto.
+
+As duas classes são triviais — fazem só o enable/disable do ducking pra aquela fonte específica, delegando a lógica real pro `AudioFocusManager`.
+
+**O que isto diz do bug do mudo do AutoOk v0.4.0:** o tap falso casava com um botão de mute cuja ação final era `IAvApService.setMute(true)` — isso é cru, mute total, não passa pelo `AudioFocusManager`. Então o `v0.5.4` ter corrigido o needle do logcat tapa o bug na raiz; mexer no ducking não ia resolver.
+
+**Oportunidade futura (não é bug atual):** quem quiser bypass de ducking em uma fonte específica (ex.: aviso de GPS deixar de abaixar música em CarPlay) tem que ou (a) interceptar `changeDurationFromSourceType` pra devolver sempre `0x2` (interrupt total) ou (b) remover a fonte da tabela `PRIORITYTYPE`. Ambos são patches no `AV.apk` com o mesmo risco do patch da Fase 10 no `DaLauncher`.
 
 ### 5.3 Grupo video path / display — TX codes
 
@@ -339,3 +379,7 @@ Para a RE nativa (`daupdater`, `.so`): precisa primeiro dumpar o ramdisk do reco
 - TX codes do `IAvApService` (213/214) mapeados do `onTransact` com `scratchpad/extract_tx.py`
 - Estrutura do `KeyCommandData` + tabela parcial de `convertKeyType` (raw → tipo lógico). Falta só a correlação `tipo lógico ↔ nome simbólico`, que é 1 teste no carro
 - Deodex do `AvApService` e `VideoManagerApService` (fechou §§5-6)
+
+**Resolvidos em 2026-10-30:**
+- Validações concretas do `SystemUpdateApService` (rota B de deploy) via deodex do `SystemUpdate.apk` + `SystemUpdateLib.odex` — ver §2.1
+- `AudioFocusManager` interno do `AvApService` (ducking real) via deodex do `AV.apk` — ver §5.2.1
