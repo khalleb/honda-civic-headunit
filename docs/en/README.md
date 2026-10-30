@@ -17,6 +17,9 @@ Practical documentation to use/adapt the project. For those who just want to dep
 | [`08-backups.md`](08-backups.md) | Complete backup catalog |
 | [`09-fase10-remove-warning.md`](09-fase10-remove-warning.md) | 🎯 Phase 10 — remove the warning for good via DaLauncher patch |
 | [`fase10-deploy-2026-10-29/README.md`](fase10-deploy-2026-10-29/README.md) | 📋 Phase 10 deep-dive — timeline of the real deploy, gate logs, bytecode proof, Phase 10.1 |
+| [`whitelist-mitsubishi-2026-10-19.md`](whitelist-mitsubishi-2026-10-19.md) | 🔬 Full static analysis of the Mitsubishi whitelist (not a gate for LP0) |
+| [`raio-x/README.md`](raio-x/README.md) | 🗺️ X-ray Layer 1 — overview of the platform scan (364 AIDLs, 445 broadcasts, trust map) |
+| [`raio-x/06-diag-apks.md`](raio-x/06-diag-apks.md) | 🔧 Diag APKs — 91 DealerDiag screens classified read/write, no PIN |
 
 ## Recommended path
 
@@ -64,8 +67,7 @@ The main user-facing docs (00-08) are translated. Still Portuguese-only:
 
 - All of `../fase7-deploy-2026-10-16/` — technical journey, APK architecture, deploy recipe (narrative)
 - `../MAPA.md` → `docs/en/MAP.md` — navigable atlas of the head unit
-- `../whitelist-mitsubishi-2026-10-19.md` — Mitsubishi whitelist analysis
-- `../raio-x/` — platform scan (364 AIDLs, 445 broadcasts, trust map)
+- `../raio-x/` — platform scan (364 AIDLs, 445 broadcasts, trust map). Partially translated: `README.md` and `06-diag-apks.md`. Pending: `01-apis-aidl.md`, `02-broadcasts.md`, `03-content-providers.md`, `04-system-properties.md`, `05-trust-map.md`, `07-services-re.md`, `08-github-landscape-2026-10-27.md`.
 
 Fork + PR welcome. See [`../../CONTRIBUTING.md`](../../CONTRIBUTING.md).
 
