@@ -2,14 +2,15 @@
 """Pacote OTA de BACKUP RAW das partições críticas.
 
 Diferente do `build.py` (instala APK + su) e do `build-rollback.py` (remove
-AutoOk + su), este faz **dump raw** das partições APP + CAP + MITSU + SDA +
-SDA2 para imagens bootáveis gzipadas no pendrive.
+AutoOk + su), este faz **dump raw** das partições críticas (eMMC: APP, CAP,
+MITSU, SDA, SDA2; MTD NOR: recovery, boot, whole_device) para imagens
+bootáveis gzipadas no pendrive.
 
 Uso: construir e deployar APENAS quando quiser ter backup "bootable" real
 (único recurso que permite restaurar firmware em caso de brick total).
 Deploy demora ~12-18 min no carro por causa do dd + gzip de ~1.5-2.5 GB.
 
-Pendrive precisa de pelo menos 2.5 GB livres.
+Pendrive precisa de pelo menos 2.8 GB livres.
 
 Pacote NÃO instala nada em /system — zero risco. Só lê e exporta.
 
@@ -19,7 +20,10 @@ Saída no pendrive após deploy:
 - /dump-raw-0040/mitsu.img.gz      (~40 MB gzipado — 1 GB raw)
 - /dump-raw-0040/sda.img.gz        (~50-70 MB gzipado — 128 MB raw, /mnt/data1 com APKs do navi + libNaviApk.so)
 - /dump-raw-0040/sda2.img.gz       (~50-70 MB gzipado — 128 MB raw, slot B do SDA)
-- /dump-raw-0040/dump-raw.log      (log do processo)
+- /dump-raw-0040/mtd-recovery.img.gz    (~3-5 MB gzipado — 8 MB raw, imagem do recovery com daupdater nativo + ramdisk)
+- /dump-raw-0040/mtd-boot.img.gz        (~3-5 MB gzipado — 8 MB raw, kernel + ramdisk + init.rc do boot normal)
+- /dump-raw-0040/mtd-whole_device.img.gz (~20-30 MB gzipado — 64 MB raw do NOR inteiro, redundante mas serve de referência de offsets)
+- /dump-raw-0040/dump-raw.log      (log do processo + mapping do /proc/mtd)
 
 Restaurar depois é via outro pacote OTA (não implementado — construir sob
 demanda em caso de brick real) que faz dd reverso. Importante é TER o backup.
@@ -92,6 +96,29 @@ def _updater_script(rom_type: str, meta, partitions) -> str:
             f"set_progress({progress_after:.6f});",
         ]
 
+    def dump_mtd(name: str, progress_after: float) -> list[str]:
+        # Resolve o índice pelo /proc/mtd (ex.: "mtd3: 00800000 00020000 \"boot\"")
+        # em vez de assumir ordem fixa. Dumpa /dev/block/mtdblock<idx> — o block
+        # device do MTD, que aceita dd igual ao eMMC. Se o nome não existe no
+        # /proc/mtd, loga NOT FOUND e segue (nunca aborta).
+        img = f"{DUMP}/mtd-{name}.img.gz"
+        resolve = f"idx=$({BB} grep '\"{name}\"' /proc/mtd | {BB} sed 's/mtd\\([0-9]*\\):.*/\\1/')"
+        return [
+            sh(f"{BB} echo === dumping mtd:{name} === >> {LOG} 2>&1"),
+            sh(f"{BB} echo pre-dump $({BB} date) >> {LOG}"),
+            sh(
+                f"{resolve}; "
+                f"if [ -n \"$idx\" ] && [ -b /dev/block/mtdblock$idx ]; "
+                f"then {BB} dd if=/dev/block/mtdblock$idx bs=4M 2>>{LOG} | {BB} gzip -c > {img} 2>>{LOG}; "
+                f"{BB} echo mtd-{name}-idx=$idx gzip-exit=$? >> {LOG}; "
+                f"else {BB} echo mtd-{name} NOT FOUND in /proc/mtd >> {LOG}; fi"
+            ),
+            sh(f"{BB} ls -la {img} >> {LOG} 2>&1"),
+            sh(f"{BB} echo post-dump $({BB} date) >> {LOG}"),
+            sh(f"{BB} sync"),
+            f"set_progress({progress_after:.6f});",
+        ]
+
     out = [
         "show_progress(1.000000, 0);",
         "set_progress(0.000000);",
@@ -101,16 +128,25 @@ def _updater_script(rom_type: str, meta, partitions) -> str:
         sh(f"{BB} mkdir -p {DUMP}"),
         sh(f"{BB} echo === DUMP-RAW START $({BB} date) rom_type={rom_type} === > {LOG} 2>&1"),
         sh(f"{BB} df -h {USB} >> {LOG} 2>&1"),
+        # Loga o /proc/mtd uma vez pro mapping nome↔índice ficar documentado,
+        # mesmo que nenhum MTD seja encontrado no dumpar depois.
+        sh(f"{BB} echo === /proc/mtd === >> {LOG} 2>&1; {BB} cat /proc/mtd >> {LOG} 2>&1"),
     ]
 
     # SDA e SDA2 (128 MB cada) são rápidas comparado a APP/CAP/MITSU, por isso
     # ficam no fim. SDA (/mnt/data1) tem o APK e as libs do navi reais; SDA2 é
     # o slot B equivalente — dumpar o par A/B deixa o backup bootable completo.
-    out.extend(dump_partition("app", "APP", 0.50))
-    out.extend(dump_partition("cap", "CAP", 0.70))
-    out.extend(dump_partition("mitsu", "MITSU", 0.85))
-    out.extend(dump_partition("sda", "SDA", 0.92))
-    out.extend(dump_partition("sda2", "SDA2", 0.95))
+    out.extend(dump_partition("app", "APP", 0.48))
+    out.extend(dump_partition("cap", "CAP", 0.68))
+    out.extend(dump_partition("mitsu", "MITSU", 0.82))
+    out.extend(dump_partition("sda", "SDA", 0.88))
+    out.extend(dump_partition("sda2", "SDA2", 0.90))
+    # MTD NOR (desbloqueia Ghidra no daupdater — recovery tem o binário nativo
+    # + ramdisk; boot tem init.rc + kernel; whole_device é redundante mas serve
+    # de referência pra conferir que os offsets batem).
+    out.extend(dump_mtd("recovery", 0.93))
+    out.extend(dump_mtd("boot", 0.95))
+    out.extend(dump_mtd("whole_device", 0.97))
 
     out.extend([
         sh(f"{BB} df -h {USB} >> {LOG} 2>&1"),

@@ -155,7 +155,7 @@ Fonte: `kernel cmdline` `mtdparts=tegra-nor:...`
 | kpanic | 61440K | 3 MB | `/kpanic` | Kernel panic log |
 | misc | 59392K | 2 MB | `/misc` | Flags boot/recovery |
 
-**IMPORTANTE:** `init.rc` **NÃO está em `/system/etc/init.rc`** (ao contrário do Android padrão). Ele mora no **ramdisk da partição `/boot` (MTD)**. Para extrair: dumpar MTD /boot via `dd if=/dev/mtd/mtd2` ou similar.
+**IMPORTANTE:** `init.rc` **NÃO está em `/system/etc/init.rc`** (ao contrário do Android padrão). Ele mora no **ramdisk da partição `/boot` (MTD)**. Para extrair: `build-dump-raw.py` (2026-10-30) já dumpa `recovery`, `boot` e `whole_device` do MTD via `/dev/block/mtdblockN` (índice resolvido do `/proc/mtd`), gerando `mtd-{nome}.img.gz` no pendrive. Deploy pendente da semana estável pós-Fase 10. Descompactar o ramdisk depois com `abootimg -x boot.img`.
 
 ### 3.4 USB
 
@@ -617,7 +617,7 @@ Caminho pra qualquer modificação adicional: pacote OTA assinado com testkey AO
 Pacotes OTA do repositório:
 - `tooling/ota-build/build.py` — install AutoOk.apk + su
 - `tooling/ota-build/build-rollback.py` — remove AutoOk.apk + su (volta ao estado inicial)
-- `tooling/ota-build/build-dump-raw.py` — dump raw bootable de APP, CAP, MITSU, SDA, SDA2 (SDA + SDA2 adicionados 2026-10-29 pra capturar `/mnt/data1` com os APKs e libs reais do navi — ver §5.4)
+- `tooling/ota-build/build-dump-raw.py` — dump raw bootable de APP, CAP, MITSU, SDA, SDA2 (eMMC) e MTD NOR `recovery`, `boot`, `whole_device` (MTD adicionado 2026-10-30 pra desbloquear Ghidra no `daupdater` nativo e no `init.rc`; SDA + SDA2 adicionados 2026-10-29 pra capturar `/mnt/data1` com os APKs e libs reais do navi — ver §5.4 e §3.3)
 - `tooling/ota-build/build-deep-scan.py` — scan textual de todas as partições + /proc/*
 - `tooling/ota-build/build-diagnostic.py` — coleta direcionada (autook.log, SharedPrefs/dbs do DaLauncher, persist props)
 - `tooling/ota-build/build-dalauncher-fase10.py` — install do APK patcheado da Fase 10 (§16.4, §10.3)
