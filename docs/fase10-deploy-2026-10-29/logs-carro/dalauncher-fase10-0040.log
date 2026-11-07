@@ -1,0 +1,22 @@
+=== DALAUNCHER-FASE10 START Thu Oct 29 14:25:11 UTC 2026 rom_type=0040 ===
+rootfs on / type rootfs (rw)
+tmpfs on /dev type tmpfs (rw,nosuid,relatime,mode=755)
+devpts on /dev/pts type devpts (rw,relatime,mode=600)
+proc on /proc type proc (rw,relatime)
+sysfs on /sys type sysfs (rw,relatime)
+/dev/block/platform/sdhci-tegra.3/by-name/UDA on /data type ext4 (rw,nosuid,nodev,noatime,user_xattr,barrier=1,data=ordered)
+/dev/block/platform/sdhci-tegra.3/by-name/CAC on /cache type ext4 (rw,nosuid,nodev,noatime,user_xattr,barrier=1,data=ordered)
+/dev/block/platform/tegra-ehci.0/sda1 on /mnt/usbdrive1 type vfat (rw,relatime,fmask=0077,dmask=0077,codepage=cp437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro)
+/dev/block/platform/sdhci-tegra.3/by-name/APP on /system type ext4 (rw,nodev,noatime,nodiratime,user_xattr,barrier=1,data=ordered)
+/dev/block/platform/sdhci-tegra.3/by-name/CAP on /system/vendor type ext4 (rw,nodev,noatime,nodiratime,user_xattr,barrier=1,data=ordered)
+mount-done
+ls: /system/vendor/app/DaLauncher.odex: No such file or directory
+-rw-r--r--    1 0        0         17798948 Oct 29 13:11 /system/vendor/app/DaLauncher.apk
+pre-deploy-ls
+perm /system/vendor/app/DaLauncher.apk chown-exit=0 chmod-exit=0
+odex-removed-OK
+655c01a3b17fe20b23c70114e1e0dae7  /system/vendor/app/DaLauncher.apk
+post-deploy-md5-apk
+=== DALAUNCHER-FASE10 END Thu Oct 29 14:25:15 UTC 2026 ===
+mv-trigger-exit=0
+rm-copy-complete-exit=0

@@ -129,8 +129,8 @@ Virar a chave do carro **NÃO** faz cold boot (sai do suspend). Para cold boot:
 | APP | mmcblk0p3 | 512 MB | ext4 | `/system` | `/system` | ✓ raw+scan+KB |
 | LOG | mmcblk0p4 | 128 MB | ext4 | `/log` | — | 🔍 scan |
 | MITSU | mmcblk0p5 | 1024 MB | ext4 | `/data/MitsubishiElectric` | — | ✓ raw+scan |
-| **SDA** | mmcblk0p6 | 128 MB | ext4 | **`/mnt/data1`** 🎯 | `/mnt/data1` | 🔍 scan — raw incluído no `build-dump-raw.py` (deploy pendente) |
-| SDA2 | mmcblk0p7 | 128 MB | ext4 | `/mnt/data2` | `/mnt/data2` | 🔍 scan — raw incluído no `build-dump-raw.py` (deploy pendente) |
+| **SDA** | mmcblk0p6 | 128 MB | ext4 | **`/mnt/data1`** 🎯 | `/mnt/data1` | ✓ raw+scan (dump 2026-11-07) |
+| SDA2 | mmcblk0p7 | 128 MB | ext4 | `/mnt/data2` | `/mnt/data2` | ✓ raw+scan (dump 2026-11-07) |
 | SDC | mmcblk0p8 | 1024 MB | ext4 | `/mnt/media` | `/mnt/media` | 🔍 scan |
 | UDA | mmcblk0p9 | 2432 MB | ext4 | `/data` | `/data` | 🔍 scan — contém packages.xml, autook.log |
 
@@ -155,7 +155,9 @@ Fonte: `kernel cmdline` `mtdparts=tegra-nor:...`
 | kpanic | 61440K | 3 MB | `/kpanic` | Kernel panic log |
 | misc | 59392K | 2 MB | `/misc` | Flags boot/recovery |
 
-**IMPORTANTE:** `init.rc` **NÃO está em `/system/etc/init.rc`** (ao contrário do Android padrão). Ele mora no **ramdisk da partição `/boot` (MTD)**. Para extrair: `build-dump-raw.py` (2026-10-30) já dumpa `recovery`, `boot` e `whole_device` do MTD via `/dev/block/mtdblockN` (índice resolvido do `/proc/mtd`), gerando `mtd-{nome}.img.gz` no pendrive. Deploy pendente da semana estável pós-Fase 10. Descompactar o ramdisk depois com `abootimg -x boot.img`.
+**IMPORTANTE:** `init.rc` **NÃO está em `/system/etc/init.rc`** (ao contrário do Android padrão). Ele mora no **ramdisk da partição `/boot` (MTD)**. Para extrair: `build-dump-raw.py` (2026-10-30) dumpa `recovery`, `boot` e `whole_device` do MTD via `/dev/block/mtdblockN` (índice resolvido do `/proc/mtd`), gerando `mtd-{nome}.img.gz` no pendrive. **Deploy executado 2026-11-07**, dumps em `~/backup-honda-civic-g10/dump-raw-2026-11-07/dumps/` (8 arquivos .img.gz, 413 MB, SHA256SUMS ao lado). Descompactar o ramdisk depois com `abootimg -x boot.img`.
+
+**4 partições MTD descobertas no `/proc/mtd` do dump 2026-11-07** mas ainda não dumpadas (não eram alvo do `build-dump-raw.py`; ficam pra próxima rodada se houver necessidade): `USP` (2 MB, "Updater Support Partition"?), `app_datas` (2 MB) + `app_datas_ex` (256 KB) — persistência de app?, `misc` (2 MB) — padrão Android pra flags boot/recovery, `kpanic` (3 MB) — crash log do kernel.
 
 ### 3.4 USB
 
@@ -1419,7 +1421,22 @@ sudo tooling/scripts/prepare-pendrive-disable-adb.sh /dev/sda
 ```
 O mesmo builder (`build-enable-adb.py --mode host`) grava `persist.sys.usb1_mode=host`, com gate `DISABLE-ADB.OK/.FAIL`. Mantém os mesmos invariantes do updater-script (loop break, sem assert/abort, set_perm só em /tmp). Alternativa manual: apagar `/data/property/persist.sys.usb1_mode` via ADB.
 
-**Gate `ENABLE-ADB.OK/.FAIL`** (ou `DISABLE-ADB.OK/.FAIL` no modo host) gravado no pendrive confirma que o arquivo foi gravado e lido de volta com o valor certo. Sem `assert`/`abort` no updater-script (§17.17/§17.18), passa pelos invariantes de todos os geradores. Deploy pendente da semana estável pós-Fase 10.
+**Gate `ENABLE-ADB.OK/.FAIL`** (ou `DISABLE-ADB.OK/.FAIL` no modo host) gravado no pendrive confirma que o arquivo foi gravado e lido de volta com o valor certo. Sem `assert`/`abort` no updater-script (§17.17/§17.18), passa pelos invariantes de todos os geradores. **Deploy liberado a partir de 2026-11-05** (semana estável pós-Fase 10 concluída). A fila de prioridade pra próxima ida ao carro virou **enable-adb → Chainfire SR1 su swap → investigar SIGSEGV via `adb logcat`** (ver §17.21).
+
+### 17.21 ⏳ Pattern SIGSEGV code=2 @ 0x*4e8 em `Binder_1` — a investigar com ADB (2026-11-07) 🆕
+
+**Observado:** no `ExceptionH16M.dat` capturado em 2026-11-07 (semana estável pós-Fase 10, 5 dias de log acumulado), **8 crashes `libc: Fatal signal 11 (SIGSEGV)` em threads `Binder_1`** entre 04 e 06/11. PIDs distintos (28340, 5201, 14401, 24211, 2306, 15414, 25255, 2717) — processos diferentes, não é um service crashando repetido. Padrão:
+- 2 crashes `code=1` (SEGV_MAPERR @ `0x00000000` — null pointer deref)
+- 5 crashes `code=2` (SEGV_ACCERR) terminando em offset fixo `0x4e8` (`41e3c4e8`, `41abf4e8`, `408e24e8`, `40c924e8`, `40ef04e8`) — mesmo field de alguma estrutura comum
+- 1 crash `code=2` em `0x4058b560` (variação)
+
+**Hipótese inicial:** alguma estrutura compartilhada no framework Mitsubishi tem um field opcional que é `null` em certos estados; multiplos services derefenciam esse field via Binder sem checar. O offset `4e8` constante diz que é a mesma field em todos.
+
+**Contexto imediato antes dos crashes:** `RILD dlopen libril-icera.so not found` (6 de 8), `DispComDMeter ioctl error` (3 de 8), `WiredAccessoryManager: No state change` (2 de 8). Correlação não conclusiva — esses erros são rotina de qualquer sessão. **Não há evidência de regressão da Fase 10** (DaLauncher aparece só 2× em 5 dias de log), mas o arquivo anterior (`20261029_112719ExceptionH16M.dat`, 52 KB, do dia 29/10) só cobre 1 minuto de boot — amostra insuficiente pra baseline comparativo.
+
+**Impacto:** nenhum na UX. Android reinicia Binder sozinho, UI segue respondendo, carro funcionou OK a semana inteira, zero reboot forçado. O arquivo `H16M` tem rotação em 16 MB (sysname sugere) — crashes novos sobrescrevem antigos.
+
+**Investigação acionável:** depende do `enable-adb` deployado (§17.20). Com ADB: `adb logcat -b events -b crash -v threadtime` durante 1-2 sessões de uso normal pra pegar o tombstone completo (`/data/tombstones/`) com stack trace do Binder, aí dá pra isolar qual service está crashando e abrir issue específica (ou aceitar como bug pré-existente do framework).
 
 ---
 
@@ -1453,6 +1470,8 @@ O mesmo builder (`build-enable-adb.py --mode host`) grava `persist.sys.usb1_mode
 | 2026-10-27 | Revisão do projeto inteiro + fix do `set_perm` no `build.py` | Revisão de APK/geradores/scripts/CI/docs, tudo na `main` (CI com 4 jobs, verde: tooling + JUnit do AutoOk). Último `set_perm` em `/system` (install do AutoOk) trocado por `chown`/`chmod` do busybox com gate `AUTOOK-INSTALLED.OK`/`.FAIL` que confere o setuid do `su` (`test -u`) — §17.18 resolvido para os 5 geradores. Sincronização do MAPA/CLAUDE com a v0.5.4, correções de logs de exit, código morto e guardas de script. Deploy da Fase 10 adiado para 2026-10-28 (só disponibilidade do carro). RE Camada 2 das services (`StrgSW`, `SystemUpdate`, `VehicleInfoManager`, `SystemInfoService`) em [`raio-x/07-services-re.md`](raio-x/07-services-re.md): OTA oficial pelo `SystemUpdateApService` escreve o `/cache/.copy_complete` (§17.17); sinal de ré por B-CAN `CVT_SHFT_IN_REVERSE` no `VehicleInfoManager` (candidato pra Fase 9); API de eventos do volante no `StrgSwApService`; mute via `IAvApService.setMute`. RE nativa (daupdater/.so) bloqueada — não dumpados. | pendente |
 | 2026-10-27 | Varredura do GitHub (33 repos) + achado KingoSU no nosso `su` | [`raio-x/08-github-landscape-2026-10-27.md`](raio-x/08-github-landscape-2026-10-27.md). O `/system/xbin/su` instalado é **KingoSU**, não SuperSU — confirmado por `strings` e pelo SHA bater com o AUDIT do [`joshfng/root-honda`](https://github.com/joshfng/root-honda). Dispara broadcast `com.kingouser.com/.NativeAccessReceiver` a cada chamada (no-op, mas público). Troca pelo `su` Chainfire SR1 pendente para o próximo rebuild do AutoOk (§10.2). TX codes + IDs B-CAN do Mitsubishi resolvidos via [`alexpotv/Clusters`](https://github.com/alexpotv/Clusters) — fecha a lacuna da RE §3/§4. Issue #29 do ic1101 confirma CR-V China (`1.F198.60`) como mesma família. `commaai/opendbc` tem o Civic Touring 2016 / Hatchback EX 2017 como fonte canônica de CAN (mesma base que o Clusters usa). | pendente |
 | 2026-10-29 | 🎯 **Fase 10 deployada no carro — aviso removido para sempre.** | §2.1 (validação do rollback, no-op bytes idênticos) e §2.2 (install Fase 10) passaram todos os gates. Logs no `~/backup-honda-civic-g10/pendrive-fase10-{restore,install}-2026-10-29/`. Aviso de abertura não aparece mais. CarPlay projeta, navegação funciona, zero crash. **Caminho Eco acordado pela 1ª vez neste carro** (§17.19) — tela "-eco-" por ~6 s em cada boot. Mesma sessão: Fase 10.1 preparada — segundo patch smali reduzindo `startNoOperationTimer` de 5000 ms para 500 ms. Pacote `output-dalauncher-fase10/20261029T134614Z/` (SHA `f571af75…`, APK `65481d45…`, md5 pós-deploy = `655c01a3b17fe20b23c70114e1e0dae7`). Updater-script bit-por-bit igual ao da v1; só o APK mudou. Doc completo em [`fase10-deploy-2026-10-29/README.md`](fase10-deploy-2026-10-29/README.md). | pendente (Fase 10.1 a aplicar) |
+| 2026-10-31 | RE Camada 2 da câmera (Camera.apk + CameraAPService.apk + CameraAPServiceLib.jar) | Deodex dos 3 artefatos. `ICameraAPService` com 164 transações, 12 listeners register/unregister. Descoberta-chave: **não existe broadcast `ENTER_REAR_WIDE_CAMERA`** — só `EXIT_*`; a entrada em ré é sinalizada por 2 canais paralelos (AIDL `ICameraAPServiceReverseSignalListener.onNotifyReverseSignalStatus` **e** `IAppManagerService.startActivity(RearWideCameraDisplayActivity, 4)` via window manager Honda, não `Context.startActivity`). `VEHICLE_RW` é `signatureOrSystem` definida em `VehicleRW.apk` → AutoOk em `/system/app/` é elegível sem resign Mitsubishi. `ReverseStateWatcher` interno do service orquestra tudo via `IVehicleCanInformationForCameraApServiceListener`. Veredito: Fase 9 (AutoOk sem logcat polling pra ré) fica em suspenso — Opção B (receiver) não cobre o enter; Opção A (AIDL bind) é viável mas custo real (classpath AIDL, lifecycle de bind, perde o teste puro JVM); carro funciona OK com logcat polling, não urgente. Doc [`raio-x/09-camera-re.md`](raio-x/09-camera-re.md). | pendente |
+| 2026-11-07 | 🎯 **Semana estável Fase 10 confirmada + dump-raw bootable completo** | Fase 10 estável por 9 dias (29/10 → 07/11). Zero reboot forçado, UI responsiva, CarPlay/navi/câmera de ré funcionando. Dump-raw deployado no carro (27 min no recovery): **APP, CAP, MITSU, SDA, SDA2** (eMMC) + **MTD recovery, boot, whole_device** — 8 `.img.gz` totalizando 413 MB em `~/backup-honda-civic-g10/dump-raw-2026-11-07/dumps/` (com SHA256SUMS). Primeira vez SDA/SDA2 + MTD foram dumpados. Destrava **RE nativa do `daupdater` + `.so`s + ramdisk do boot + recovery pelo Ghidra** (bloqueio §19.1 do raio-x). `/proc/mtd` revelou 4 partições MTD não mapeadas (USP, app_datas, app_datas_ex, kpanic, misc) adicionadas ao §3.3. `ExceptionH16M.dat` de 5 dias (1.7 MB) revelou 8 crashes SIGSEGV em `Binder_1` com pattern @ offset `0x4e8` — **novo bug §17.21 pra investigar com ADB** (hipótese: field compartilhado no framework Mitsubishi). | pendente |
 
 ---
 

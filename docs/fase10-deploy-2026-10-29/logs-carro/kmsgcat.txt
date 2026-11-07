@@ -1,0 +1,932 @@
+<6>[    0.000000] Initializing cgroup subsys cpu
+<5>[    0.000000] Linux version 3.1.10+ (jenkins@NDYWY3861584) (gcc version 4.6.x-google 20120106 (prerelease) (GCC) ) #1 SMP PREEMPT Thu Apr 7 18:50:54 JST 2016
+<4>[    0.000000] CPU: ARMv7 Processor [412fc099] revision 9 (ARMv7), cr=10c5387d
+<4>[    0.000000] CPU: VIPT nonaliasing data cache, VIPT aliasing instruction cache
+<4>[    0.000000] Machine: vcm30t30
+<6>[    0.000000] DMA: 16MiB DMA coherent/WC memory allocated at 0xbed00000 phys
+<6>[    0.000000] Tegra reserved memory:
+<6>[    0.000000] LP0:                    84008140 - 8400a13f
+<6>[    0.000000] Bootloader framebuffer: 00000000 - 00000000
+<6>[    0.000000] Framebuffer:            bdd00000 - be4fffff
+<6>[    0.000000] 2nd Framebuffer:        be500000 - becfffff
+<6>[    0.000000] Carveout:               00000000 - 00000000
+<6>[    0.000000] Vpr:                    00000000 - 00000000
+<4>[    0.000000] Memory policy: ECC disabled, Data cache writealloc
+<7>[    0.000000] On node 0 totalpages: 252928
+<7>[    0.000000] free_area_init_node: node 0, pgdat c088c180, node_mem_map c0c09000
+<7>[    0.000000]   Normal zone: 1404 pages used for memmap
+<7>[    0.000000]   Normal zone: 0 pages reserved
+<7>[    0.000000]   Normal zone: 158340 pages, LIFO batch:31
+<7>[    0.000000]   HighMem zone: 894 pages used for memmap
+<7>[    0.000000]   HighMem zone: 92290 pages, LIFO batch:31
+<6>[    0.000000] fuse_speedo_calib: ATE prog ver 3.8
+<6>[    0.000000] Tegra3: CPU Speedo ID 14, Soc Speedo ID 4
+<6>[    0.000000] Tegra Revision: A03 SKU: 0x91 CPU Process: 1 Core Process: 0
+<6>[    0.000000] tegra: PLLP fixed rate: 408000000
+<4>[    0.000000] Lowering cpu_lp maximum rate from 620000000 to 450000000
+<4>[    0.000000] Lowering sbus maximum rate from 378000000 to 334000000
+<4>[    0.000000] Lowering vde maximum rate from 600000000 to 484000000
+<4>[    0.000000] Lowering mpe maximum rate from 600000000 to 484000000
+<4>[    0.000000] Lowering 2d maximum rate from 600000000 to 484000000
+<4>[    0.000000] Lowering epp maximum rate from 600000000 to 484000000
+<4>[    0.000000] Lowering 3d maximum rate from 600000000 to 484000000
+<4>[    0.000000] Lowering 3d2 maximum rate from 600000000 to 484000000
+<4>[    0.000000] Lowering host1x maximum rate from 300000000 to 242000000
+<4>[    0.000000] Lowering cbus maximum rate from 700000000 to 484000000
+<4>[    0.000000] Lowering pll_c maximum rate from 1400000000 to 1066000000
+<4>[    0.000000] Lowering ndflash maximum rate from 240000000 to 200000000
+<4>[    0.000000] Lowering nor maximum rate from 127000000 to 102000000
+<4>[    0.000000] Lowering sbc1 maximum rate from 160000000 to 100000000
+<4>[    0.000000] Lowering sbc2 maximum rate from 160000000 to 100000000
+<4>[    0.000000] Lowering sbc3 maximum rate from 160000000 to 100000000
+<4>[    0.000000] Lowering sbc4 maximum rate from 160000000 to 100000000
+<4>[    0.000000] Lowering sbc5 maximum rate from 160000000 to 100000000
+<4>[    0.000000] Lowering sbc6 maximum rate from 160000000 to 100000000
+<4>[    0.000000] Lowering dsia maximum rate from 500000000 to 432500000
+<4>[    0.000000] Lowering dsib maximum rate from 500000000 to 432500000
+<4>[    0.000000] Lowering cpu_g maximum rate from 1700000000 to 900000000
+<4>[    0.000000] tegra3_dvfs: cold offset 50000000 is too high for regular dvfs limit 1000000
+<4>[    0.000000] tegra3_dvfs: cold offset 50000000 is too high for regular dvfs limit 1000000
+<4>[    0.000000] tegra3_dvfs: cold offset 50000000 is too high for regular dvfs limit 1000000
+<4>[    0.000000] tegra3_dvfs: cold offset 50000000 is too high for regular dvfs limit 1000000
+<4>[    0.000000] tegra3_dvfs: cold offset 50000000 is too high for regular dvfs limit 1000000
+<4>[    0.000000] tegra3_dvfs: cold offset 50000000 is too high for regular dvfs limit 1000000
+<4>[    0.000000] tegra3_dvfs: cold offset 50000000 is too high for regular dvfs limit 1000000
+<4>[    0.000000] tegra3_dvfs: cold offset 50000000 is too high for regular dvfs limit 1000000
+<4>[    0.000000] tegra3_dvfs: cold offset 50000000 is too high for regular dvfs limit 1000000
+<4>[    0.000000] tegra3_dvfs: cold offset 50000000 is too high for regular dvfs limit 1000000
+<4>[    0.000000] tegra3_dvfs: cold offset 50000000 is too high for regular dvfs limit 1000000
+<4>[    0.000000] tegra3_dvfs: cold offset 50000000 is too high for regular dvfs limit 1000000
+<4>[    0.000000] tegra3_dvfs: cold offset 50000000 is too high for regular dvfs limit 1000000
+<4>[    0.000000] tegra3_dvfs: cold offset 50000000 is too high for regular dvfs limit 1000000
+<4>[    0.000000] tegra3_dvfs: cold offset 50000000 is too high for regular dvfs limit 1000000
+<4>[    0.000000] tegra3_dvfs: cold offset 50000000 is too high for regular dvfs limit 1000000
+<6>[    0.000000] tegra_dvfs_rail_disable_prepare: vdd_core: enabled bridge.emc
+<6>[    0.000000] tegra dvfs: VDD_CPU nominal 950mV, scaling disabled
+<6>[    0.000000] tegra dvfs: VDD_CORE nominal 1300mV, scaling disabled
+<3>[    0.000000] Timed out waiting for lock bit on pll pll_c
+<6>[    0.000000] L310 cache controller enabled
+<6>[    0.000000] l2x0: 8 ways, CACHE_ID 0x410000c7, AUX_CTRL 0x7e080001, Cache size: 1048576 B
+<6>[    0.000000] PERCPU: Embedded 8 pages/cpu @c1512000 s10464 r8192 d14112 u32768
+<7>[    0.000000] pcpu-alloc: s10464 r8192 d14112 u32768 alloc=8*4096
+<7>[    0.000000] pcpu-alloc: [0] 0 [0] 1 [0] 2 [0] 3 
+<4>[    0.000000] Built 1 zonelists in Zone order, mobility grouping on.  Total pages: 250630
+<5>[    0.000000] Kernel command line: tegraid=30.1.3.0.0 mem=1021M@2048M video=tegrafb debug_uartport=lsport,1 usbcore.old_scheme_first=1 lp0_vec=8192@0x84008140 core_edp_mv=1300 nvsku=699-61855-1002-000 SkuVer=AB ProdInfo=000-00000-0000-000 ProdVer=  no_console_suspend=1  android.kerneltype=normal  androidboot.bootloader=1.10_20160407183722  commchip_id=0  console=ttyS0,115200n8 androidboot.serialno=015c026ed84bfe0f  androidboot.hardware=vcm30t30 androidboot.console=ttyS0 mtdparts=tegra-nor:2M@21504K(USP),8M@4864K(recovery),8M@13056K(boot),2M@23552K(app_datas),256K@25600K(app_datas_ex),2M@59392K(misc),3M@61440K(kpanic),65536K@0K(whole_device) quiet lpj=8996624 vmalloc=256m nr_cpus=4 da.hwversion=0xb da.camera_mode=2 da.clr.rgb_d=2371,1971,0,0,0 da.clr.rgb_n=1734,1091,0,0,0 da.clr.yuv_d=2371,1971,0,0,0,0,0 da.clr.yuv_n=1091,1091,0,0,0,0,0 da.tilt_step=771 da.car_model=TBAA da.mvc_connect=0 da.vol_knob=2791,2791 da.cd_slot=21,5,0 da.navi=0 da.reboot=1 da.ill=0 
+<5>[    0.000000] 
+<6>[    0.000000] PID hash table entries: 4096 (order: 2, 16384 bytes)
+<6>[    0.000000] Dentry cache hash table entries: 131072 (order: 7, 524288 bytes)
+<6>[    0.000000] Inode-cache hash table entries: 65536 (order: 6, 262144 bytes)
+<6>[    0.000000] Memory: 988MB = 988MB total
+<5>[    0.000000] Memory: 988672k/988672k available, 56832k reserved, 372736K highmem
+<5>[    0.000000] Virtual kernel memory layout:
+<5>[    0.000000]     vector  : 0xffff0000 - 0xffff1000   (   4 kB)
+<5>[    0.000000]     fixmap  : 0xfff00000 - 0xfffe0000   ( 896 kB)
+<5>[    0.000000]     DMA     : 0xff000000 - 0xffe00000   (  14 MB)
+<5>[    0.000000]     vmalloc : 0xe7800000 - 0xf7000000   ( 248 MB)
+<5>[    0.000000]     lowmem  : 0xc0000000 - 0xe7000000   ( 624 MB)
+<5>[    0.000000]     pkmap   : 0xbfe00000 - 0xc0000000   (   2 MB)
+<5>[    0.000000]     modules : 0xbe800000 - 0xbfe00000   (  22 MB)
+<5>[    0.000000]       .text : 0xc0008000 - 0xc07ab000   (7820 kB)
+<5>[    0.000000]       .init : 0xc07ab000 - 0xc07ff8e0   ( 339 kB)
+<5>[    0.000000]       .data : 0xc0800000 - 0xc088fd60   ( 576 kB)
+<5>[    0.000000]        .bss : 0xc088fd84 - 0xc0ae3528   (2382 kB)
+<6>[    0.000000] Preemptible hierarchical RCU implementation.
+<6>[    0.000000] NR_IRQS:800
+<6>[    0.000000] sched_clock: 32 bits at 1000kHz, resolution 1000ns, wraps every 4294967ms
+<6>[    0.000000] Console: colour dummy device 80x30
+<6>[    0.000245] Calibrating delay loop (skipped) preset value.. 1799.32 BogoMIPS (lpj=8996624)
+<6>[    0.000266] pid_max: default: 32768 minimum: 301
+<6>[    0.000418] Security Framework initialized
+<6>[    0.000505] Mount-cache hash table entries: 512
+<6>[    0.001372] Initializing cgroup subsys debug
+<6>[    0.001386] Initializing cgroup subsys cpuacct
+<6>[    0.001451] Initializing cgroup subsys freezer
+<6>[    0.001485] CPU: Testing write buffer coherency: ok
+<6>[    0.001531] ftrace: allocating 20899 entries in 62 pages
+<6>[    0.019363] hw perfevents: enabled with ARMv7 Cortex-A9 PMU driver, 7 counters available
+<4>[    0.020733] CPU1: Booted secondary processor
+<4>[    0.021456] CPU2: Booted secondary processor
+<4>[    0.022170] CPU3: Booted secondary processor
+<6>[    0.022272] Brought up 4 CPUs
+<6>[    0.022284] SMP: Total of 4 processors activated (7197.29 BogoMIPS).
+<6>[    0.026460] print_constraints: dummy: 
+<6>[    0.026726] NET: Registered protocol family 16
+<6>[    0.027765] host1x bus init
+<6>[    0.027915] Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+<4>[    0.141105] Unable to set clock audio0 to rate 12288000: -38
+<4>[    0.141122] Unable to set clock audio1 to rate 12288000: -38
+<4>[    0.141136] Unable to set clock audio2 to rate 12288000: -38
+<4>[    0.141149] Unable to set clock audio3 to rate 12288000: -38
+<4>[    0.141163] Unable to set clock audio4 to rate 12288000: -38
+<6>[    0.144235] Clear bootloader IO dpd settings
+<6>[    0.144775] Selecting UARTB as the debug console
+<6>[    0.144800] The debug console clock name is uartb_dbg
+<6>[    0.145045] serial8250.0: ttyS0 at MMIO 0x70006040 (irq = 69) is a Tegra
+<6>[    0.150441] console [ttyS0] enabled
+<6>[    0.180834] ram_console: got buffer at bdc00000, size 100000
+<6>[    0.180947] ram_console: found existing buffer, size 32714, start 32714
+<6>[    0.307167] console [ram-1] enabled
+<6>[    0.307929] Registering gpio keys
+<6>[    0.308093] hw-breakpoint: found 6 breakpoint and 1 watchpoint registers.
+<6>[    0.308253] hw-breakpoint: 1 breakpoint(s) reserved for watchpoint single-step.
+<6>[    0.308422] hw-breakpoint: maximum watchpoint size is 4 bytes.
+<6>[    0.308819] tegra_iovmm_register: added iovmm-smmu
+<6>[    0.316236] bio: create slab <bio-0> at 0
+<5>[    0.317201] SCSI subsystem initialized
+<7>[    0.317500] libata version 3.00 loaded.
+<6>[    0.319297] usbcore: registered new interface driver usbfs
+<6>[    0.319527] usbcore: registered new interface driver hub
+<6>[    0.319811] usbcore: registered new device driver usb
+<6>[    0.320026] tegra-otg tegra-otg: otg transceiver registered
+<6>[    0.326329] print_constraints: max77663_sd0: 800 <--> 1587 mV at 1350 mV normal standby
+<6>[    0.327401] print_constraints: max77663_sd1: 600 <--> 3787 mV at 1300 mV normal standby
+<6>[    0.328509] print_constraints: max77663_sd2: 600 <--> 3787 mV at 1800 mV normal standby
+<6>[    0.329634] print_constraints: max77663_sd3: 600 <--> 3787 mV at 3300 mV normal standby
+<6>[    0.330673] print_constraints: max77663_sd4: 600 <--> 3787 mV at 3300 mV normal standby
+<6>[    0.331783] print_constraints: max77663_ldo0: 800 <--> 2375 mV at 1000 mV normal standby
+<6>[    0.332907] print_constraints: max77663_ldo1: 800 <--> 2375 mV at 1200 mV normal standby
+<6>[    0.334064] print_constraints: max77663_ldo2: 800 <--> 3950 mV at 1800 mV normal standby
+<6>[    0.335124] print_constraints: max77663_ldo3: 800 <--> 3950 mV at 1800 mV normal standby
+<6>[    0.336279] print_constraints: max77663_ldo4: 800 <--> 1587 mV at 1200 mV normal standby
+<6>[    0.337408] print_constraints: max77663_ldo5: 800 <--> 3950 mV at 3300 mV normal standby
+<6>[    0.338466] print_constraints: max77663_ldo6: 800 <--> 3950 mV at 1800 mV normal standby
+<6>[    0.339599] print_constraints: max77663_ldo7: 800 <--> 3950 mV at 1800 mV normal standby
+<6>[    0.340714] print_constraints: max77663_ldo8: 800 <--> 3950 mV at 2800 mV normal standby
+<6>[    0.342181] Advanced Linux Sound Architecture Driver Version 1.0.24.
+<6>[    0.342769] Bluetooth: Core ver 2.16
+<6>[    0.342908] NET: Registered protocol family 31
+<6>[    0.343065] Bluetooth: HCI device and connection manager initialized
+<6>[    0.343157] Bluetooth: HCI socket layer initialized
+<6>[    0.343313] Bluetooth: L2CAP socket layer initialized
+<6>[    0.343420] Bluetooth: SCO socket layer initialized
+<6>[    0.343894] print_constraints: fixed_reg_en_3v3_fuse_en: 3300 mV normal standby
+<6>[    0.344916] tegra-nvmap tegra-nvmap: created carveout iram (255KiB)
+<6>[    0.346133] host1x host1x: initialized
+<6>[    0.346266] VFP support v0.3: implementor 41 architecture 3 part 30 variant 9 rev 4
+<5>[    0.346507] Registering SWP/SWPB emulation handler
+<6>[    0.347152] melco_pm melco_pm: probe: success
+<6>[    0.347393] Switching to clocksource timer_us
+<6>[    0.361504] ashmem: initialized
+<6>[    0.361959] msgmni has been set to 1203
+<6>[    0.363023] mpe mpe: initialized
+<6>[    0.363800] gr3d gr3d: initialized
+<6>[    0.364286] gr2d gr2d: initialized
+<6>[    0.364730] isp isp: initialized
+<6>[    0.364978] vi vi: initialized
+<6>[    0.370033] tegradc tegradc.0: probed
+<6>[    0.370458] tegradc tegradc.0: probed
+<6>[    0.371599] tegradc tegradc.1: probed
+<6>[    0.371997] tegradc tegradc.1: probed
+<6>[    0.372195] tegradc tegradc.1: display(800x480) detected
+<6>[    0.379013] input: gpio-keys as /devices/platform/gpio-keys.0/input/input0
+<6>[    0.409447] max77663-rtc max77663-rtc.0: rtc core: registered max77663-rtc as rtc0
+<6>[    0.409844] i2c /dev entries driver
+<6>[    0.413827] nvavp nvavp: allocated IOVM at ff00000 for AVP os
+<6>[    0.414303] tegra_camera tegra_camera: tegra_camera_probe
+<4>[    0.414450] _regulator_get: tegra_camera supply avdd_dsi_csi not found, using dummy regulator
+<6>[    0.415251] logger: created 256K log 'log_main'
+<6>[    0.415501] logger: created 256K log 'log_events'
+<6>[    0.415665] logger: created 256K log 'log_radio'
+<6>[    0.415827] logger: created 256K log 'log_system'
+<6>[    0.416131] adv7181d 2-0021: chip found @ 0x42 (Tegra I2C adapter)
+<6>[    0.457455] adv7181d probed: device created successfully
+<4>[    0.457684] i2c-core: driver [adv7181d] using legacy suspend method
+<4>[    0.457773] i2c-core: driver [adv7181d] using legacy resume method
+<6>[    0.458217] NET: Registered protocol family 2
+<6>[    0.458523] IP route cache hash table entries: 32768 (order: 5, 131072 bytes)
+<6>[    0.459301] TCP established hash table entries: 131072 (order: 8, 1048576 bytes)
+<6>[    0.461281] TCP bind hash table entries: 65536 (order: 7, 786432 bytes)
+<6>[    0.462448] TCP: Hash tables configured (established 131072 bind 65536)
+<6>[    0.462603] TCP reno registered
+<6>[    0.462693] UDP hash table entries: 512 (order: 2, 16384 bytes)
+<6>[    0.462875] UDP-Lite hash table entries: 512 (order: 2, 16384 bytes)
+<6>[    0.463317] NET: Registered protocol family 1
+<7>[    0.463496] PCI: CLS 0 bytes, default 32
+<6>[    0.463791] Unpacking initramfs...
+<6>[    0.571885] Running do_deferred_initcalls
+<7>[    0.572096] vcm30t30_wlan_init(): ================>
+<7>[    0.572220] vcm30t30_wlan_init(): <================ ret=0
+<7>[    0.572326] vcm30t30_bt_init(): ================>
+<7>[    0.573065] vcm30t30_bt_init(): <================ ret=0
+<6>[    0.573282] PMU: registered new PMU device of type 0
+<5>[    0.573293]  Early-RVC: nvearlyvideoapp.cpp(131): main begin
+<3>[    0.573969] clip_cpu_rate_limits: LP CPU max rate 450000000 at the bottom of cpufreq table
+<5>[    0.574013]  Early-RVC: ervclocalif.cpp(967): switchWindowZorder before top_a
+<5>[    0.587143]  Early-RVC: ervclocalif.cpp(996): switchWindowZorder after top_c
+<4>[    0.588644] scale3d: 3d max rate = min rate (484000000), disabling
+<4>[    0.607221] highmem bounce pool size: 64 pages
+<6>[    0.608233] fuse init (API version 7.17)
+<6>[    0.608653] Registering char device tf_driver (122:0)
+<6>[    0.608984] TF : INFO 00000001 00:00:00.000 ------ ------  --------------- Booting... (t=00:00:01.371) TFNXBF01.16.37161     /Trusted-Logic
+<6>[    0.611299] io scheduler noop registered (default)
+<6>[    0.612057] tegra_uart.0: ttyHS0 at MMIO 0x70006000 (irq = 68) is a TEGRA_UART
+<6>[    0.628619] input: uinput4lvds as /devices/virtual/input/input1
+<6>[    0.638014] tegra_camera tegra_camera: tegra_camera_open
+<5>[    0.659937]  Early-RVC: ervclocalif.cpp(1888): ervcMainLoop begin
+<5>[    0.660353]  Early-RVC: ervclocalif.cpp(1016): setPreviewInfo property_set:0(ret=-1)
+<4>[    0.660572]  Early-RVC: ervclocalif.cpp(484): colorSetAdjustment ILL is null.
+<5>[    0.661097]  Early-RVC: ervclocalif.cpp(876): setAngleView Set Angle view: 1, 1
+<5>[    0.661390]  Early-RVC: ervclocalif.cpp(404): getCarModel CAR_MODEL_PROPERTY is TBAA(ret=4).
+<5>[    0.661864]  Early-RVC: ervclocalif.cpp(716): getColorParam Disp Mode[0] Paramter(Enable):2371,1971,0,0,0,0,0
+<5>[    0.662190]  Early-RVC: ervclocalif.cpp(716): getColorParam Disp Mode[1] Paramter(Enable):1734,1091,0,0,0,0,0
+<5>[    0.662462]  Early-RVC: ervclocalif.cpp(716): getColorParam Disp Mode[2] Paramter(Enable):2371,1971,0,0,0,0,0
+<5>[    0.662748]  Early-RVC: ervclocalif.cpp(716): getColorParam Disp Mode[3] Paramter(Enable):1091,1091,0,0,0,0,0
+<4>[    0.663046]  Early-RVC: ervclocalif.cpp(484): colorSetAdjustment ILL is null.
+<5>[    0.663547]  Early-RVC: ervclocalif.cpp(1615): ervcReverseMain begin
+<6>[    0.667575] Registered UART port ttyHS0
+<6>[    0.667743] tegra hsuart 0 rx dma
+<6>[    0.668011] tegra_uart.3: ttyHS3 at MMIO 0x70006300 (irq = 122) is a TEGRA_UART
+<6>[    0.707542] Registered UART port ttyHS3
+<6>[    0.707698] tegra hsuart 3 rx pio
+<6>[    0.707851] tegra_uart.4: ttyHS4 at MMIO 0x70006400 (irq = 123) is a TEGRA_UART
+<5>[    0.710048]  Early-RVC: ervclocalif.cpp(1784): controlPreview [ILL_DAY] begin
+<5>[    0.710154]  Early-RVC: ervclocalif.cpp(1864): controlPreview ILL Change Notification received : 0
+<5>[    0.710386]  Early-RVC: ervclocalif.cpp(505): colorSetAdjustment mode:0 (param:Enable)
+<5>[    0.711457]  Early-RVC: ervclocalif.cpp(526): colorSetAdjustment call color_set_adjustment()(ret=0) argv(0,0,0,0,0)
+<5>[    0.711857]  Early-RVC: ervclocalif.cpp(567): colorSetAdjustment call disp_com_notify_brightness_setting(): lcd(0,2371),sfw(0,1971),hky(0,0),vol(0),ill(0),bSte(0)
+<5>[    0.712106]  Early-RVC: ervclocalif.cpp(1874): controlPreview [ILL_DAY] end ret = 1
+<5>[    0.744154]  Early-RVC: ervclocalif.cpp(1784): controlPreview [ERVC_REVERSEOFF_LANE_OFF] begin
+<5>[    0.744400]  Early-RVC: ervclocalif.cpp(1016): setPreviewInfo property_set:0(ret=-1)
+<5>[    0.744699]  Early-RVC: ervclocalif.cpp(1040): setPreviewType property_set:0(ret=-1)
+<5>[    0.744943]  Early-RVC: ervclocalif.cpp(1874): controlPreview [ERVC_REVERSEOFF_LANE_OFF] end ret = 1
+<5>[    0.745225]  Early-RVC: ervclocalif.cpp(1672): ervcReverseMain ervcWaitReversed() changed status(0)
+<6>[    0.767549] Registered UART port ttyHS4
+<6>[    0.767782] tegra hsuart 4 rx dma
+<6>[    0.768037] Initialized tegra uart driver
+<6>[    0.771471] loop: module loaded
+<6>[    0.773198] tegra-nor: Found 1 x16 devices at 0x0 in 16-bit bank. Manufacturer ID 0x000001 Chip ID 0x002301
+<6>[    0.773369] Amd/Fujitsu Extended Query Table at 0x0040
+<6>[    0.773472]   Amd/Fujitsu Extended Query version 1.5.
+<6>[    0.773558] Enabling Spansion 65nm mode, writesize = 512 bytes
+<5>[    0.773713] number of CFI chips: 1
+<5>[    0.773820] 8 cmdlinepart partitions found on MTD device tegra-nor
+<5>[    0.773976] Creating 8 MTD partitions on "tegra-nor":
+<5>[    0.774066] 0x000001500000-0x000001700000 : "USP"
+<5>[    0.776230] 0x0000004c0000-0x000000cc0000 : "recovery"
+<5>[    0.777487] 0x000000cc0000-0x0000014c0000 : "boot"
+<5>[    0.778831] 0x000001700000-0x000001900000 : "app_datas"
+<5>[    0.780051] 0x000001900000-0x000001940000 : "app_datas_ex"
+<5>[    0.781312] 0x000003a00000-0x000003c00000 : "misc"
+<5>[    0.782578] 0x000003c00000-0x000003f00000 : "kpanic"
+<5>[    0.783885] 0x000000000000-0x000004000000 : "whole_device"
+<6>[    0.785756] e1000e: Intel(R) PRO/1000 Network Driver - 1.4.4-k
+<6>[    0.785846] e1000e: Copyright(c) 1999 - 2011 Intel Corporation.
+<6>[    0.786122] PPP generic driver version 2.4.2
+<6>[    0.786540] PPP Deflate Compression module registered
+<6>[    0.786700] PPP BSD Compression module registered
+<6>[    0.787704] PPP MPPE Compression module registered
+<6>[    0.787865] NET: Registered protocol family 24
+<6>[    0.788449] tun: Universal TUN/TAP device driver, 1.6
+<6>[    0.788541] tun: (C) 1999-2004 Max Krasnyansky <maxk@qualcomm.com>
+<6>[    0.788921] usbcore: registered new interface driver asix
+<6>[    0.789054] usbcore: registered new interface driver cdc_ether
+<6>[    0.789266] usbcore: registered new interface driver smsc75xx
+<6>[    0.789407] usbcore: registered new interface driver smsc95xx
+<6>[    0.789576] cdc_ncm: 04-Aug-2011
+<6>[    0.789714] usbcore: registered new interface driver cdc_ncm
+<6>[    0.789937] usbcore: registered new interface driver cdc_acm
+<6>[    0.790025] cdc_acm: USB Abstract Control Model driver for USB modems and ISDN adapters
+<6>[    0.790222] usbcore: registered new interface driver cdc_wdm
+<6>[    0.790309] Initializing USB Mass Storage driver...
+<6>[    0.790514] usbcore: registered new interface driver usb-storage
+<6>[    0.790601] USB Mass Storage support registered.
+<6>[    0.790808] usbcore: registered new interface driver libusual
+<6>[    0.791027] usbcore: registered new interface driver usbserial
+<6>[    0.791182] usbserial: USB Serial Driver core
+<6>[    0.791306] USB Serial support registered for GSM modem (1-port)
+<6>[    0.791517] usbcore: registered new interface driver option
+<6>[    0.791605] option: v0.7.2:USB Driver for GSM modems
+<6>[    0.791795] USB Serial support registered for pl2303
+<6>[    0.791935] usbcore: registered new interface driver pl2303
+<6>[    0.792090] pl2303: Prolific PL2303 USB to serial adaptor driver
+<6>[    0.792178] Nvidia Tegra High-Speed USB SOC 					Device Controller driver (Apr 30, 2012)
+<6>[    0.792432] tegra USB phy - inst[0] platform info:
+<6>[    0.792518] port_otg: yes
+<6>[    0.792600] has_hostpc: yes
+<6>[    0.792749] phy_interface: USB_PHY_INTF_UTMI
+<6>[    0.792832] op_mode: TEGRA_USB_OPMODE_DEVICE
+<6>[    0.792916] vbus_pmu_irq: 0
+<6>[    0.793063] vbus_gpio: -1
+<6>[    0.793143] charging: disabled
+<6>[    0.793225] remote_wakeup: disabled
+<4>[    0.793387] _regulator_get: tegra-udc.0 supply avdd_usb not found, using dummy regulator
+<3>[    0.796626] Timed out waiting for lock bit on pll pll_u
+<6>[    0.805812] utmi_phy_enable_trking_data(791) inst:[0]
+<4>[    0.807483] _regulator_get: deviceless supply usb_bat_chg not found, using dummy regulator
+<6>[    0.807796] tegra-otg tegra-otg: SUSPEND --> PERIPHERAL
+<6>[    0.807892] Set USB_1_CDx (CD1:0 CD0:0)
+<6>[    0.810605] utmi_phy_enable_trking_data(791) inst:[0]
+<6>[    0.814797] android_usb gadget: Mass Storage Function, version: 2009/09/11
+<6>[    0.814960] android_usb gadget: Number of LUNs=1
+<6>[    0.815049]  lun0: LUN: removable file: (no medium)
+<6>[    0.815973] android_usb gadget: android_usb ready
+<6>[    0.816064] tegra-udc: bind to driver android_usb
+<4>[    0.816465] mousedev: could not register psaux device, error: -16
+<6>[    0.816623] mousedev: PS/2 mouse device common for all mice
+<6>[    0.817803] using rtc device, max77663-rtc, for alarms
+<6>[    0.818517] lirc_dev: IR Remote Control driver registered, major 242 
+<6>[    0.818686] IR NEC protocol handler initialized
+<6>[    0.818840] IR RC5(x) protocol handler initialized
+<6>[    0.818925] IR RC6 protocol handler initialized
+<6>[    0.819076] IR JVC protocol handler initialized
+<6>[    0.819159] IR Sony protocol handler initialized
+<6>[    0.819244] IR RC5 (streamzap) protocol handler initialized
+<6>[    0.819396] IR MCE Keyboard/mouse protocol handler initialized
+<6>[    0.819481] IR LIRC bridge handler initialized
+<6>[    0.819635] Linux video capture interface: v2.00
+<6>[    0.820102] trpc_sema_init: registered misc dev 10:46
+<6>[    0.820471] trpc_node_register: Adding 'local' to node list
+<6>[    0.821060] tmon-tmp411-sensor 4-004d: detected NVT210
+<6>[    0.821621] tmon-tmp411-sensor 4-004d: 
+<6>[    0.821626]  Tmon IRQ registered for gpio:179
+<6>[    0.822011] i2c i2c-4: supports SMBALERT#, edge trigger
+<6>[    0.822219] tmon-tmp411-sensor 4-004d: Temperature Monitor enabled
+<4>[    0.822412] i2c-core: driver [tmon-tmp411-sensor] using legacy suspend method
+<4>[    0.822577] i2c-core: driver [tmon-tmp411-sensor] using legacy resume method
+<6>[    0.823209] tegra_wdt_probe done
+<6>[    0.823698] device-mapper: uevent: version 1.0.3
+<6>[    0.824132] device-mapper: ioctl: 4.21.0-ioctl (2011-07-06) initialised: dm-devel@redhat.com
+<6>[    0.824344] Bluetooth: HCI UART driver ver 2.2
+<6>[    0.824437] Bluetooth: HCI H4 protocol initialized
+<6>[    0.824597] Bluetooth: HCILL protocol initialized
+<6>[    0.824686] Bluetooth: BlueSleep Mode Driver Ver 1.1
+<6>[    0.825854] cpuidle: using governor ladder
+<6>[    0.826015] sdhci: Secure Digital Host Controller Interface driver
+<6>[    0.826172] sdhci: Copyright(c) Pierre Ossman
+<6>[    0.826256] sdhci-pltfm: SDHCI platform and OF driver helper
+<4>[    0.827627] mmc0: Invalid maximum block size, assuming 512 bytes
+<4>[    0.827817] _regulator_get: sdhci-tegra.3 supply vmmc not found, using dummy regulator
+<6>[    0.831281] mmc0: SDHCI controller on sdhci-tegra.3 [sdhci-tegra.3] using ADMA
+<3>[    0.831416] sdhci-tegra sdhci-tegra.1: missing platform data
+<4>[    0.838413] mmc1: Invalid maximum block size, assuming 512 bytes
+<6>[    0.841879] mmc1: SDHCI controller on sdhci-tegra.0 [sdhci-tegra.0] using ADMA
+<4>[    0.842215] mmc2: Invalid maximum block size, assuming 512 bytes
+<6>[    0.845753] mmc2: SDHCI controller on sdhci-tegra.2 [sdhci-tegra.2] using ADMA
+<6>[    0.847003] tegra-se tegra-se: tegra_se_probe: complete
+<6>[    0.847676] usbcore: registered new interface driver usbhid
+<6>[    0.847839] usbhid: USB HID core driver
+<6>[    0.848541] usbcore: registered new interface driver snd-usb-audio
+<6>[    0.851521] asoc: dit-hifi <-> tegra30-i2s.0 mapping ok
+<6>[    0.852034] asoc: dit-hifi <-> tegra30-i2s.2 mapping ok
+<6>[    0.852408] asoc: dit-hifi <-> tegra30-i2s.4 mapping ok
+<6>[    0.854206] ALSA device list:
+<6>[    0.854359]   #0: tegra-vcm
+<6>[    0.854716] oprofile: using arm/armv7-ca9
+<6>[    0.854933] GACT probability NOT on
+<6>[    0.855091] Mirror/redirect action on
+<6>[    0.855176] u32 classifier
+<6>[    0.855259]     Actions configured
+<6>[    0.855343] Netfilter messages via NETLINK v0.30.
+<6>[    0.855557] nf_conntrack version 0.5.0 (15448 buckets, 61792 max)
+<6>[    0.856056] NF_TPROXY: Transparent proxy support initialized, version 4.1.0
+<6>[    0.856212] NF_TPROXY: Copyright (c) 2006-2007 BalaBit IT Ltd.
+<6>[    0.856698] xt_time: kernel timezone is -0000
+<6>[    0.857009] ip_tables: (C) 2000-2006 Netfilter Core Team
+<6>[    0.857284] arp_tables: (C) 2002 David S. Miller
+<6>[    0.857494] TCP cubic registered
+<6>[    0.857766] NET: Registered protocol family 10
+<6>[    0.858751] Mobile IPv6
+<6>[    0.858863] ip6_tables: (C) 2000-2006 Netfilter Core Team
+<6>[    0.858964] IPv6 over IPv4 tunneling driver
+<6>[    0.860332] NET: Registered protocol family 17
+<6>[    0.860444] NET: Registered protocol family 15
+<6>[    0.860642] Bluetooth: RFCOMM TTY layer initialized
+<6>[    0.860812] Bluetooth: RFCOMM socket layer initialized
+<6>[    0.860898] Bluetooth: RFCOMM ver 1.11
+<6>[    0.861050] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+<6>[    0.861135] Bluetooth: HIDP (Human Interface Emulation) ver 1.2
+<4>[    0.873759] Disabling clocks left on by bootloader:
+<4>[    0.873858]    audio_2x
+<4>[    0.873945]    audio4_2x
+<4>[    0.874030]    audio3_2x
+<4>[    0.874181]    audio2_2x
+<4>[    0.874266]    audio1_2x
+<4>[    0.874350]    audio0_2x
+<4>[    0.874433]    audio
+<4>[    0.874513]    audio4
+<4>[    0.874663]    audio3
+<4>[    0.874746]    audio2
+<4>[    0.874827]    audio1
+<4>[    0.874908]    audio0
+<4>[    0.875036]    dsi2-fixed
+<4>[    0.875183]    dsi1-fixed
+<4>[    0.875277]    uarte_dbg
+<4>[    0.875363]    uartd_dbg
+<4>[    0.875444]    uartc_dbg
+<4>[    0.875594]    uarta_dbg
+<4>[    0.875678]    uarte
+<4>[    0.875766]    i2c3-fast
+<4>[    0.875856]    bsev
+<4>[    0.875946]    bsea
+<4>[    0.876098]    vfir
+<4>[    0.876190]    spdif_in
+<4>[    0.876276]    spdif_out
+<4>[    0.876363]    fuse_burn
+<4>[    0.876453]    cclk_lp
+<4>[    0.876603]    pll_x_out0
+<4>[    0.876686]    pll_d_out0
+<4>[    0.876767]    pll_p_out2
+<4>[    0.876853]    pll_c_out1
+<6>[    0.877058] CPU rate: 900 MHz
+<6>[    0.877505] DVFS: Got RTC device name:rtc0
+<6>[    0.892202] TEGRA: Linear age: 8
+<4>[    0.892298] _regulator_get: deviceless supply vdd_cpu not found, using dummy regulator
+<3>[    0.892486] tegra_dvfs: failed initial get vdd_cpu voltage
+<4>[    0.898204] tegra3_dvfs: minimum cap.cbus rate 484000000 requires 1300 mV
+<4>[    0.898326] tegra3_dvfs: minimum cap.sclk rate 12000000 requires 1300 mV
+<4>[    0.898640] tegra3_dvfs: minimum cap.emc rate 750000000 requires 1300 mV
+<6>[    0.898845] tegra dvfs: tegra sysfs cap interface is initialized
+<6>[    0.899315] tegra_actmon.emc: Completed initialization (0)
+<6>[    0.899516] tegra_actmon.avp: Completed initialization (0)
+<6>[    0.902090] ehci_hcd: USB 2.0 'Enhanced' Host Controller (EHCI) Driver
+<6>[    0.902281] tegra USB phy - inst[1] platform info:
+<6>[    0.902435] port_otg: no
+<6>[    0.902516] has_hostpc: yes
+<6>[    0.902596] phy_interface: USB_PHY_INTF_UTMI
+<6>[    0.902746] op_mode: TEGRA_USB_OPMODE_HOST
+<6>[    0.902829] vbus_gpio: -1
+<6>[    0.902910] vbus_reg: NULL
+<6>[    0.902991] hot_plug: disabled
+<6>[    0.903073] remote_wakeup: disabled
+<4>[    0.903163] _regulator_get: tegra-ehci.1 supply avdd_usb not found, using dummy regulator
+<6>[    0.904529] utmi_phy_enable_trking_data(791) inst:[1]
+<6>[    0.904621] tegra-ehci tegra-ehci.1: Tegra EHCI Host Controller
+<6>[    0.904896] tegra-ehci tegra-ehci.1: new USB bus registered, assigned bus number 1
+<6>[    0.927571] tegra-ehci tegra-ehci.1: irq 53, io mem 0x7d004000
+<6>[    0.947555] tegra-ehci tegra-ehci.1: USB 2.0 started, EHCI 1.00
+<6>[    0.947721] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002
+<6>[    0.947885] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+<6>[    0.948038] usb usb1: Product: Tegra EHCI Host Controller
+<6>[    0.948123] usb usb1: Manufacturer: Linux 3.1.10+ ehci_hcd
+<6>[    0.948272] usb usb1: SerialNumber: tegra-ehci.1
+<6>[    0.949118] hub 1-0:1.0: USB hub found
+<6>[    0.949223] hub 1-0:1.0: 1 port detected
+<6>[    0.949787] tegra USB phy - inst[2] platform info:
+<6>[    0.949875] port_otg: no
+<6>[    0.949968] has_hostpc: yes
+<6>[    0.950118] phy_interface: USB_PHY_INTF_UTMI
+<6>[    0.950201] op_mode: TEGRA_USB_OPMODE_HOST
+<6>[    0.950283] vbus_gpio: -1
+<6>[    0.950431] vbus_reg: NULL
+<6>[    0.950511] hot_plug: disabled
+<6>[    0.950592] remote_wakeup: disabled
+<4>[    0.950681] _regulator_get: tegra-ehci.2 supply avdd_usb not found, using dummy regulator
+<6>[    0.952026] utmi_phy_enable_trking_data(791) inst:[2]
+<6>[    0.952187] tegra-ehci tegra-ehci.2: Tegra EHCI Host Controller
+<6>[    0.952300] tegra-ehci tegra-ehci.2: new USB bus registered, assigned bus number 2
+<6>[    0.977566] tegra-ehci tegra-ehci.2: irq 129, io mem 0x7d008000
+<6>[    0.997546] tegra-ehci tegra-ehci.2: USB 2.0 started, EHCI 1.00
+<6>[    0.997762] usb usb2: New USB device found, idVendor=1d6b, idProduct=0002
+<6>[    0.997851] usb usb2: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+<6>[    0.998003] usb usb2: Product: Tegra EHCI Host Controller
+<6>[    0.998156] usb usb2: Manufacturer: Linux 3.1.10+ ehci_hcd
+<6>[    0.998238] usb usb2: SerialNumber: tegra-ehci.2
+<6>[    0.999030] hub 2-0:1.0: USB hub found
+<6>[    0.999198] hub 2-0:1.0: 1 port detected
+<6>[    1.015072] max77663-rtc max77663-rtc.0: setting system clock to 2026-10-29 14:25:52 UTC (1793283952)
+<6>[    1.015341] nvmap_page_pool_init: nvmap uc page pool size=30896 pages
+<6>[    1.039068] nvmap_page_pool_init: nvmap pool = uc, highmem=30896, pool_size=30896,totalram=247168, freeram=209494, totalhigh=93184, freehigh=58123
+<6>[    1.308797] nvmap_page_pool_init: nvmap wc page pool size=30896 pages
+<6>[    1.331451] nvmap_page_pool_init: nvmap pool = wc, highmem=30896, pool_size=30896,totalram=247168, freeram=178556, totalhigh=93184, freehigh=27185
+<6>[    1.533259] nvmap_page_pool_init: nvmap iwb page pool size=30896 pages
+<6>[    1.557415] nvmap_page_pool_init: nvmap pool = iwb, highmem=26889, pool_size=30896,totalram=247168, freeram=147574, totalhigh=93184, freehigh=184
+<6>[    1.605881] mmc0: new high speed DDR MMC card at address 0001
+<6>[    1.606828] mmcblk0: mmc0:0001 VM010B 7.03 GiB 
+<6>[    1.615490]  mmcblk0: p1 p2 p3 p4 p5 p6 p7 p8 p9
+<4>[    1.669456] mmc1: card claims to support voltages below the defined range. These will be ignored.
+<4>[    1.702116] mmc1: queuing unknown CIS tuple 0x91 (3 bytes)
+<6>[    1.708997] mmc1: new high speed SDIO card at address 0001
+<4>[    1.809562] init (1): /proc/1/oom_adj is deprecated, please use /proc/1/oom_score_adj instead.
+<3>[    1.810031] init: could not open /dev/keychord
+<3>[    1.815131] init: cannot open '/initlogo.rle'
+<4>[    1.889600] mmc2: host does not support reading read-only switch. assuming write-enable.
+<6>[    1.891900] mmc2: new high speed SDHC card at address e5d4
+<6>[    1.892614] mmcblk1: mmc2:e5d4 RP16G 15.0 GiB 
+<6>[    1.894618]  mmcblk1: p1
+<3>[    1.928540] android_usb: already disabled
+<6>[    1.933431] tegra-otg tegra-otg: PERIPHERAL --> SUSPEND
+<6>[    1.933572] android_work: did not send uevent (0 0   (null))
+<6>[    1.933762] tegra-otg tegra-otg: SUSPEND --> HOST
+<6>[    1.933850] Set USB_1_CDx (CD1:0 CD0:1)
+<6>[    1.934345] tegra USB phy - inst[0] platform info:
+<6>[    1.934437] port_otg: yes
+<6>[    1.934520] has_hostpc: yes
+<6>[    1.934789] phy_interface: USB_PHY_INTF_UTMI
+<6>[    1.934897] op_mode: TEGRA_USB_OPMODE_HOST
+<6>[    1.934993] vbus_gpio: -1
+<6>[    1.935083] vbus_reg: NULL
+<6>[    1.935252] hot_plug: disabled
+<6>[    1.935347] remote_wakeup: disabled
+<4>[    1.935452] _regulator_get: tegra-ehci.0 supply avdd_usb not found, using dummy regulator
+<6>[    1.936893] utmi_phy_enable_trking_data(791) inst:[0]
+<6>[    1.937026] tegra-ehci tegra-ehci.0: Tegra EHCI Host Controller
+<6>[    1.937276] tegra-ehci tegra-ehci.0: new USB bus registered, assigned bus number 3
+<6>[    1.967591] tegra-ehci tegra-ehci.0: irq 52, io mem 0x7d000000
+<6>[    1.987556] tegra-ehci tegra-ehci.0: USB 2.0 started, EHCI 1.00
+<6>[    1.987786] usb usb3: New USB device found, idVendor=1d6b, idProduct=0002
+<6>[    1.987874] usb usb3: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+<6>[    1.988028] usb usb3: Product: Tegra EHCI Host Controller
+<6>[    1.988114] usb usb3: Manufacturer: Linux 3.1.10+ ehci_hcd
+<6>[    1.988264] usb usb3: SerialNumber: tegra-ehci.0
+<6>[    1.988798] hub 3-0:1.0: USB hub found
+<6>[    1.988965] hub 3-0:1.0: 1 port detected
+<6>[    2.000048] EXT4-fs (mmcblk0p3): mounted filesystem with ordered data mode. Opts: (null)
+<6>[    2.011607] EXT4-fs (mmcblk0p1): mounted filesystem with ordered data mode. Opts: nomblk_io_submit,errors=remount-ro
+<6>[    2.057669] fs_mgr: Running /system/bin/e2fsck on /dev/block/platform/sdhci-tegra.3/by-name/CAC
+<6>[    2.132435] EXT4-fs (mmcblk0p1): mounted filesystem with writeback data mode. Opts: journal_async_commit,data=writeback,nodelalloc,discard,errors=remount-ro
+<6>[    2.145393] EXT4-fs (mmcblk0p9): mounted filesystem with ordered data mode. Opts: nomblk_io_submit,errors=remount-ro
+<6>[    2.197586] fs_mgr: Running /system/bin/e2fsck on /dev/block/platform/sdhci-tegra.3/by-name/UDA
+<6>[    2.223851] EXT4-fs (mmcblk0p9): mounted filesystem with writeback data mode. Opts: journal_async_commit,data=writeback,nodelalloc,discard,errors=remount-ro
+<6>[    2.232236] EXT4-fs (mmcblk0p2): mounted filesystem with ordered data mode. Opts: (null)
+<6>[    2.245442] EXT4-fs (mmcblk0p4): mounted filesystem with ordered data mode. Opts: nomblk_io_submit,errors=remount-ro
+<6>[    2.297572] fs_mgr: Running /system/bin/e2fsck on /dev/block/platform/sdhci-tegra.3/by-name/LOG
+<6>[    2.307583] Set USB_1_CDx (CD1:0 CD0:0)
+<6>[    2.307688] usb 3-1: new high speed USB device number 2 using tegra-ehci
+<6>[    2.330036] EXT4-fs (mmcblk0p4): mounted filesystem with writeback data mode. Opts: journal_async_commit,data=writeback,nodelalloc,discard,errors=remount-ro
+<6>[    2.338954] usb 3-1: New USB device found, idVendor=0781, idProduct=5571
+<6>[    2.339118] usb 3-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+<6>[    2.339204] usb 3-1: Product: Cruzer Fit
+<6>[    2.339360] usb 3-1: Manufacturer: SanDisk
+<6>[    2.339454] usb 3-1: SerialNumber: 4C530001290305103194
+<6>[    2.340971] scsi0 : usb-storage 3-1:1.0
+<6>[    2.345100] EXT4-fs (mmcblk0p6): mounted filesystem with ordered data mode. Opts: nomblk_io_submit,errors=remount-ro
+<6>[    2.417582] fs_mgr: Running /system/bin/e2fsck on /dev/block/platform/sdhci-tegra.3/by-name/SDA
+<6>[    2.444041] EXT4-fs (mmcblk0p6): mounted filesystem with writeback data mode. Opts: journal_async_commit,data=writeback,nodelalloc,discard,errors=remount-ro
+<6>[    2.457470] EXT4-fs (mmcblk0p7): mounted filesystem with ordered data mode. Opts: nomblk_io_submit,errors=remount-ro
+<6>[    2.527574] fs_mgr: Running /system/bin/e2fsck on /dev/block/platform/sdhci-tegra.3/by-name/SDA2
+<6>[    2.553573] EXT4-fs (mmcblk0p7): mounted filesystem with writeback data mode. Opts: journal_async_commit,data=writeback,nodelalloc,discard,errors=remount-ro
+<6>[    2.565050] EXT4-fs (mmcblk0p8): mounted filesystem with ordered data mode. Opts: nomblk_io_submit,errors=remount-ro
+<6>[    2.617559] fs_mgr: Running /system/bin/e2fsck on /dev/block/platform/sdhci-tegra.3/by-name/SDC
+<6>[    2.650456] EXT4-fs (mmcblk0p8): mounted filesystem with writeback data mode. Opts: journal_async_commit,data=writeback,nodelalloc,discard,errors=remount-ro
+<6>[    2.802776] EXT4-fs (mmcblk0p5): mounted filesystem with ordered data mode. Opts: nomblk_io_submit,errors=remount-ro
+<6>[    2.857556] fs_mgr: Running /system/bin/e2fsck on /dev/block/platform/sdhci-tegra.3/by-name/MITSU
+<6>[    2.883989] EXT4-fs (mmcblk0p5): mounted filesystem with writeback data mode. Opts: journal_async_commit,data=writeback,nodelalloc,discard,errors=remount-ro
+<6>[    2.969321] tegra hsuart 3 tx dma
+<6>[    2.977878] tegra hsuart 3 tx dma
+<6>[    2.983409] tegra hsuart 0 tx dma
+<6>[    2.983593] tegra_uart_0 rx using dma
+<6>[    3.015381] TF : INFO 00000002 14:25:53.123 P-0005 T-0014 TL OTF --------- SDrvCreate
+<6>[    3.015625] TF : INFO 00000003 14:25:53.124 P-000D T-001E NV RSA --------- SDrvCreate
+<6>[    3.019227] TF : INFO 00000004 14:25:53.127 ------ ------  --------------- Booted
+<6>[    3.061133] tegra hsuart 3 tx dma
+<6>[    3.110210] (stk) :sysfs entries created
+<6>[    3.110447] (stk) : debugfs entries created 
+<4>[    3.159502] tegra-i2c tegra-i2c.0: I2c error status 0x00000008
+<4>[    3.159745] tegra-i2c tegra-i2c.0: no acknowledge from address 0x33
+<4>[    3.159832] tegra-i2c tegra-i2c.0: Packet status 0x00010009
+<6>[    3.184283] Loading modules backported from Linux version ol_r8.a9.14-0-gd03410c
+<6>[    3.184409] Backport generated by backports.git ol_r8.a9.14-0-ge04a253
+<6>[    3.220702] Bluetooth: Bluetooth Driver for TI WiLink - Version 1.0
+<6>[    3.224895] (stc): st_register(4) 
+<6>[    3.225066] (stc):  chnl_id list empty :4 
+<6>[    3.225225] (stk) : st_kim_start
+<7>[    3.225387] plat_kim_chip_enable(): =============>
+<5>[    3.340267] scsi 0:0:0:0: Direct-Access     SanDisk  Cruzer Fit       1.00 PQ: 0 ANSI: 6
+<5>[    3.341991] sd 0:0:0:0: [sda] 61341696 512-byte logical blocks: (31.4 GB/29.2 GiB)
+<5>[    3.343732] sd 0:0:0:0: [sda] Write Protect is off
+<7>[    3.343892] sd 0:0:0:0: [sda] Mode Sense: 43 00 00 00
+<6>[    3.344362] (stk) :ldisc_install = 1
+<5>[    3.346412] sd 0:0:0:0: [sda] Write cache: disabled, read cache: enabled, doesn't support DPO or FUA
+<6>[    3.356535]  sda: sda1
+<5>[    3.360357] sd 0:0:0:0: [sda] Attached SCSI removable disk
+<6>[    3.515008] tegra hsuart 4 tx dma
+<6>[    3.515131] tegra_uart_4 rx using dma
+<4>[    3.517961] tegra-i2c tegra-i2c.0: I2c error status 0x0000000a
+<4>[    3.518166] tegra-i2c tegra-i2c.0: no acknowledge from address 0x33
+<4>[    3.518393] tegra-i2c tegra-i2c.0: Packet status 0x00010005
+<6>[    3.568810] (stc): st_tty_open 
+<6>[    3.568997] (stk) :line discipline installed
+<6>[    3.570645] (stk) :TIInit_12.10.28.bts
+<6>[    3.675447] warning: `rild' uses 32-bit capabilities (legacy support in use)
+<6>[    3.782821] cfg80211: Calling CRDA to update world regulatory domain
+<4>[    3.877150] tegra-i2c tegra-i2c.0: I2c error status 0x00000008
+<4>[    3.877343] tegra-i2c tegra-i2c.0: no acknowledge from address 0x33
+<4>[    3.877441] tegra-i2c tegra-i2c.0: Packet status 0x00010009
+<6>[    4.042722] (stc): add_channel_to_table: id 4
+<6>[    4.042823] (stc): st_register(2) 
+<6>[    4.042949] (stc): add_channel_to_table: id 2
+<6>[    4.043219] (stc): st_register(3) 
+<6>[    4.043305] (stc): add_channel_to_table: id 3
+<4>[    4.135593] tegra-i2c tegra-i2c.0: I2c error status 0x00000008
+<4>[    4.135693] tegra-i2c tegra-i2c.0: no acknowledge from address 0x33
+<4>[    4.135850] tegra-i2c tegra-i2c.0: Packet status 0x00010009
+<6>[    4.382026] cfg80211: World regulatory domain updated:
+<6>[    4.382201] cfg80211:  DFS Master region: unset
+<6>[    4.382287] cfg80211:   (start_freq - end_freq @ bandwidth), (max_antenna_gain, max_eirp), (dfs_cac_time)
+<6>[    4.382924] cfg80211:   (2402000 KHz - 2472000 KHz @ 40000 KHz), (N/A, 2000 mBm), (N/A)
+<6>[    4.383033] cfg80211:   (2457000 KHz - 2482000 KHz @ 40000 KHz), (N/A, 2000 mBm), (N/A)
+<6>[    4.383256] cfg80211:   (2474000 KHz - 2494000 KHz @ 20000 KHz), (N/A, 2000 mBm), (N/A)
+<6>[    4.383663] cfg80211:   (5170000 KHz - 5250000 KHz @ 80000 KHz, 160000 KHz AUTO), (N/A, 2000 mBm), (N/A)
+<6>[    4.383869] cfg80211:   (5250000 KHz - 5330000 KHz @ 80000 KHz, 160000 KHz AUTO), (N/A, 2000 mBm), (0 s)
+<6>[    4.384089] cfg80211:   (5490000 KHz - 5730000 KHz @ 160000 KHz), (N/A, 2000 mBm), (0 s)
+<6>[    4.384486] cfg80211:   (5735000 KHz - 5835000 KHz @ 80000 KHz), (N/A, 2000 mBm), (N/A)
+<6>[    4.384794] cfg80211:   (57240000 KHz - 63720000 KHz @ 2160000 KHz), (N/A, 0 mBm), (N/A)
+<4>[    4.394095] tegra-i2c tegra-i2c.0: I2c error status 0x00000008
+<4>[    4.394271] tegra-i2c tegra-i2c.0: no acknowledge from address 0x33
+<4>[    4.394541] tegra-i2c tegra-i2c.0: Packet status 0x00010009
+<4>[    4.653612] tegra-i2c tegra-i2c.0: I2c error status 0x00000008
+<4>[    4.653790] tegra-i2c tegra-i2c.0: no acknowledge from address 0x33
+<4>[    4.653880] tegra-i2c tegra-i2c.0: Packet status 0x00010009
+<4>[    5.012827] tegra-i2c tegra-i2c.0: I2c error status 0x00000008
+<4>[    5.012923] tegra-i2c tegra-i2c.0: no acknowledge from address 0x33
+<4>[    5.013074] tegra-i2c tegra-i2c.0: Packet status 0x00010009
+<6>[    5.105998] adv7480 probed: device created successfully
+<4>[    5.106323] i2c-core: driver [adv7480] using legacy suspend method
+<4>[    5.106474] i2c-core: driver [adv7480] using legacy resume method
+<6>[    5.107150] hdmi_rx0: HDMI Receiver driver registered
+<7>[    5.107877] vcm30t30_wlan_power(1): ===============>
+<6>[    5.138053] input: a3g4250d as /devices/platform/spi_tegra.4/spi4.2/input/input2
+<6>[    5.138702] input: a3g4250d_temp as /devices/platform/spi_tegra.4/spi4.2/input/input3
+<6>[    5.138967] a3g4250d probed: device created successfully
+<6>[    5.139410] gyroscope0: gyroscope driver registered
+<6>[    5.139523] a3g4250d: gyroscope sysfs driver init
+<3>[    5.210649] android_usb: already disabled
+<6>[    5.218125] ncm_function_bind_config MAC: 00:00:00:00:00:00
+<4>[    5.218285] android_usb gadget: using random self ethernet address
+<4>[    5.218448] android_usb gadget: using random host ethernet address
+<6>[    5.222224] usb0: MAC 32:af:15:54:86:c7
+<6>[    5.222386] usb0: HOST MAC 1a:3b:70:86:92:08
+<6>[    5.222488] mtp_bind_config
+<7>[    5.269207] vcm30t30_wlan_power(1): <=============== ret=0
+<4>[    5.371097] tegra-i2c tegra-i2c.0: I2c error status 0x00000008
+<4>[    5.371206] tegra-i2c tegra-i2c.0: no acknowledge from address 0x33
+<4>[    5.371373] tegra-i2c tegra-i2c.0: Packet status 0x00010009
+<6>[    5.549161] wlcore: wl18xx HW: 18xxQ, PG 2.3 (ROM 0x3)
+<7>[    5.552565] vcm30t30_wlan_power(0): ===============>
+<7>[    5.552683] vcm30t30_wlan_power(0): <=============== ret=0
+<7>[    5.553471] cfg80211: Updating information on frequency 2412 MHz with regulatory rule:
+<7>[    5.553635] cfg80211: 2402000 KHz - 2472000 KHz @ 40000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.553722] cfg80211: Updating information on frequency 2417 MHz with regulatory rule:
+<7>[    5.553875] cfg80211: 2402000 KHz - 2472000 KHz @ 40000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.554029] cfg80211: Updating information on frequency 2422 MHz with regulatory rule:
+<7>[    5.554116] cfg80211: 2402000 KHz - 2472000 KHz @ 40000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.554270] cfg80211: Updating information on frequency 2427 MHz with regulatory rule:
+<7>[    5.554426] cfg80211: 2402000 KHz - 2472000 KHz @ 40000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.554637] cfg80211: Updating information on frequency 2432 MHz with regulatory rule:
+<7>[    5.554792] cfg80211: 2402000 KHz - 2472000 KHz @ 40000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.554947] cfg80211: Updating information on frequency 2437 MHz with regulatory rule:
+<7>[    5.555038] cfg80211: 2402000 KHz - 2472000 KHz @ 40000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.555191] cfg80211: Updating information on frequency 2442 MHz with regulatory rule:
+<7>[    5.555343] cfg80211: 2402000 KHz - 2472000 KHz @ 40000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.555428] cfg80211: Updating information on frequency 2447 MHz with regulatory rule:
+<7>[    5.555582] cfg80211: 2402000 KHz - 2472000 KHz @ 40000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.555735] cfg80211: Updating information on frequency 2452 MHz with regulatory rule:
+<7>[    5.555822] cfg80211: 2402000 KHz - 2472000 KHz @ 40000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.555973] cfg80211: Updating information on frequency 2457 MHz with regulatory rule:
+<7>[    5.556129] cfg80211: 2402000 KHz - 2472000 KHz @ 40000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.556214] cfg80211: Updating information on frequency 2462 MHz with regulatory rule:
+<7>[    5.556301] cfg80211: 2402000 KHz - 2472000 KHz @ 40000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.556457] cfg80211: Updating information on frequency 2467 MHz with regulatory rule:
+<7>[    5.556610] cfg80211: 2457000 KHz - 2482000 KHz @ 40000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.556694] cfg80211: Updating information on frequency 2472 MHz with regulatory rule:
+<7>[    5.556847] cfg80211: 2457000 KHz - 2482000 KHz @ 40000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.557048] cfg80211: Updating information on frequency 2484 MHz with regulatory rule:
+<7>[    5.557138] cfg80211: 2474000 KHz - 2494000 KHz @ 20000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.557291] cfg80211: Disabling freq 5040 MHz
+<7>[    5.557374] cfg80211: Disabling freq 5060 MHz
+<7>[    5.557553] cfg80211: Disabling freq 5080 MHz
+<7>[    5.557642] cfg80211: Disabling freq 5170 MHz
+<7>[    5.557732] cfg80211: Updating information on frequency 5180 MHz with regulatory rule:
+<7>[    5.557829] cfg80211: 5170000 KHz - 5250000 KHz @ 80000 KHz, 160000 KHz AUTO), (N/A mBi, 2000 mBm)
+<7>[    5.557988] cfg80211: Updating information on frequency 5190 MHz with regulatory rule:
+<7>[    5.558143] cfg80211: 5170000 KHz - 5250000 KHz @ 80000 KHz, 160000 KHz AUTO), (N/A mBi, 2000 mBm)
+<7>[    5.558232] cfg80211: Updating information on frequency 5200 MHz with regulatory rule:
+<7>[    5.558321] cfg80211: 5170000 KHz - 5250000 KHz @ 80000 KHz, 160000 KHz AUTO), (N/A mBi, 2000 mBm)
+<7>[    5.558478] cfg80211: Updating information on frequency 5210 MHz with regulatory rule:
+<7>[    5.558632] cfg80211: 5170000 KHz - 5250000 KHz @ 80000 KHz, 160000 KHz AUTO), (N/A mBi, 2000 mBm)
+<7>[    5.558719] cfg80211: Updating information on frequency 5220 MHz with regulatory rule:
+<7>[    5.558807] cfg80211: 5170000 KHz - 5250000 KHz @ 80000 KHz, 160000 KHz AUTO), (N/A mBi, 2000 mBm)
+<7>[    5.558963] cfg80211: Updating information on frequency 5230 MHz with regulatory rule:
+<7>[    5.559122] cfg80211: 5170000 KHz - 5250000 KHz @ 80000 KHz, 160000 KHz AUTO), (N/A mBi, 2000 mBm)
+<7>[    5.559210] cfg80211: Updating information on frequency 5240 MHz with regulatory rule:
+<7>[    5.559299] cfg80211: 5170000 KHz - 5250000 KHz @ 80000 KHz, 160000 KHz AUTO), (N/A mBi, 2000 mBm)
+<7>[    5.559456] cfg80211: Updating information on frequency 5260 MHz with regulatory rule:
+<7>[    5.559611] cfg80211: 5250000 KHz - 5330000 KHz @ 80000 KHz, 160000 KHz AUTO), (N/A mBi, 2000 mBm)
+<7>[    5.559699] cfg80211: Updating information on frequency 5280 MHz with regulatory rule:
+<7>[    5.559787] cfg80211: 5250000 KHz - 5330000 KHz @ 80000 KHz, 160000 KHz AUTO), (N/A mBi, 2000 mBm)
+<7>[    5.559942] cfg80211: Updating information on frequency 5300 MHz with regulatory rule:
+<7>[    5.560098] cfg80211: 5250000 KHz - 5330000 KHz @ 80000 KHz, 160000 KHz AUTO), (N/A mBi, 2000 mBm)
+<7>[    5.560185] cfg80211: Updating information on frequency 5320 MHz with regulatory rule:
+<7>[    5.560275] cfg80211: 5250000 KHz - 5330000 KHz @ 80000 KHz, 160000 KHz AUTO), (N/A mBi, 2000 mBm)
+<7>[    5.560429] cfg80211: Updating information on frequency 5500 MHz with regulatory rule:
+<7>[    5.560584] cfg80211: 5490000 KHz - 5730000 KHz @ 160000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.560672] cfg80211: Updating information on frequency 5520 MHz with regulatory rule:
+<7>[    5.560826] cfg80211: 5490000 KHz - 5730000 KHz @ 160000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.560983] cfg80211: Updating information on frequency 5540 MHz with regulatory rule:
+<7>[    5.561070] cfg80211: 5490000 KHz - 5730000 KHz @ 160000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.561225] cfg80211: Updating information on frequency 5560 MHz with regulatory rule:
+<7>[    5.561379] cfg80211: 5490000 KHz - 5730000 KHz @ 160000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.561468] cfg80211: Updating information on frequency 5580 MHz with regulatory rule:
+<7>[    5.561557] cfg80211: 5490000 KHz - 5730000 KHz @ 160000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.561713] cfg80211: Updating information on frequency 5600 MHz with regulatory rule:
+<7>[    5.561869] cfg80211: 5490000 KHz - 5730000 KHz @ 160000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.561956] cfg80211: Updating information on frequency 5620 MHz with regulatory rule:
+<7>[    5.562109] cfg80211: 5490000 KHz - 5730000 KHz @ 160000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.562263] cfg80211: Updating information on frequency 5640 MHz with regulatory rule:
+<7>[    5.562350] cfg80211: 5490000 KHz - 5730000 KHz @ 160000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.562505] cfg80211: Updating information on frequency 5660 MHz with regulatory rule:
+<7>[    5.562661] cfg80211: 5490000 KHz - 5730000 KHz @ 160000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.562748] cfg80211: Updating information on frequency 5680 MHz with regulatory rule:
+<7>[    5.562903] cfg80211: 5490000 KHz - 5730000 KHz @ 160000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.563057] cfg80211: Updating information on frequency 5700 MHz with regulatory rule:
+<7>[    5.563145] cfg80211: 5490000 KHz - 5730000 KHz @ 160000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.563299] cfg80211: Updating information on frequency 5745 MHz with regulatory rule:
+<7>[    5.563454] cfg80211: 5735000 KHz - 5835000 KHz @ 80000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.563541] cfg80211: Updating information on frequency 5765 MHz with regulatory rule:
+<7>[    5.563695] cfg80211: 5735000 KHz - 5835000 KHz @ 80000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.563848] cfg80211: Updating information on frequency 5785 MHz with regulatory rule:
+<7>[    5.564002] cfg80211: 5735000 KHz - 5835000 KHz @ 80000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.564089] cfg80211: Updating information on frequency 5805 MHz with regulatory rule:
+<7>[    5.564243] cfg80211: 5735000 KHz - 5835000 KHz @ 80000 KHz), (N/A mBi, 2000 mBm)
+<7>[    5.564395] cfg80211: Updating information on frequency 5825 MHz with regulatory rule:
+<7>[    5.564483] cfg80211: 5735000 KHz - 5835000 KHz @ 80000 KHz), (N/A mBi, 2000 mBm)
+<6>[    5.569074] wlcore: loaded
+<6>[    5.569185] wlcore: driver version: ol_r8.a9.14
+<6>[    5.569336] wlcore: compilation time: Thu Apr  7 18:10:32 2016
+<4>[    5.630661] tegra-i2c tegra-i2c.0: I2c error status 0x00000008
+<4>[    5.630828] tegra-i2c tegra-i2c.0: no acknowledge from address 0x33
+<4>[    5.630917] tegra-i2c tegra-i2c.0: Packet status 0x00010009
+<6>[    5.713167] nvavp nvavp: using SMMU at ff00000 to load AVP kernel
+<6>[    5.716389] nvavp nvavp: read firmware from 'nvavp_os_0ff00000.bin' (15516 bytes)
+<6>[    5.759270] nvavp nvavp: entry=00000094 control=00004a80 debug=00005280 size=15492
+<6>[    5.759840] nvavp nvavp: AVP os at vaddr=e78c1000 paddr=ff00000 reset_addr=0ff00094
+<6>[    5.764161] nvavp nvavp: read ucode firmware from 'nvavp_vid_ucode.bin' (43720 bytes)
+<4>[    5.988989] tegra-i2c tegra-i2c.0: I2c error status 0x00000008
+<4>[    5.989087] tegra-i2c tegra-i2c.0: no acknowledge from address 0x33
+<4>[    5.989239] tegra-i2c tegra-i2c.0: Packet status 0x00010009
+<6>[    6.047987] (stc): remove_channel_from_table: id 3
+<6>[    6.048149] (stc): remove_channel_from_table: id 2
+<6>[    6.048236] (stc): remove_channel_from_table: id 4
+<6>[    6.048384] (stc):  all chnl_ids unregistered 
+<6>[    6.048477] (stk) :ldisc_install = 0
+<6>[    6.048948] (stc): st_tty_close 
+<7>[    6.051233] plat_kim_chip_disable(): =============>
+<4>[    6.089601] tegra-i2c tegra-i2c.0: I2c error status 0x00000008
+<4>[    6.089763] tegra-i2c tegra-i2c.0: no acknowledge from address 0x33
+<4>[    6.089850] tegra-i2c tegra-i2c.0: Packet status 0x00010009
+<3>[    6.168740] FAT-fs (sda): invalid media value (0x90)
+<6>[    6.173958] FAT-fs (sda): Can't find a valid FAT filesystem
+<5>[    6.364755]  Early-RVC: ervclocalif.cpp(1784): controlPreview [BA_START] begin
+<5>[    6.365325]  Early-RVC: ervclocalif.cpp(1016): setPreviewInfo property_set:0(ret=0)
+<5>[    6.365747]  Early-RVC: ervclocalif.cpp(1040): setPreviewType property_set:0(ret=0)
+<5>[    6.866109]  Early-RVC: ervclocalif.cpp(967): switchWindowZorder before top_c
+<5>[    6.867214]  Early-RVC: ervclocalif.cpp(996): switchWindowZorder after top_a
+<5>[    6.867694]  Early-RVC: ervclocalif.cpp(1874): controlPreview [BA_START] end ret = 1
+<6>[   21.294506] request_suspend_state: wakeup (3->0) at 21276986003 (2026-10-29 14:26:12.774332001 UTC)
+<6>[   21.431553] nvavp nvavp: using SMMU at ff00000 to load AVP kernel
+<6>[   21.432239] nvavp nvavp: AVP os at vaddr=e78c1000 paddr=ff00000 reset_addr=0ff00094
+<5>[   21.676244]  Early-RVC: ervclocalif.cpp(1784): controlPreview [WINDOW_TOPA] begin
+<5>[   21.676385]  Early-RVC: ervclocalif.cpp(1874): controlPreview [WINDOW_TOPA] end ret = 1
+<6>[   23.871551] acc_open
+<6>[   23.883882] acc_release
+<6>[   25.797780] input: uinput4strgsw as /devices/virtual/input/input4
+<4>[   42.331510] ak773x_dsp: ak7738_revision_check REVCHK rev:C
+<4>[   42.331689] ak773x_dsp: ak7738_create_filepath REVCHK cra(0) /vendor/etc/ak7738/AK7738_PRM_BT_16K.cra
+<4>[   42.331949] ak773x_dsp: ak7738_create_filepath REVCHK cra(1) /vendor/etc/ak7738/AK7738_PRM_CP_16K.cra
+<4>[   42.332190] ak773x_dsp: ak7738_create_filepath REVCHK cra(2) /vendor/etc/ak7738/AK7738_PRM_CP_24K.cra
+<4>[   42.332399] ak773x_dsp: ak7738_create_filepath REVCHK reg(0) /vendor/etc/ak7738/rev_b/AK7738_REG_16K.txt
+<4>[   42.332623] ak773x_dsp: ak7738_create_filepath REVCHK reg(1) /vendor/etc/ak7738/rev_b/AK7738_REG_24K.txt
+<4>[   42.332817] ak773x_dsp: ak7738_create_filepath REVCHK subdsp crm(2) /vendor/etc/ak7738/AK7738_PRM_SUB.cra
+<6>[   43.043122] ak773x_dsp: ak7738_probe(3738) device created successfully
+<6>[   46.003328] (stc): st_register(9) 
+<6>[   46.003479] (stc):  chnl_id list empty :9 
+<6>[   46.003801] (stk) : st_kim_start
+<7>[   46.004021] plat_kim_chip_enable(): =============>
+<6>[   46.139580] (stk) :ldisc_install = 1
+<6>[   46.145180] tegra hsuart 4 tx dma
+<6>[   46.145464] tegra_uart_4 rx using dma
+<6>[   46.151888] melco_pm: USB1 power config: auto
+<6>[   46.197588] (stc): st_tty_open 
+<6>[   46.197839] (stk) :line discipline installed
+<6>[   46.198415] (stk) :TIInit_12.10.28.bts
+<6>[   46.493400] (stc): add_channel_to_table: id 9
+<5>[   50.447104]  Early-RVC: ervclocalif.cpp(1784): controlPreview [BOOT_COMPLETE] begin
+<5>[   50.447391]  Early-RVC: ervclocalif.cpp(947): stopReverseThread begin
+<5>[   50.490747]  Early-RVC: ervclocalif.cpp(950): stopReverseThread end
+<5>[   50.991441]  Early-RVC: ervclocalif.cpp(967): switchWindowZorder before top_a
+<5>[   50.991737]  Early-RVC: ervclocalif.cpp(996): switchWindowZorder after top_a
+<5>[   50.992014]  Early-RVC: ervclocalif.cpp(1874): controlPreview [BOOT_COMPLETE] end ret = 1
+<5>[   50.992464]  Early-RVC: ervclocalif.cpp(1784): controlPreview [CAP_PREVIEW_STOP] begin
+<5>[   50.992821]  Early-RVC: ervclocalif.cpp(967): switchWindowZorder before top_a
+<5>[   50.993042]  Early-RVC: ervclocalif.cpp(996): switchWindowZorder after top_a
+<5>[   50.993414]  Early-RVC: ervclocalif.cpp(1874): controlPreview [CAP_PREVIEW_STOP] end ret = 0
+<5>[   50.993774]  Early-RVC: ervclocalif.cpp(967): switchWindowZorder before top_a
+<5>[   50.994009]  Early-RVC: ervclocalif.cpp(996): switchWindowZorder after top_a
+<5>[   50.994336]  Early-RVC: ervclocalif.cpp(947): stopReverseThread begin
+<5>[   50.994560]  Early-RVC: ervclocalif.cpp(950): stopReverseThread end
+<5>[   50.994851]  Early-RVC: ervclocalif.cpp(1976): ervcMainLoop end
+<5>[   50.995060]  Early-RVC: nvearlyvideoapp.cpp(80): cleanup begin
+<6>[   51.053431] tegra_camera tegra_camera: tegra_camera_release
+<5>[   51.090774]  Early-RVC: ervclocalif.cpp(1987): ervcCleanup begin
+<5>[   51.090958]  Early-RVC: ervclocalif.cpp(967): switchWindowZorder before top_a
+<5>[   51.091255]  Early-RVC: ervclocalif.cpp(996): switchWindowZorder after top_a
+<5>[   51.091459]  Early-RVC: ervclocalif.cpp(947): stopReverseThread begin
+<5>[   51.091730]  Early-RVC: ervclocalif.cpp(950): stopReverseThread end
+<5>[   51.092560]  Early-RVC: ervclocalif.cpp(1016): setPreviewInfo property_set:2(ret=0)
+<5>[   51.093173]  Early-RVC: ervclocalif.cpp(1040): setPreviewType property_set:0(ret=0)
+<5>[   51.093932]  Early-RVC: ervclocalif.cpp(2003): ervcCleanup end
+<5>[   51.094209]  Early-RVC: nvearlyvideoapp.cpp(105): cleanup end
+<5>[   51.094540]  Early-RVC: nvearlyvideoapp.cpp(149): main end
+<3>[   51.129182] init: sys_prop: permission denied uid:1003  name:service.bootanim.exit
+<3>[   51.138827] init: sys_prop: permission denied uid:1003  name:earlyrvc.camappstatus
+<7>[   51.857607] vcm30t30_wlan_power(1): ===============>
+<7>[   52.010174] vcm30t30_wlan_power(1): <=============== ret=0
+<6>[   52.431679] wlcore: PHY firmware version: Rev 8.2.0.0.228
+<6>[   52.555116] wlcore: firmware booted (Rev 8.9.0.0.39)
+<6>[   52.578906] ADDRCONF(NETDEV_UP): wlan0: link is not ready
+<6>[   52.794199] cfg80211: Calling CRDA for country: XZ
+<7>[   52.836313] cfg80211: Updating information on frequency 2412 MHz with regulatory rule:
+<7>[   52.836547] cfg80211: 2402000 KHz - 2482000 KHz @ 20000 KHz), (N/A mBi, 2000 mBm)
+<7>[   52.836748] cfg80211: Updating information on frequency 2417 MHz with regulatory rule:
+<7>[   52.836886] cfg80211: 2402000 KHz - 2482000 KHz @ 20000 KHz), (N/A mBi, 2000 mBm)
+<7>[   52.837073] cfg80211: Updating information on frequency 2422 MHz with regulatory rule:
+<7>[   52.837255] cfg80211: 2402000 KHz - 2482000 KHz @ 20000 KHz), (N/A mBi, 2000 mBm)
+<7>[   52.837368] cfg80211: Updating information on frequency 2427 MHz with regulatory rule:
+<7>[   52.837650] cfg80211: 2402000 KHz - 2482000 KHz @ 20000 KHz), (N/A mBi, 2000 mBm)
+<7>[   52.837885] cfg80211: Updating information on frequency 2432 MHz with regulatory rule:
+<7>[   52.837998] cfg80211: 2402000 KHz - 2482000 KHz @ 20000 KHz), (N/A mBi, 2000 mBm)
+<7>[   52.838378] cfg80211: Updating information on frequency 2437 MHz with regulatory rule:
+<7>[   52.838594] cfg80211: 2402000 KHz - 2482000 KHz @ 20000 KHz), (N/A mBi, 2000 mBm)
+<7>[   52.838775] cfg80211: Updating information on frequency 2442 MHz with regulatory rule:
+<7>[   52.838864] cfg80211: 2402000 KHz - 2482000 KHz @ 20000 KHz), (N/A mBi, 2000 mBm)
+<7>[   52.839030] cfg80211: Updating information on frequency 2447 MHz with regulatory rule:
+<7>[   52.839191] cfg80211: 2402000 KHz - 2482000 KHz @ 20000 KHz), (N/A mBi, 2000 mBm)
+<7>[   52.839280] cfg80211: Updating information on frequency 2452 MHz with regulatory rule:
+<7>[   52.839446] cfg80211: 2402000 KHz - 2482000 KHz @ 20000 KHz), (N/A mBi, 2000 mBm)
+<7>[   52.839619] cfg80211: Updating information on frequency 2457 MHz with regulatory rule:
+<7>[   52.839717] cfg80211: 2402000 KHz - 2482000 KHz @ 20000 KHz), (N/A mBi, 2000 mBm)
+<7>[   52.839907] cfg80211: Updating information on frequency 2462 MHz with regulatory rule:
+<7>[   52.840109] cfg80211: 2402000 KHz - 2482000 KHz @ 20000 KHz), (N/A mBi, 2000 mBm)
+<7>[   52.840207] cfg80211: Updating information on frequency 2467 MHz with regulatory rule:
+<7>[   52.840389] cfg80211: 2402000 KHz - 2482000 KHz @ 20000 KHz), (N/A mBi, 2000 mBm)
+<7>[   52.840560] cfg80211: Updating information on frequency 2472 MHz with regulatory rule:
+<7>[   52.840662] cfg80211: 2402000 KHz - 2482000 KHz @ 20000 KHz), (N/A mBi, 2000 mBm)
+<7>[   52.840866] cfg80211: Disabling freq 2484 MHz
+<7>[   52.840961] cfg80211: Disabling freq 5040 MHz
+<7>[   52.841134] cfg80211: Disabling freq 5060 MHz
+<7>[   52.841230] cfg80211: Disabling freq 5080 MHz
+<7>[   52.841438] cfg80211: Disabling freq 5170 MHz
+<7>[   52.841569] cfg80211: Disabling freq 5180 MHz
+<7>[   52.841689] cfg80211: Disabling freq 5190 MHz
+<7>[   52.841892] cfg80211: Disabling freq 5200 MHz
+<7>[   52.842010] cfg80211: Disabling freq 5210 MHz
+<7>[   52.842197] cfg80211: Disabling freq 5220 MHz
+<7>[   52.842291] cfg80211: Disabling freq 5230 MHz
+<7>[   52.842414] cfg80211: Disabling freq 5240 MHz
+<7>[   52.842607] cfg80211: Disabling freq 5260 MHz
+<7>[   52.842701] cfg80211: Disabling freq 5280 MHz
+<7>[   52.842816] cfg80211: Disabling freq 5300 MHz
+<7>[   52.843032] cfg80211: Disabling freq 5320 MHz
+<7>[   52.843131] cfg80211: Updating information on frequency 5500 MHz with regulatory rule:
+<7>[   52.843355] cfg80211: 5490000 KHz - 5730000 KHz @ 40000 KHz), (N/A mBi, 2400 mBm)
+<7>[   52.843553] cfg80211: Updating information on frequency 5520 MHz with regulatory rule:
+<7>[   52.843666] cfg80211: 5490000 KHz - 5730000 KHz @ 40000 KHz), (N/A mBi, 2400 mBm)
+<7>[   52.843858] cfg80211: Updating information on frequency 5540 MHz with regulatory rule:
+<7>[   52.844019] cfg80211: 5490000 KHz - 5730000 KHz @ 40000 KHz), (N/A mBi, 2400 mBm)
+<7>[   52.844110] cfg80211: Updating information on frequency 5560 MHz with regulatory rule:
+<7>[   52.844295] cfg80211: 5490000 KHz - 5730000 KHz @ 40000 KHz), (N/A mBi, 2400 mBm)
+<7>[   52.844479] cfg80211: Updating information on frequency 5580 MHz with regulatory rule:
+<7>[   52.844570] cfg80211: 5490000 KHz - 5730000 KHz @ 40000 KHz), (N/A mBi, 2400 mBm)
+<7>[   52.844746] cfg80211: Updating information on frequency 5600 MHz with regulatory rule:
+<7>[   52.844992] cfg80211: 5490000 KHz - 5730000 KHz @ 40000 KHz), (N/A mBi, 2400 mBm)
+<7>[   52.845118] cfg80211: Updating information on frequency 5620 MHz with regulatory rule:
+<7>[   52.845310] cfg80211: 5490000 KHz - 5730000 KHz @ 40000 KHz), (N/A mBi, 2400 mBm)
+<7>[   52.845510] cfg80211: Updating information on frequency 5640 MHz with regulatory rule:
+<7>[   52.845605] cfg80211: 5490000 KHz - 5730000 KHz @ 40000 KHz), (N/A mBi, 2400 mBm)
+<7>[   52.845778] cfg80211: Updating information on frequency 5660 MHz with regulatory rule:
+<7>[   52.845957] cfg80211: 5490000 KHz - 5730000 KHz @ 40000 KHz), (N/A mBi, 2400 mBm)
+<7>[   52.846142] cfg80211: Updating information on frequency 5680 MHz with regulatory rule:
+<7>[   52.846263] cfg80211: 5490000 KHz - 5730000 KHz @ 40000 KHz), (N/A mBi, 2400 mBm)
+<7>[   52.846526] cfg80211: Updating information on frequency 5700 MHz with regulatory rule:
+<7>[   52.846789] cfg80211: 5490000 KHz - 5730000 KHz @ 40000 KHz), (N/A mBi, 2400 mBm)
+<7>[   52.846946] cfg80211: Disabling freq 5745 MHz
+<7>[   52.847475] cfg80211: Disabling freq 5765 MHz
+<7>[   52.847910] cfg80211: Disabling freq 5785 MHz
+<7>[   52.848145] cfg80211: Disabling freq 5805 MHz
+<7>[   52.848419] cfg80211: Disabling freq 5825 MHz
+<6>[   52.852014] cfg80211: Regulatory domain changed to country: XZ
+<6>[   52.852202] cfg80211:  DFS Master region: unset
+<6>[   52.852306] cfg80211:   (start_freq - end_freq @ bandwidth), (max_antenna_gain, max_eirp), (dfs_cac_time)
+<6>[   52.852588] cfg80211:   (2402000 KHz - 2482000 KHz @ 20000 KHz), (N/A, 2000 mBm), (N/A)
+<6>[   52.852821] cfg80211:   (5490000 KHz - 5730000 KHz @ 40000 KHz), (N/A, 2400 mBm), (N/A)
+<3>[   52.873861] init: untracked pid 197 exited
+<3>[   52.879978] init: untracked pid 238 exited
+<7>[   52.939911] cfg80211: Found new beacon on frequency: 2467 MHz (Ch 12) on phy0
+<7>[   53.046764] cfg80211: Found new beacon on frequency: 2472 MHz (Ch 13) on phy0
+<7>[   54.717132] cfg80211: Found new beacon on frequency: 5540 MHz (Ch 108) on phy0
+<7>[   55.577106] cfg80211: Found new beacon on frequency: 5640 MHz (Ch 128) on phy0
+<6>[   56.145767] wlan0: authenticate with fa:2d:c0:23:ac:8f
+<6>[   56.151912] wlan0: direct probe to fa:2d:c0:23:ac:8f (try 1/3)
+<6>[   56.359391] wlan0: direct probe to fa:2d:c0:23:ac:8f (try 2/3)
+<6>[   56.567668] wlan0: direct probe to fa:2d:c0:23:ac:8f (try 3/3)
+<6>[   56.777660] wlan0: authentication with fa:2d:c0:23:ac:8f timed out
+<6>[   57.051927] wlan0: authenticate with 4e:12:65:af:49:c5
+<6>[   57.056773] wlan0: send auth to 4e:12:65:af:49:c5 (try 1/3)
+<6>[   57.088157] wlan0: authenticated
+<6>[   57.097708] wlan0: associate with 4e:12:65:af:49:c5 (try 1/3)
+<6>[   57.107328] wlan0: RX AssocResp from 4e:12:65:af:49:c5 (capab=0x421 status=0 aid=1)
+<6>[   57.122523] ADDRCONF(NETDEV_CHANGE): wlan0: link becomes ready
+<6>[   57.123921] wlan0: associated
+<7>[   57.124332] cfg80211: regulatory domain set by country ie, ignore
+<6>[   57.128841] wlcore: Association completed.
+<7>[   84.937564] wlan0: no IPv6 routers present
