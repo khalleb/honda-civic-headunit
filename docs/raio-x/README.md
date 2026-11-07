@@ -18,6 +18,7 @@ Este raio-x é o "schema" da plataforma: lista o que **existe**, não o que **ca
 | 6 | [`06-diag-apks.md`](06-diag-apks.md) | RE dos Diag APKs (DealerDiag et al.) e do `DiagApService` | **91 telas do DealerDiag, sem PIN** |
 | 7 | [`07-services-re.md`](07-services-re.md) | RE das services: volante, OTA oficial, veículo, áudio | **StrgSW, SystemUpdate, VehicleInfoManager, SystemInfoService** |
 | 8 | [`08-github-landscape-2026-10-27.md`](08-github-landscape-2026-10-27.md) | Varredura do GitHub: 33 repos, achado KingoSU no nosso `su`, TX codes do Mitsubishi mapeados pelo Clusters | **KingoSU em `/system/xbin/su`**, Clusters, opendbc, CR-V China |
+| 9 | [`09-camera-re.md`](09-camera-re.md) | RE Camada 2 da câmera: AIDL (`ICameraAPService` + 12 listeners), broadcasts `EXIT_*`, sinal CAN `CVT_SHFT_IN_REVERSE` | **164 transações AIDL, ReverseStateWatcher no service, veredito Fase 9** |
 
 ## Alto nível — o que o raio-x revela
 

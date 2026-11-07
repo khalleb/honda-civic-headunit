@@ -698,9 +698,17 @@ Visíveis em logcat quando o boot acontece:
 | Needle completo | `com.mitsubishielectric.ada.app.camera/.activity.RearWideCameraDisplayActivity` |
 | Trigger | Marcha ré engatada |
 | Comportamento | Sobe sobre qualquer Activity ativa (incluindo o aviso). Quando saí da ré, Activity anterior volta ao topo. |
-| Pacote OTA | `/system/vendor/app/Camera.apk` + `/system/vendor/app/CameraAPService.apk` |
+| Pacote OTA | `/system/vendor/app/Camera.apk` + `/system/vendor/app/CameraAPService.apk` + `/system/vendor/framework/CameraAPServiceLib.jar` |
 | Impacto no AutoOk v0.3.0 | APK tentava tapar enquanto câmera estava ativa (tap caía na UI da câmera, no vazio) |
-| Impacto no AutoOk v0.4.0 | HmiServiceReceiver re-inicia o watcher após exit de LP0 que acompanha a mudança de ré, cobre o cenário corretamente |
+| Impacto no AutoOk v0.4.0+ | HmiServiceReceiver re-inicia o watcher após exit de LP0 que acompanha a mudança de ré, cobre o cenário corretamente |
+
+**RE Camada 2 (2026-10-31, doc [`raio-x/09-camera-re.md`](raio-x/09-camera-re.md)):**
+
+- **Sinal fonte:** B-CAN `CVT_SHFT_IN_REVERSE` → `VehicleInfoManager` → `IVehicleCanInformationForCameraApServiceListener` → `ReverseStateWatcher` interno do `CameraAPService` → 2 saídas paralelas:
+  - **Saída AIDL:** `ICameraAPServiceReverseSignalListener.onNotifyReverseSignalStatus(int)` pra quem registrou listener via `ICameraAPService` (`VEHICLE_RW` é `signatureOrSystem` → qualquer APK em `/system/app/` é elegível sem resign Mitsubishi).
+  - **Saída UI:** `IAppManagerService.startActivity(RearWideCameraDisplayActivity, 4)` via window manager Honda, **não `Context.startActivity`** — por isso o needle que o AutoOk pega no logcat é o `am_create_activity` e não uma intent clássica.
+- **Broadcasts:** só existem `com.mitsubishielectric.android.action.camera.EXIT_*` (REAR_WIDE_CAMERA, FRONT, MVC, LANEWATCH, …) e `PAUSE_MVC`/`ACTION_MVC_CTM`. **Não há `ENTER_*`** — a entrada só é visível via AIDL ou via o `am_create_activity` da Activity.
+- **Fase 9 (AutoOk sem logcat polling pra ré) — veredito:** fica em suspenso. Opção B (BroadcastReceiver) cobre só o exit, não o enter. Opção A (AIDL bind) é viável mas custo real (classpath AIDL, lifecycle de bind, perde o padrão de teste puro JVM). Opção C (logcat polling como hoje) funciona OK, não é urgente. Detalhes no §6 do doc.
 
 ### 11.5 InfoClockOpeningActivity 🆕
 
@@ -1472,6 +1480,7 @@ O mesmo builder (`build-enable-adb.py --mode host`) grava `persist.sys.usb1_mode
   - [06-diag-apks.md](raio-x/06-diag-apks.md) — RE dos Diag APKs (sem PIN)
   - [07-services-re.md](raio-x/07-services-re.md) — RE das services (volante, OTA oficial, veículo, áudio)
   - [08-github-landscape-2026-10-27.md](raio-x/08-github-landscape-2026-10-27.md) — varredura do GitHub (33 repos; achado KingoSU no nosso `su`; TX codes do Mitsubishi via Clusters)
+  - [09-camera-re.md](raio-x/09-camera-re.md) — RE Camada 2 da câmera (AIDL + broadcasts + sinal CAN); veredito pra Fase 9
   - [README.md](raio-x/README.md) — índice + metodologia
 
 ### 19.2 Fase 7 (deploy final)
